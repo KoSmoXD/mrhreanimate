@@ -1,11 +1,11 @@
-# Mr H Reanimate 2.1.0
+# Mr H Reanimate 2.1.1
 
 A patch-layer fork of [UhhhhhhModded](https://github.com/testing734/UhhhhhhModded), originally authored by STEVETHEREALONE with patches by BoredGal and Awes955. This package **does not include or relicense upstream source**. The `Mr_H_Reanimate.lua` loader retrieves the exact public commit `87467966d37ce4b8b2c219a0bcffaf2aa8f658a9` and patches it in memory before execution.
 
 ## What's changed
 
 - Replaces the original **STEVE / THERE / ALONE** intro logo with **tplay / addon / real**.
-- Standardizes the opening scroller, splash captions, startup quotes, top-bar message, and main-page greeting to **LEGIT HEAVEN FOR REANIMATORS**.
+- Keeps the **Mr H Reanimate** name on the splash screen, window title, and original controls. Only the background intro scroller uses **LEGIT HEAVEN FOR REANIMATORS**; the original splash captions and main-page greetings are preserved.
 - Preserves the upstream reanimation engine, original settings and module system. Original author attribution remains in the source and documentation.
 - Fixes a malformed Luau declaration (`local conn conn`) that otherwise prevents compilation.
 - Fixes `cloneref` bootstrap ordering and an incorrectly named `sethiddenproperty` fallback.
@@ -25,7 +25,7 @@ loadstring(readfile("Mr_H_Reanimate.lua"))()
 
 The upstream engine requires executor-specific file APIs (`readfile`, `writefile`, etc.), HTTP requests, and other nonstandard capabilities. **It does not run as a normal LocalScript in Roblox Studio or through the standard Roblox mobile app alone.** No server-visible FE results can be guaranteed because they depend on physics replication and network ownership.
 
-**Rejoin before testing the new intro** if an older version is already running. Executing v2.1 while v2.0 is active removes its legacy purple HUD when possible, but does not restart the upstream reanimation engine or replace its already-created startup text.
+**Rejoin before testing the new intro** if an older version is already running. Executing v2.1.1 while v2.0 is active removes its legacy purple HUD when possible, but does not restart the upstream reanimation engine or replace its already-created startup text.
 
 ## Security limits
 
