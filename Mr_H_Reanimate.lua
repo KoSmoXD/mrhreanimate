@@ -1,5 +1,5 @@
 --[[
- Mr H Reanimate 2.1.0
+ Mr H Reanimate 2.1.1
  A maintained runtime fork/patch layer for UhhhhhhModded, not a repackaged source dump.
  Original engine: STEVETHEREALONE, BoredGal, Awes955 Modded.
  Upstream: https://github.com/testing734/UhhhhhhModded
@@ -11,7 +11,7 @@
 ]]
 
 local BRAND = "Mr H Reanimate"
-local VERSION = "2.1.0"
+local VERSION = "2.1.1"
 local BASE_COMMIT = "87467966d37ce4b8b2c219a0bcffaf2aa8f658a9"
 local BASE_URL = "https://raw.githubusercontent.com/testing734/UhhhhhhModded/"
     .. BASE_COMMIT .. "/uhhhhhh%20awes%20fork"
@@ -164,11 +164,11 @@ local function rewrite(source)
         "notification branding")
     source = patch(source,
         'local CracktroFrameText = "Uhhhhhh Reanimate (modded) V" .. UhhhhhhVersion',
-        'local CracktroFrameText = "LEGIT HEAVEN FOR REANIMATORS"',
+        'local CracktroFrameText = "Mr H Reanimate | engine v" .. UhhhhhhVersion',
         "splash branding")
     source = patch(source,
         'TopBarText.Text = "Uhhhhhh Reanimate (modded by awes955) | v" .. UhhhhhhVersion',
-        'TopBarText.Text = "LEGIT HEAVEN FOR REANIMATORS"',
+        'TopBarText.Text = "Mr H Reanimate | engine v" .. UhhhhhhVersion',
         "topbar branding")
     source = patch(source,
         'UI.CreateText(MainPage, `Reanimate V{UhhhhhhVersion}, By STEVE :D and modded by awes`, 11, Enum.TextXAlignment.Right)',
@@ -187,30 +187,8 @@ local function rewrite(source)
     source = replaceSection(source,
         "\tif (SaveData.SkipIntro and math.random(2) == 1) or os.date(\"%m %d\") ~= \"04 01\" then",
         "\n\tlocal TopBarClose = Util.Instance(\"TextButton\", TopBarFrame)",
-        "\tTopBarText.Text = \"LEGIT HEAVEN FOR REANIMATORS\"\n\tlocal TopBarClose = Util.Instance(\"TextButton\", TopBarFrame)",
+        "\tTopBarText.Text = \"Mr H Reanimate | engine v\" .. UhhhhhhVersion\n\tlocal TopBarClose = Util.Instance(\"TextButton\", TopBarFrame)",
         "static startup topbar")
-    source = patch(source,
-        'local text0 = Util.MakeText("Discord: discord.gg/NASNUKRBVM")',
-        'local text0 = Util.MakeText("LEGIT HEAVEN FOR REANIMATORS")',
-        "startup text zero")
-    source = patch(source,
-        'local text1 = Util.MakeText("Made by STEVETHEREALONE :" .. (math.random() < 0.333 and "3" or (math.random() < 0.5 and "D" or "P")))',
-        'local text1 = Util.MakeText("LEGIT HEAVEN FOR REANIMATORS")',
-        "startup text one")
-    source = patch(source,
-        'local text2 = Util.MakeText("Click me to start!")',
-        'local text2 = Util.MakeText("LEGIT HEAVEN FOR REANIMATORS")',
-        "startup text two")
-    source = replaceSection(source,
-        '\tlocal quotes = {\n\t\t"\\"EVERY CLIENT ORBITS A SERVER...\\""',
-        "\n\tlocal text3 = nil",
-        "\tlocal quotes = { \"LEGIT HEAVEN FOR REANIMATORS\" }\n\tlocal text3 = nil",
-        "startup rotating quotes")
-    source = replaceSection(source,
-        'local AsciiText = UI.CreateText(MainPage, "", 12, Enum.TextXAlignment.Center)',
-        '\nUI.CreateText(MainPage, `Mr H Reanimate | Engine V{UhhhhhhVersion} | STEVE, BoredGal, Awes955`, 11, Enum.TextXAlignment.Right)',
-        'UI.CreateText(MainPage, "LEGIT HEAVEN FOR REANIMATORS", 12, Enum.TextXAlignment.Center)\nUI.CreateText(MainPage, `Mr H Reanimate | Engine V{UhhhhhhVersion} | STEVE, BoredGal, Awes955`, 11, Enum.TextXAlignment.Right)',
-        "static main page greeting")
     return source
 end
 
