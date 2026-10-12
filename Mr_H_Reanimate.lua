@@ -1,5 +1,5 @@
 --[[
- Mr H Reanimate 2.1.1
+ Mr H Reanimate 2.1.2
  A maintained runtime fork/patch layer for UhhhhhhModded, not a repackaged source dump.
  Original engine: STEVETHEREALONE, BoredGal, Awes955 Modded.
  Upstream: https://github.com/testing734/UhhhhhhModded
@@ -11,7 +11,7 @@
 ]]
 
 local BRAND = "Mr H Reanimate"
-local VERSION = "2.1.1"
+local VERSION = "2.1.2"
 local BASE_COMMIT = "87467966d37ce4b8b2c219a0bcffaf2aa8f658a9"
 local BASE_URL = "https://raw.githubusercontent.com/testing734/UhhhhhhModded/"
     .. BASE_COMMIT .. "/uhhhhhh%20awes%20fork"
@@ -164,15 +164,15 @@ local function rewrite(source)
         "notification branding")
     source = patch(source,
         'local CracktroFrameText = "Uhhhhhh Reanimate (modded) V" .. UhhhhhhVersion',
-        'local CracktroFrameText = "Mr H Reanimate | engine v" .. UhhhhhhVersion',
+        'local CracktroFrameText = "Mr H Reanimate"',
         "splash branding")
     source = patch(source,
         'TopBarText.Text = "Uhhhhhh Reanimate (modded by awes955) | v" .. UhhhhhhVersion',
-        'TopBarText.Text = "Mr H Reanimate | engine v" .. UhhhhhhVersion',
+        'TopBarText.Text = "Mr H Reanimate"',
         "topbar branding")
     source = patch(source,
         'UI.CreateText(MainPage, `Reanimate V{UhhhhhhVersion}, By STEVE :D and modded by awes`, 11, Enum.TextXAlignment.Right)',
-        'UI.CreateText(MainPage, `Mr H Reanimate | Engine V{UhhhhhhVersion} | STEVE, BoredGal, Awes955`, 11, Enum.TextXAlignment.Right)',
+        '-- Mr H: menu credit text removed; original authors acknowledged in source and README',
         "main-page branding and credits")
 
     source = patch(source,
@@ -187,7 +187,7 @@ local function rewrite(source)
     source = replaceSection(source,
         "\tif (SaveData.SkipIntro and math.random(2) == 1) or os.date(\"%m %d\") ~= \"04 01\" then",
         "\n\tlocal TopBarClose = Util.Instance(\"TextButton\", TopBarFrame)",
-        "\tTopBarText.Text = \"Mr H Reanimate | engine v\" .. UhhhhhhVersion\n\tlocal TopBarClose = Util.Instance(\"TextButton\", TopBarFrame)",
+        "\tTopBarText.Text = \"Mr H Reanimate\"\n\tlocal TopBarClose = Util.Instance(\"TextButton\", TopBarFrame)",
         "static startup topbar")
     return source
 end
