@@ -159,3 +159,41 @@ h1{font-size:clamp(30px,4.4vw,54px);letter-spacing:-.05em;line-height:1.08;margi
 .make-field textarea{width:100%;min-width:0;resize:vertical;min-height:96px;max-height:290px;border:1px solid #47474e;border-radius:9px;background:#18181a;color:#f6f6f7;padding:13px;font:inherit;font-size:13px;line-height:1.6;outline:none;transition:border-color .25s ease,box-shadow .25s ease}
 .make-field textarea::placeholder{color:#88888e}
 .make-field textarea:focus{border-color:#dddde2;box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+
+/* Community dances, separate movesets gallery and comment dialog. */
+.site-tabs{overflow-x:auto;scrollbar-width:thin;white-space:nowrap}
+.site-tab{flex-shrink:0}
+.click-card{cursor:pointer}
+.click-card:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.card-description{margin:15px 0 0;color:#a7a7ae;font-size:12px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line;overflow-wrap:anywhere}
+.card-actions .details-button{flex:1;padding:10px 9px;font-size:11px;white-space:nowrap}
+.card-actions .download{flex:1;text-align:center;font-size:12px}
+#library-movesets-panel{animation:panel-in .35s var(--ease)}
+.detail-panel{max-width:640px;max-height:min(92vh,950px)}
+.item-owner{display:flex;align-items:center;margin:-5px 0 17px}
+.item-description{color:#dedee2;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;margin:0 0 12px}
+.item-facts{font-size:11px;color:#a5a5af;margin:12px 0 18px}
+.item-download{display:flex;justify-content:center;align-items:center;min-height:43px;text-decoration:none}
+.comments-top{margin-top:27px;border-top:1px solid #35353a;padding-top:16px}
+.comments-top h3{font-size:16px;margin:0 0 13px;display:flex;align-items:center;gap:10px}
+.comments-top span{color:#aeaeaf;font-weight:500}
+.comments-list{display:grid;gap:9px;margin-bottom:17px}
+.comment-entry{border:1px solid #323237;border-radius:9px;padding:14px;background:#171719}
+.comment-heading{display:flex;gap:11px;align-items:center;flex-wrap:wrap}
+.comment-heading .anim-author{gap:8px;min-width:0}
+.comment-heading .avatar{width:29px;height:29px;font-size:12px}
+.comment-heading .author-name{font-size:12px}
+.comment-date{color:#8f8f99;font-size:10px;margin-left:auto;white-space:nowrap}
+.comment-delete{background:transparent;border:1px solid #5d4246;color:#f1b5bb;border-radius:6px;font-size:10px;padding:5px 8px}
+.comment-delete:hover{background:#321c20}
+.comment-body{font-size:13px;line-height:1.65;color:#e8e8eb;margin:12px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.empty-comments{border:1px dashed #414147;padding:25px;color:#aaa;border-radius:9px;text-align:center}
+.comment-form{display:grid;gap:10px;margin:18px 0 0;padding-top:17px;border-top:1px solid #333}
+.comment-form label{font-size:12px;font-weight:700}
+.comment-form textarea,.form textarea{background:#1a1a1c;color:#f7f7f9;border:1px solid #505056;border-radius:8px;padding:12px;font:inherit;resize:vertical;min-height:78px;width:100%;outline:none}
+.comment-form textarea:focus,.form textarea:focus{border-color:#e5e5e9}
+.comment-form button{justify-self:end}
+#comment-signin{border-top:1px solid #333;padding:15px 0 0}
+#comment-more{display:block;margin:3px auto 14px}
+#comment-more[hidden]{display:none}
+@media(max-width:640px){.site-tabs{gap:0}.site-tab{flex:0 0 auto;font-size:12px;padding:13px 12px}.gallery-head .filters{width:100%}.gallery-head .filters input{min-width:0}.detail-panel{padding:16px}.card-actions{padding:12px;gap:6px}}
