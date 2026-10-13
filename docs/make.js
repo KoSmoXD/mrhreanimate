@@ -2,33 +2,35 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const browse=$('browse-panel'),maker=$('make-panel'),moveset=$('moveset-panel'),library=$('library-movesets-panel');
-const browseTab=$('tab-browse'),makeTab=$('tab-make'),movesetTab=$('tab-moveset'),libraryTab=$('tab-library-movesets');
+const browse=$('browse-panel'),maker=$('make-panel'),moveset=$('moveset-panel'),library=$('library-movesets-panel'),bulk=$('rbxm2anim-panel');
+const browseTab=$('tab-browse'),makeTab=$('tab-make'),movesetTab=$('tab-moveset'),libraryTab=$('tab-library-movesets'),bulkTab=$('tab-rbxm2anim');
 const form=$('make-form'),picker=$('maker-model'),music=$('maker-music');
 const drop=$('maker-drop'),error=$('maker-error'),button=$('maker-convert'),status=$('maker-status');
 let modelFile=null;
 
 function tabFromHash(){
  if(location.hash==='#movesets')return 'library';
+ if(location.hash==='#rbxm2anim')return 'bulk';
  if(location.hash==='#make-moveset')return 'moveset';
  if(location.hash==='#make-animation')return 'make';
  return 'browse';
 }
 function showTab(tab,updateUrl=true){
  for(const [name,section,button] of [
-  ['browse',browse,browseTab],['library',library,libraryTab],['make',maker,makeTab],['moveset',moveset,movesetTab]
+  ['browse',browse,browseTab],['library',library,libraryTab],['make',maker,makeTab],['bulk',bulk,bulkTab],['moveset',moveset,movesetTab]
  ]){
   const active=name===tab;
   section.hidden=!active;
   button.classList.toggle('active',active);
   button.setAttribute('aria-selected',String(active));
  }
- if(updateUrl)history.replaceState(null,'',tab==='library'?'#movesets':tab==='moveset'?'#make-moveset':tab==='make'?'#make-animation':'#browse-animations');
+ if(updateUrl)history.replaceState(null,'',tab==='library'?'#movesets':tab==='moveset'?'#make-moveset':tab==='bulk'?'#rbxm2anim':tab==='make'?'#make-animation':'#browse-animations');
  window.dispatchEvent(new CustomEvent('mrh-section-change',{detail:{tab}}));
 }
 browseTab.addEventListener('click',()=>showTab('browse'));
 libraryTab.addEventListener('click',()=>showTab('library'));
 makeTab.addEventListener('click',()=>showTab('make'));
+bulkTab.addEventListener('click',()=>showTab('bulk'));
 movesetTab.addEventListener('click',()=>showTab('moveset'));
 window.addEventListener('hashchange',()=>showTab(tabFromHash(),false));
 showTab(tabFromHash(),false);
