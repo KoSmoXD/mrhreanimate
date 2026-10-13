@@ -29,7 +29,7 @@ def published_source() -> str:
         (b - ((i * 73 + 91) % 256)) % 256
         for i, b in enumerate(encoded_bytes, start=1)
     ).decode("utf-8")
-    if 'local VERSION = "2.8.5"' not in decoded:
+    if 'local VERSION = "2.9.0"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
@@ -44,6 +44,17 @@ def published_source() -> str:
         raise AssertionError("Advanced Tools must run in its own function closure")
     if "end)() -- close isolated Advanced Tools function" not in decoded:
         raise AssertionError("Advanced Tools isolated function is not closed")
+    for feature in (
+        'Preview 3D: ',
+        'ViewportFrame',
+        '3D Animation Preview',
+        'parsePreview(data)',
+        'viewState.Duration',
+        'Preview track: ',
+    ):
+        if feature not in decoded:
+            raise AssertionError("Missing 3D animation preview feature: " + feature)
+
 
     return decoded
 
