@@ -156,3 +156,33 @@ test('owner claim is reserved and one-time; avatar upload and owner moderation w
  r=await api('/me',{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({password:'OwnerPassword456'})});
  assert.equal(r.status,403,'verified owner account cannot be deleted');
 });
+
+
+test('Uhhhhhh Make Animation converts Roblox XML KeyframeSequence to install-ready ZIP',async()=>{
+ const xml='<roblox version="4">'+
+ '<Item class="KeyframeSequence" referent="1"><Properties><string name="Name">SitTest</string></Properties>'+
+ '<Item class="Keyframe" referent="2"><Properties><string name="Name">Keyframe</string><float name="Time">0</float></Properties>'+
+ '<Item class="Pose" referent="3"><Properties><string name="Name">Torso</string>'+
+ '<float name="Weight">1</float><token name="EasingStyle">0</token>'+
+ '<token name="EasingDirection">0</token></Properties></Item></Item>'+
+ '<Item class="Keyframe" referent="4"><Properties><string name="Name">Keyframe</string><float name="Time">1</float></Properties>'+
+ '<Item class="Pose" referent="5"><Properties><string name="Name">Torso</string><float name="Weight">1</float>'+
+ '<token name="EasingStyle">0</token><token name="EasingDirection">0</token></Properties></Item></Item>'+
+ '</Item></roblox>';
+ const fields=new FormData();
+ fields.set('model',new Blob([xml],{type:'application/xml'}),'SitTest.rbxmx');
+ fields.set('name','Sit Animation');
+ fields.set('loop','true');
+ const result=await api('/make-animation',{method:'POST',body:fields});
+ assert.equal(result.status,200,JSON.stringify(result.body));
+ assert.match(result.response.headers.get('content-type'),/application\/zip/);
+ const bytes=Buffer.from(await result.response.arrayBuffer());
+ assert.equal(bytes.readUInt32LE(0),0x04034b50,'download should be a ZIP');
+ assert.ok(bytes.includes(Buffer.from('UhhhhhhReanim/Content/Anims/SitTest.anim')),'includes converted track');
+ assert.ok(bytes.includes(Buffer.from('UhhhhhhReanim/Modules/')),'includes generated dance module');
+ assert.ok(bytes.length>180,'ZIP should contain the animation and module');
+ const bad=new FormData();
+ bad.set('model',new Blob(['<roblox><Item class="Part"/></roblox>']),'NotAnimation.rbxmx');
+ const rejected=await api('/make-animation',{method:'POST',body:bad});
+ assert.equal(rejected.status,400,'models without KeyframeSequence must fail safely');
+});
