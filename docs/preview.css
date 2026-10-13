@@ -35,3 +35,7 @@
 .preview-source-choose{width:100%}
 @media(max-width:900px){.preview-layout{grid-template-columns:1fr}.preview-source{grid-template-columns:repeat(2,minmax(0,1fr))}.preview-source-card:last-child{grid-column:1/-1}}
 @media(max-width:650px){.preview-heading{display:block}.preview-source{grid-template-columns:1fr}.preview-source-card:last-child{grid-column:auto}#preview-stage{height:350px}.preview-settings{grid-template-columns:1fr}.preview-control-line .action,.preview-control-line .primary{min-width:80px}}
+
+/* Six tabs stay reachable on narrow displays. */
+.site-tabs{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;max-width:100%}
+.site-tab{flex:0 0 auto;white-space:nowrap}
