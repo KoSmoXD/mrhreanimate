@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#050505">
 <meta name="description" content="Browse, upload, and download community animation packs for Mr H Reanimate.">
 <title>Mr H Animations</title>
-<meta name="mrh-frontend-version" content="moveset-maker-20261013">
+<meta name="mrh-frontend-version" content="description-fields-20261013">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./styles.css?v=moveset-maker-20261013">
-<script src="./app.js?v=moveset-maker-20261013" defer></script>
-<script src="./make.js?v=moveset-maker-20261013" defer></script>
-<script src="./moveset.js?v=moveset-maker-20261013" defer></script>
+<link rel="stylesheet" href="./styles.css?v=description-fields-20261013">
+<script src="./app.js?v=description-fields-20261013" defer></script>
+<script src="./make.js?v=description-fields-20261013" defer></script>
+<script src="./moveset.js?v=description-fields-20261013" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -60,6 +60,9 @@
           </label>
           <label class="make-field" for="maker-name"><span>Animation name <em>Optional</em></span>
             <input id="maker-name" type="text" maxlength="80" placeholder="Defaults to the KeyframeSequence name"></label>
+          <label class="make-field" for="maker-description"><span>Dance description <em>Optional</em></span>
+            <textarea id="maker-description" maxlength="500" rows="3" placeholder="Describe your dance, its style, or credits..."></textarea>
+            <small class="make-note">Appears in the generated Lua dance module · up to 500 characters</small></label>
           <label class="make-field" for="maker-music"><span>Music for this dance <em>Optional · MP3</em></span>
             <input id="maker-music" type="file" accept=".mp3,audio/mpeg">
             <small class="make-note">Include music for synchronized playback; otherwise the generated module uses elapsed time.</small>
@@ -104,6 +107,9 @@
         <form id="moveset-form" class="make-form">
           <label class="make-field" for="moveset-name"><span>Moveset name <em>Required</em></span>
             <input id="moveset-name" type="text" minlength="2" maxlength="64" placeholder="e.g. Mr H Classic" required></label>
+          <label class="make-field" for="moveset-description"><span>Moveset description <em>Optional</em></span>
+            <textarea id="moveset-description" maxlength="500" rows="3" placeholder="Describe your moveset, movement style, or credits..."></textarea>
+            <small class="make-note">Appears in the generated Lua moveset module · up to 500 characters</small></label>
           <div class="moveset-tracks">
             <div class="moveset-track-heading">MOVEMENT ANIMATIONS <span>Upload .anim tracks</span></div>
             <div class="moveset-track-grid">
