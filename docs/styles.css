@@ -154,3 +154,8 @@ h1{font-size:clamp(30px,4.4vw,54px);letter-spacing:-.05em;line-height:1.08;margi
 .moveset-completeness{font-size:11px;color:#a7a7ad;letter-spacing:.015em}
 .moveset-panel .make-heading p code{color:#d1d1d6}
 @media(max-width:640px){.moveset-track-grid{grid-template-columns:1fr}}
+
+/* Shared creator description fields */
+.make-field textarea{width:100%;min-width:0;resize:vertical;min-height:96px;max-height:290px;border:1px solid #47474e;border-radius:9px;background:#18181a;color:#f6f6f7;padding:13px;font:inherit;font-size:13px;line-height:1.6;outline:none;transition:border-color .25s ease,box-shadow .25s ease}
+.make-field textarea::placeholder{color:#88888e}
+.make-field textarea:focus{border-color:#dddde2;box-shadow:0 0 0 3px rgba(255,255,255,.05)}
