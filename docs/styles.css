@@ -131,3 +131,26 @@ h1{font-size:clamp(30px,4.4vw,54px);letter-spacing:-.05em;line-height:1.08;margi
 .make-output code{overflow-wrap:anywhere}
 @media(max-width:850px){.make-grid{grid-template-columns:1fr}.make-heading{align-items:start;flex-direction:column}}
 @media(max-width:640px){.site-tab{flex:1;padding:13px 7px;font-size:13px}.make-form,.make-guide-inner{padding:17px}.make-card-top{padding:15px}.david-link{width:100%;text-align:center}}
+
+/* Moveset Maker — black theme consistent with the animation gallery */
+.moveset-tracks{display:grid;gap:13px}
+.moveset-track-heading{display:flex;align-items:center;justify-content:space-between;color:#e8e8ec;font-size:11px;font-weight:800;letter-spacing:.08em}
+.moveset-track-heading span{color:#97979d;font-size:10px;letter-spacing:0;font-weight:500}
+.moveset-track-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.move-slot{background:#18181a;border:1px solid #45454a;border-radius:9px;min-width:0;padding:13px;display:grid;gap:13px;cursor:pointer;transition:transform .25s var(--ease),border-color .25s,background .25s}
+.move-slot:hover{border-color:#f4f4f4;transform:translateY(-2px)}
+.move-slot.filled{border-color:#658c71;background:#152019}
+.move-slot>span:first-child{display:grid;gap:3px}
+.move-slot strong{font-size:13px;color:#f0f0f2}
+.move-slot small{font-size:10px;font-weight:400;color:#9e9ea5}
+.move-file-name{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#c6c6cc;border-top:1px solid #36363a;padding-top:9px;font-size:11px;font-weight:600}
+.move-slot input[type=file]{position:absolute;inline-size:1px;block-size:1px;opacity:0;overflow:hidden}
+.move-slot:focus-within{outline:2px solid #f4f4f4;outline-offset:2px}
+.moveset-slider-row{display:grid;gap:10px;border:1px solid #343439;border-radius:9px;padding:13px;background:#131315}
+.moveset-slider-row label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:800}
+.moveset-slider-row output{color:#dddde1;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.moveset-slider-row input[type=range]{width:100%;accent-color:#f4f4f5;cursor:pointer}
+.moveset-slider-row small{color:#a2a2a9;line-height:1.55;font-size:11px}
+.moveset-completeness{font-size:11px;color:#a7a7ad;letter-spacing:.015em}
+.moveset-panel .make-heading p code{color:#d1d1d6}
+@media(max-width:640px){.moveset-track-grid{grid-template-columns:1fr}}
