@@ -508,31 +508,47 @@ const movesetUploader=multer({
  limits:{fileSize:20*1048576,files:8,fields:4,parts:12},
  fileFilter(req,file,cb){
   const extension=path.extname(file.originalname).toLowerCase();
-  if(ROLES.includes(file.fieldname)&&extension==='.anim')return cb(null,true);
+  if(ROLES.includes(file.fieldname)&&['.anim','.rbxm','.rbxmx'].includes(extension))return cb(null,true);
   if(file.fieldname==='music'&&extension==='.mp3')return cb(null,true);
-  cb(new Error('Only .anim movement tracks and optional MP3 are supported.'));
+  cb(new Error('Only .anim, .rbxm, .rbxmx movement tracks and optional MP3 are supported.'));
  }
 }).fields(movesetFields);
 app.post('/api/make-moveset',movesetLimiter,(req,res)=>{
  movesetUploader(req,res,async error=>{
   const files=req.files||{};
-  let completed=false;
+  let completed=false,conversionDir=null;
+  const clean=async()=>{
+    await removeTmp(files);
+    if(conversionDir)await fsp.rm(conversionDir,{recursive:true,force:true}).catch(()=>{});
+  };
   try{
    if(error)throw Error(error.code==='LIMIT_FILE_SIZE'?'File too large.':error.message||'Invalid moveset upload.');
-   if(!files.idle?.[0]||!files.walk?.[0])throw Error('Both Idle and Walk .anim files are required.');
+   if(!files.idle?.[0]||!files.walk?.[0])throw Error('Both Idle and Walk files (.anim, .rbxm, or .rbxmx) are required.');
    const tracks={};
    const name=String(req.body?.name||'').trim();
    let total=0;
    for(const role of ROLES){
     const file=files[role]?.[0];
     if(!file)continue;
-    if(file.size<8||file.size>8*1048576)throw Error(role+' animation must be between 8 bytes and 8 MB.');
+    const ext=path.extname(file.originalname).toLowerCase();
+    const isModel=ext==='.rbxm'||ext==='.rbxmx';
+    if(file.size<(isModel?32:8)||file.size>(isModel?4:8)*1048576)
+     throw Error(role+' must be '+(isModel?'a model under 4 MB.':'an animation under 8 MB.'));
     total+=file.size;
-    // Reuse the established Uhhhhhh binary track validator.
-    const data=await fsp.readFile(file.path);
-    const info=validateAnim(data);
-    if(info.duration<0.05)throw Error(role+' needs a duration of at least 0.05 seconds for smooth looping.');
-    tracks[role]=file;
+    let finalPath=file.path;
+    if(isModel){
+     if(!conversionDir)conversionDir=await fsp.mkdtemp(path.join(TMP,'moveset-'));
+     const outputDir=path.join(conversionDir,role);
+     let sequences;
+     try{sequences=await convertRobloxModel(file.path,outputDir);}
+     catch(e){throw Error(role+' ('+file.originalname+'): '+e.message);}
+     if(sequences.length!==1)throw Error(role+' model contains '+sequences.length+' animations. Each moveset slot needs exactly one KeyframeSequence. Use RBXM2ANIM for bulk files.');
+     finalPath=path.join(outputDir,sequences[0].filename);
+    }else{
+     const info=validateAnim(await fsp.readFile(file.path));
+     if(info.duration<0.05)throw Error(role+' needs at least 0.05 seconds of animation.');
+    }
+    tracks[role]={...file,path:finalPath};
    }
    const music=files.music?.[0]||null;
    if(music){
@@ -570,9 +586,9 @@ app.post('/api/make-moveset',movesetLimiter,(req,res)=>{
    res.destroy(err);
   }finally{
    // Disk entries must remain until ZIP streams finish reading.
-   if(!completed){await removeTmp(files);}
+   if(!completed){await clean();}
    else{
-    const cleanup=()=>removeTmp(files);
+    const cleanup=()=>clean();
     if(res.writableFinished||res.destroyed)await cleanup();
     else res.once('close',cleanup);
    }
