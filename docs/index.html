@@ -6,12 +6,13 @@
 <meta name="theme-color" content="#050505">
 <meta name="description" content="Browse, upload, and download community animation packs for Mr H Reanimate.">
 <title>Mr H Animations</title>
-<meta name="mrh-frontend-version" content="description-fields-20261013">
+<meta name="mrh-frontend-version" content="community-tabs-20261013">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./styles.css?v=description-fields-20261013">
-<script src="./app.js?v=description-fields-20261013" defer></script>
-<script src="./make.js?v=description-fields-20261013" defer></script>
-<script src="./moveset.js?v=description-fields-20261013" defer></script>
+<link rel="stylesheet" href="./styles.css?v=community-tabs-20261013">
+<script src="./app.js?v=community-tabs-20261013" defer></script>
+<script src="./make.js?v=community-tabs-20261013" defer></script>
+<script src="./moveset.js?v=community-tabs-20261013" defer></script>
+<script src="./community.js?v=community-tabs-20261013" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -27,7 +28,8 @@
 </header>
 <main class="main">
   <nav class="site-tabs" role="tablist" aria-label="Animation website sections">
-    <button type="button" id="tab-browse" class="site-tab active" role="tab" aria-controls="browse-panel" aria-selected="true">Browse Animations</button>
+    <button type="button" id="tab-browse" class="site-tab active" role="tab" aria-controls="browse-panel" aria-selected="true">Dances</button>
+    <button type="button" id="tab-library-movesets" class="site-tab" role="tab" aria-controls="library-movesets-panel" aria-selected="false">Movesets</button>
     <button type="button" id="tab-make" class="site-tab" role="tab" aria-controls="make-panel" aria-selected="false">Make Animation</button>
     <button type="button" id="tab-moveset" class="site-tab" role="tab" aria-controls="moveset-panel" aria-selected="false">Moveset Maker</button>
   </nav>
@@ -39,6 +41,14 @@
   <div id="connection-warning" class="connection-warning" hidden></div>
   <div id="gallery" class="gallery" aria-live="polite"><div class="state-message">Loading animations...</div></div>
   <div class="pagination"><button id="load-more" type="button" class="action" hidden>Load more</button></div>
+  </section>
+  <section id="library-movesets-panel" role="tabpanel" aria-labelledby="tab-library-movesets" hidden>
+    <div class="gallery-head">
+      <div><h1>Movesets</h1><p>Community-made Uhhhhhh movesets. Open a card to read comments or download the ZIP.</p></div>
+      <div class="filters"><input type="search" id="moveset-search" maxlength="80" placeholder="Search movesets..." aria-label="Search movesets"><button class="action" type="button" id="moveset-refresh">↻</button><button id="moveset-upload-trigger" class="primary action" type="button" hidden>+ Upload Moveset</button></div>
+    </div>
+    <div id="moveset-gallery" class="gallery" aria-live="polite"><div class="state-message">Loading movesets...</div></div>
+    <div class="pagination"><button type="button" id="moveset-load-more" class="action" hidden>Load more</button></div>
   </section>
   <section id="make-panel" class="make-panel" role="tabpanel" aria-labelledby="tab-make" hidden>
     <div class="make-heading">
@@ -159,6 +169,40 @@
   </section>
 </main>
 
+
+<div id="moveset-upload-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="moveset-upload-title" hidden>
+ <div class="modal-panel wide">
+  <div class="modal-header"><h2 id="moveset-upload-title">Upload moveset</h2><button type="button" class="close" data-close="moveset-upload-modal" aria-label="Close">×</button></div>
+  <form id="moveset-upload-form" class="form">
+   <label>Moveset name<input id="community-moveset-title" name="title" type="text" minlength="2" maxlength="80" required placeholder="e.g. Mr H Classic"></label>
+   <label>Description (optional)<textarea id="community-moveset-description" name="description" maxlength="500" rows="3" placeholder="Describe the moveset and give credits"></textarea></label>
+   <label>Uhhhhhh moveset ZIP<input id="community-moveset-zip" type="file" name="archive" accept=".zip,application/zip" required></label>
+   <p class="small-note">Upload the ZIP downloaded from the Moveset Maker tab. It must contain a MOVESET Lua module and at least two .anim tracks. Max 50 MB. Uploaded modules are untrusted scripts; review before running.</p>
+   <div class="form-error" id="moveset-upload-error" role="alert" hidden></div>
+   <button type="submit" class="primary full" id="moveset-upload-submit">Publish Moveset</button>
+  </form>
+ </div>
+</div>
+<div id="item-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="item-title" hidden>
+ <div class="modal-panel detail-panel">
+  <div class="modal-header"><h2 id="item-title">Animation</h2><button type="button" class="close" data-close="item-modal" aria-label="Close">×</button></div>
+  <div id="item-owner" class="item-owner"></div>
+  <p id="item-description" class="item-description"></p>
+  <div id="item-facts" class="item-facts"></div>
+  <a id="item-download" class="primary item-download" href="#">Download ZIP ↓</a>
+  <div class="comments-top"><h3>Comments <span id="item-comment-count">0</span></h3></div>
+  <div id="item-comments" class="comments-list" aria-live="polite"><div class="state-message">Loading comments...</div></div>
+  <button type="button" class="action" id="comment-more" hidden>Older comments</button>
+  <form id="comment-form" class="comment-form" hidden>
+   <label for="comment-text">Write a comment</label>
+   <textarea id="comment-text" rows="3" maxlength="1000" placeholder="Say what you think about this upload..." required></textarea>
+   <div id="comment-error" class="form-error" role="alert" hidden></div>
+   <button class="primary" type="submit" id="comment-submit">Post comment</button>
+  </form>
+  <p id="comment-signin" class="small-note" hidden>Log in to post a comment.</p>
+ </div>
+</div>
+
 <div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title" hidden>
   <div class="modal-panel">
     <div class="modal-header"><h2 id="auth-title">Log in</h2><button class="close" data-close="auth-modal" type="button" aria-label="Close">×</button></div>
@@ -180,6 +224,7 @@
     <div class="modal-header"><h2 id="upload-title">Upload animation</h2><button class="close" data-close="upload-modal" type="button" aria-label="Close">×</button></div>
     <form id="upload-form" class="form">
       <label>Animation name<input id="upload-name" name="title" type="text" minlength="2" maxlength="80" required placeholder="e.g. Sit animation"></label>
+      <label>Dance description (optional)<textarea id="upload-description" name="description" rows="3" maxlength="500" placeholder="What does your dance look like?"></textarea></label>
       <p class="small-note">Each uploaded pack needs the animation, MP3 soundtrack, and matching Lua dance module. Other users can download the full ZIP.</p>
       <div class="file-choices">
         <label class="file-choice"><span><b>Animation .anim</b><small id="anim-file-label">Choose file</small></span><input id="upload-anim" name="anim" type="file" accept=".anim" required></label>
