@@ -2,6 +2,20 @@
 
 The website has been redesigned into a **black, minimal public animation browser**. Cards show the animation title, uploader, upload date, total pack size, and download button. Sign up and log in with a username and password. Authenticated users can publish animations, change their username/password, delete their uploads, and delete their account.
 
+## Moveset Maker (Uhhhhhh only)
+
+The website now includes a **Moveset Maker** tab at `#make-moveset`, alongside Browse Animations and Make Animation.
+
+Choose a name and native Uhhhhhh `.anim` files for **Idle** and **Walk** (required). Optional animation slots are **Run, Jump, Fall, Climb and Sit**. Optional background MP3 music is supported.
+
+The transition slider sets smooth movement-state crossfading from 0.05 to 1.5 seconds, and the run-speed slider defines the Walk-to-Run threshold (4–80 studs/second). Missing tracks fall back to uploaded tracks.
+
+The endpoint `POST /api/make-moveset` validates the files and generates an official Uhhhhhh `MOVESET` module using `AnimLib.Animator`, `AssetGetPathFromFilename`, `m.Init`, `m.Update` and `m.Destroy`. Crossfading uses `Animator.weight` and recognizes `IsDancing`.
+
+The ZIP contains `.anim` files in `UhhhhhhReanim/Content/Anims/`, an optional MP3 under `UhhhhhhReanim/Content/Sounds/`, and the generated Lua module in `UhhhhhhReanim/Modules/`. Roblox `.rbxm` models should first be converted under Make Animation.
+
+This generator does not guarantee replication or perfect playback for every rig. Test the downloaded moveset inside Roblox.
+
 ## Make Animation tab (Uhhhhhh only)
 
 The public site now has **Browse Animations** and **Make Animation** tabs in the same black theme. The original gallery, registration, profile photos, owner verification, uploads and downloads are preserved.
