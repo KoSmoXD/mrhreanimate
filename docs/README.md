@@ -6,6 +6,17 @@ The website has been redesigned into a **black, minimal public animation browser
 
 Both **Make Animation (dance)** and **Moveset Maker** accept an optional description (up to 500 characters). The description is embedded in the generated Uhhhhhh Lua `m.Description` field and supports line breaks, quotes, and Unicode. When left empty, the original default description is used.
 
+## Community movesets and comments
+
+The black website includes a separate **Movesets** browsing tab alongside **Dances**, **Make Animation**, and **Moveset Maker**. Users can open dance or moveset cards to read detail pages and comment threads.
+
+Registered users can comment on dances and movesets (up to 1,000 characters per comment). All visitors can read comments. Comment authors can remove their own comments; the verified owner `Mr_H` can moderate any comment or upload. Comments and uploads are stored in the existing persistent SQLite database.
+
+Users can upload a moveset ZIP in the **Movesets** tab. It should come from **Moveset Maker** and contain at least two native `.anim` tracks plus a `.lua` module declaring `ModuleType = "MOVESET"`, under the expected `UhhhhhhReanim/` directory structure. Uploaded ZIPs are checked for unsafe paths, unsupported file types, oversized or suspiciously compressed contents, invalid tracks, and missing MOVESET modules, without executing Lua. Public downloads return the exact stored ZIP. Moveset uploads are limited to 50 MB.
+
+New API endpoints: `GET/POST /api/movesets`, `GET /api/movesets/:id`, `GET /api/movesets/:id/download`, `DELETE /api/movesets/:id`, `GET/POST /api/animations/:id/comments`, `GET/POST /api/movesets/:id/comments`, and `DELETE /api/comments/:id`. The original gallery and maker endpoints remain unchanged.
+
+Because community Lua is user-submitted, downloads should be reviewed before execution.
 ## Moveset Maker (Uhhhhhh only)
 
 The website now includes a **Moveset Maker** tab at `#make-moveset`, alongside Browse Animations and Make Animation.
