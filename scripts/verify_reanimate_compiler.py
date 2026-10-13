@@ -31,7 +31,7 @@ def published_source() -> str:
     ).decode("utf-8")
     if any(ord(ch) > 127 for ch in decoded):
         raise AssertionError("This hex byte wrapper must contain only ASCII source")
-    if 'local VERSION = "2.9.1"' not in decoded:
+    if 'local VERSION = "2.9.2"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
@@ -46,16 +46,20 @@ def published_source() -> str:
         raise AssertionError("Advanced Tools must run in its own function closure")
     if "end)() -- close isolated Advanced Tools function" not in decoded:
         raise AssertionError("Advanced Tools isolated function is not closed")
-    for feature in (
+    for removed in (
         'Preview 3D: ',
-        'ViewportFrame',
+        'MrH3DAnimationViewport',
         '3D Animation Preview',
         'parsePreview(data)',
         'viewState.Duration',
         'Preview track: ',
+        'onlinePreview(',
     ):
-        if feature not in decoded:
-            raise AssertionError("Missing 3D animation preview feature: " + feature)
+        if removed in decoded:
+            raise AssertionError("3D preview must live on the website, not in the loader: " + removed)
+    for required in ('Online Modules (Mr H Website)', 'onlineInstall(kind, item)'):
+        if required not in decoded:
+            raise AssertionError("Online Modules install feature missing: " + required)
 
 
     return decoded
