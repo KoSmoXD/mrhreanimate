@@ -11,7 +11,7 @@ const port=23000+Math.floor(Math.random()*20000);
 const base='http://127.0.0.1:'+port;
 const dataDir=fs.mkdtempSync(path.join(os.tmpdir(),'mrh-animations-test-'));
 const app=spawn(process.execPath,[path.resolve(__dirname,'../server.js')],{
- env:{...process.env,PORT:String(port),NODE_ENV:'development',TRUST_PROXY:'false',DATA_DIR:dataDir},
+ env:{...process.env,PORT:String(port),NODE_ENV:'development',TRUST_PROXY:'false',DATA_DIR:dataDir,OWNER_SETUP_KEY:'owner-claim-test-key-1234567890-ABCDEFGHIJKLMNOP'},
  stdio:['ignore','pipe','pipe']
 });
 let logs='';
@@ -86,4 +86,61 @@ test('public gallery, registration, authenticated upload, ZIP download and accou
  r=await api('/me',{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({password:'StrongerPassphrase456'})});
  assert.equal(r.status,200);
  r=await api('/me');assert.equal(r.status,401);
+});
+
+
+test('owner claim is reserved and one-time; avatar upload and owner moderation work',async()=>{
+ let r=await api('/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:'Mr_H',password:'StrongPassword123'})});
+ assert.equal(r.status,403,'ordinary registration cannot impersonate the owner');
+ const uname='Creator'+crypto.randomBytes(4).toString('hex');
+ r=await api('/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:uname,password:'RegularPassword123'})});
+ assert.equal(r.status,201,JSON.stringify(r.body));
+ r=await api('/me',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({username:'Mr_H',currentPassword:'RegularPassword123'})});
+ assert.equal(r.status,403,'regular users cannot rename themselves to owner');
+ const animation=new FormData();
+ animation.set('title','Moderation demo');
+ animation.set('anim',new Blob([makeAnim()]),'Moderation.anim');
+ animation.set('mp3',new Blob([Uint8Array.from([73,68,51,3,0,0,0,0])]),'Moderation.mp3');
+ animation.set('lua',new Blob(['return {}']),'Moderation.lua');
+ r=await api('/animations',{method:'POST',body:animation});
+ assert.equal(r.status,201,JSON.stringify(r.body));
+ const uploadedId=r.body.animation.id;
+ r=await api('/logout',{method:'POST'});assert.equal(r.status,200);
+ r=await api('/owner/claim',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({setupKey:'incorrect-owner-claim',password:'OwnerPassword456'})});
+ assert.equal(r.status,403,'wrong setup key cannot create an owner');
+ r=await api('/owner/claim',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({setupKey:'owner-claim-test-key-1234567890-ABCDEFGHIJKLMNOP',password:'OwnerPassword456'})});
+ assert.equal(r.status,201,JSON.stringify(r.body));
+ assert.equal(r.body.user.username,'Mr_H');
+ assert.equal(r.body.user.role,'owner');
+ r=await api('/owner/claim',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({setupKey:'owner-claim-test-key-1234567890-ABCDEFGHIJKLMNOP',password:'AnotherPassword123'})});
+ assert.equal(r.status,409,'owner can only be claimed once');
+ r=await api('/me',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({username:'OtherAdmin',currentPassword:'OwnerPassword456'})});
+ assert.equal(r.status,403,'verified owner username remains locked');
+ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==','base64');
+ const photo=new FormData();
+ photo.set('avatar',new Blob([png],{type:'image/png'}),'avatar.png');
+ r=await api('/me/avatar',{method:'PUT',body:photo});
+ assert.equal(r.status,200,JSON.stringify(r.body));
+ assert.match(r.body.user.avatarUrl,/^\/api\/users\//);
+ const ownerId=r.body.user.id;
+ const image=await api('/users/'+ownerId+'/avatar');
+ assert.equal(image.status,200);
+ assert.match(image.response.headers.get('content-type'),'image/png');
+ const ownerFile=new FormData();
+ ownerFile.set('title','Official Mr_H dance');
+ ownerFile.set('anim',new Blob([makeAnim()]),'Official.anim');
+ ownerFile.set('mp3',new Blob([Uint8Array.from([73,68,51,3,0,0,0,0])]),'Official.mp3');
+ ownerFile.set('lua',new Blob(['return {}']),'Official.lua');
+ r=await api('/animations',{method:'POST',body:ownerFile});
+ assert.equal(r.status,201,JSON.stringify(r.body));
+ r=await api('/animations');assert.equal(r.status,200);
+ const official=r.body.items.find(item=>item.username==='Mr_H');
+ assert.equal(official.role,'owner');
+ assert.ok(official.avatarUrl,'avatar should appear in animation gallery');
+ r=await api('/animations/'+uploadedId,{method:'DELETE'});
+ assert.equal(r.status,200,'owner can delete a different uploader animation');
+ r=await api('/me/avatar',{method:'DELETE'});assert.equal(r.status,200);
+ assert.equal(r.body.user.avatarUrl,null);
+ r=await api('/me',{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({password:'OwnerPassword456'})});
+ assert.equal(r.status,403,'verified owner account cannot be deleted');
 });
