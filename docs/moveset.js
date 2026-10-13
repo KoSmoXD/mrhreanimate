@@ -22,12 +22,12 @@
   const input=$('moveset-'+role),name=$('moveset-'+role+'-name');
   input.addEventListener('change',()=>{
    const file=input.files?.[0];
-   if(file && (!/\.anim$/i.test(file.name)||file.size>8*1048576)){
-    showError(role.toUpperCase()+' must be an .anim file smaller than 8 MB.');
+   if(file && (!/\.(anim|rbxm|rbxmx)$/i.test(file.name)||file.size>(/\.(rbxm|rbxmx)$/i.test(file.name)?4:8)*1048576)){
+    showError(role.toUpperCase()+' needs .anim (8 MB), .rbxm or .rbxmx (4 MB).');
     input.value='';
    }else showError('');
    const accepted=input.files?.[0];
-   name.textContent=accepted?accepted.name+' · '+formatSize(accepted.size):'Choose .anim';
+   name.textContent=accepted?accepted.name+' · '+formatSize(accepted.size):'Choose .rbxm / .anim';
    input.closest('.move-slot')?.classList.toggle('filled',!!accepted);
    countReady();
   });
@@ -68,13 +68,14 @@
   for(const role of ROLES){
    const file=$('moveset-'+role).files?.[0];
    if(!file)continue;
-   if(!/\.anim$/i.test(file.name)||file.size<8||file.size>8*1048576){
-    showError(role.toUpperCase()+' needs a valid .anim smaller than 8 MB.');return;
+   const raw=/\.(rbxm|rbxmx)$/i.test(file.name);
+   if(!/\.(anim|rbxm|rbxmx)$/i.test(file.name)||file.size<(raw?32:8)||file.size>(raw?4:8)*1048576){
+    showError(role.toUpperCase()+' needs .anim under 8 MB or .rbxm/.rbxmx under 4 MB.');return;
    }
    total+=file.size;
    data.append(role,file,file.name);
   }
-  if(!data.has('idle')||!data.has('walk')){showError('Idle and Walk .anim files are required.');return;}
+  if(!data.has('idle')||!data.has('walk')){showError('Idle and Walk animation files are required (.rbxm, .rbxmx, or .anim).');return;}
   const music=$('moveset-music').files?.[0];
   if(music){
    if(!/\.mp3$/i.test(music.name)||music.size>20*1048576){
@@ -86,7 +87,7 @@
   if(total>50*1048576){showError('The entire moveset must be under 50 MB.');return;}
   submit.disabled=true;
   submit.textContent='Building moveset...';
-  status.textContent='Validating tracks and generating the Uhhhhhh MOVESET module...';
+  status.textContent='Converting Roblox models to .anim (if needed) and building the Uhhhhhh moveset ZIP...';
   try{
    const response=await fetch('/api/make-moveset',{
     method:'POST',body:data,credentials:'same-origin'
