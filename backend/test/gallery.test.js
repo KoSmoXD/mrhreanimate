@@ -90,13 +90,13 @@ test('public gallery, registration, authenticated upload, ZIP download and accou
  const page=await fetch(base+'/');
  const markup=await page.text();
  assert.ok(page.headers.get('cache-control')?.includes('no-store'),'HTML must not be cached');
- assert.ok(markup.includes('app.js?v=community-tabs-20261013'),'auth script must be cache busted');
- const asset=await fetch(base+'/app.js?v=community-tabs-20261013');
+ assert.ok(markup.includes('app.js?v=raw-rbxm-converter-20261013'),'auth script must be cache busted');
+ const asset=await fetch(base+'/app.js?v=raw-rbxm-converter-20261013');
  const script=await asset.text();
  assert.equal(asset.status,200);
  assert.ok(asset.headers.get('cache-control')?.includes('no-store'),'auth JS must not be cached');
  assert.ok(script.includes("'/owner/claim'"),'owner setup must route to special owner endpoint');
- const stylesheet=await fetch(base+'/styles.css?v=community-tabs-20261013');
+ const stylesheet=await fetch(base+'/styles.css?v=raw-rbxm-converter-20261013');
  assert.ok(stylesheet.headers.get('cache-control')?.includes('no-store'),'UI CSS must not be cached');
  const guest=await api('/animations');
  assert.equal(guest.status,200);assert.deepEqual(guest.body.items,[]);
@@ -319,4 +319,68 @@ test('Movesets are a separate shared gallery with comments and owner moderation'
  assert.equal(r.status,200,'owner can delete public movesets');
  r=await api('/movesets/'+id);assert.equal(r.status,404);
  r=await api('/movesets/'+id+'/comments');assert.equal(r.status,404);
+});
+
+
+function rawKeyframeModel(name){
+ const sequence=(label)=>'<Item class="KeyframeSequence" referent="1"><Properties><string name="Name">'+label+'</string></Properties>'+
+ '<Item class="Keyframe" referent="2"><Properties><string name="Name">Keyframe</string><float name="Time">0</float></Properties>'+
+ '<Item class="Pose" referent="3"><Properties><string name="Name">Torso</string><float name="Weight">1</float><token name="EasingStyle">0</token><token name="EasingDirection">0</token></Properties></Item></Item>'+
+ '<Item class="Keyframe" referent="4"><Properties><string name="Name">Keyframe</string><float name="Time">1</float></Properties>'+
+ '<Item class="Pose" referent="5"><Properties><string name="Name">Torso</string><float name="Weight">1</float><token name="EasingStyle">0</token><token name="EasingDirection">0</token></Properties></Item></Item></Item>';
+ return '<roblox version="4">'+sequence(name)+'</roblox>';
+}
+
+test('Moveset Maker auto-converts RBXM and RBXMX model slots while preserving .anim inputs',async()=>{
+ const original=makeAnim();
+ const len=original.readUInt16LE(0),start=2+len+4;
+ const header=Buffer.from(original.subarray(0,start));header.writeUInt32LE(2,2+len);
+ const second=Buffer.from(original.subarray(start));second.writeFloatLE(1,0);
+ const anim=Buffer.concat([header,original.subarray(start),second]);
+ const models=new FormData();
+ models.set('name','Raw Models Test');
+ models.set('description','Raw Roblox models converted automatically');
+ models.set('fade','0.20');
+ models.set('runSpeed','16');
+ models.set('idle',new Blob([rawKeyframeModel('RawIdle')],{type:'application/xml'}),'Idle.rbxmx');
+ models.set('walk',new Blob([rawKeyframeModel('RawWalk')],{type:'application/octet-stream'}),'Walk.rbxm');
+ models.set('run',new Blob([anim]),'Run.anim');
+ const response=await api('/make-moveset',{method:'POST',body:models});
+ assert.equal(response.status,200,JSON.stringify(response.body));
+ const zip=Buffer.from(await response.response.arrayBuffer());
+ assert.equal(zip.readUInt32LE(0),0x04034b50);
+ for(const filename of ['MRH_Raw_Models_Test_idle.anim','MRH_Raw_Models_Test_walk.anim','MRH_Raw_Models_Test_run.anim','MRH_Raw_Models_Test_Moveset.lua']){
+  assert.ok(zip.includes(Buffer.from(filename)),'ZIP missing '+filename);
+ }
+ assert.ok(readZipText(zip,'.lua').includes('m.ModuleType = "MOVESET"'));
+ const invalid=new FormData();
+ invalid.set('name','Bad Raw');
+ invalid.set('fade','0.2');
+ invalid.set('runSpeed','16');
+ invalid.set('idle',new Blob(['bad data not a model']),'Invalid.rbxm');
+ invalid.set('walk',new Blob([rawKeyframeModel('Walk')]),'Walk.rbxmx');
+ const error=await api('/make-moveset',{method:'POST',body:invalid});
+ assert.equal(error.status,400,'malformed Roblox model should be rejected');
+});
+
+test('RBXM2ANIM tab converts multiple models and returns only anim tracks',async()=>{
+ const bulk=new FormData();
+ bulk.append('models',new Blob([rawKeyframeModel('TestIdle')]),'Idle.rbxmx');
+ bulk.append('models',new Blob([rawKeyframeModel('TestWalk')]),'Walk.rbxm');
+ const response=await api('/rbxm2anim/bulk',{method:'POST',body:bulk});
+ assert.equal(response.status,200,JSON.stringify(response.body));
+ assert.match(response.response.headers.get('content-type'),/application\/zip/);
+ const zip=Buffer.from(await response.response.arrayBuffer());
+ assert.equal(zip.readUInt32LE(0),0x04034b50);
+ for(const name of ['Idle_TestIdle.anim','Walk_TestWalk.anim']){
+  assert.ok(zip.includes(Buffer.from('UhhhhhhReanim/Content/Anims/'+name)),'missing '+name);
+ }
+ assert.ok(!zip.includes(Buffer.from('UhhhhhhReanim/Modules/')),'bulk converter must not create Lua');
+ const empty=new FormData();
+ const noFiles=await api('/rbxm2anim/bulk',{method:'POST',body:empty});
+ assert.equal(noFiles.status,400,'bulk converter must require models');
+ const badFile=new FormData();
+ badFile.append('models',new Blob(['not a model']),'Corrupt.rbxm');
+ const bad=await api('/rbxm2anim/bulk',{method:'POST',body:badFile});
+ assert.equal(bad.status,400,'bad Roblox model must fail conversion');
 });
