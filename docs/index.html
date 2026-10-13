@@ -6,13 +6,14 @@
 <meta name="theme-color" content="#050505">
 <meta name="description" content="Browse, upload, and download community animation packs for Mr H Reanimate.">
 <title>Mr H Animations</title>
-<meta name="mrh-frontend-version" content="community-tabs-20261013">
+<meta name="mrh-frontend-version" content="raw-rbxm-converter-20261013">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./styles.css?v=community-tabs-20261013">
-<script src="./app.js?v=community-tabs-20261013" defer></script>
-<script src="./make.js?v=community-tabs-20261013" defer></script>
-<script src="./moveset.js?v=community-tabs-20261013" defer></script>
-<script src="./community.js?v=community-tabs-20261013" defer></script>
+<link rel="stylesheet" href="./styles.css?v=raw-rbxm-converter-20261013">
+<script src="./app.js?v=raw-rbxm-converter-20261013" defer></script>
+<script src="./make.js?v=raw-rbxm-converter-20261013" defer></script>
+<script src="./moveset.js?v=raw-rbxm-converter-20261013" defer></script>
+<script src="./community.js?v=raw-rbxm-converter-20261013" defer></script>
+<script src="./bulk.js?v=raw-rbxm-converter-20261013" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -31,6 +32,7 @@
     <button type="button" id="tab-browse" class="site-tab active" role="tab" aria-controls="browse-panel" aria-selected="true">Dances</button>
     <button type="button" id="tab-library-movesets" class="site-tab" role="tab" aria-controls="library-movesets-panel" aria-selected="false">Movesets</button>
     <button type="button" id="tab-make" class="site-tab" role="tab" aria-controls="make-panel" aria-selected="false">Make Animation</button>
+    <button type="button" id="tab-rbxm2anim" class="site-tab" role="tab" aria-controls="rbxm2anim-panel" aria-selected="false">RBXM2ANIM</button>
     <button type="button" id="tab-moveset" class="site-tab" role="tab" aria-controls="moveset-panel" aria-selected="false">Moveset Maker</button>
   </nav>
   <section id="browse-panel" role="tabpanel" aria-labelledby="tab-browse">
@@ -102,12 +104,62 @@
     </div>
   </section>
 
+
+  <section id="rbxm2anim-panel" class="make-panel" role="tabpanel" aria-labelledby="tab-rbxm2anim" hidden>
+    <div class="make-heading">
+      <div><div class="make-overline">UHHHHHH REANIMATE / BATCH CONVERTER</div>
+        <h1>RBXM2ANIM</h1>
+        <p>Convert Roblox <code>.rbxm</code> and <code>.rbxmx</code> KeyframeSequence models straight into Uhhhhhh <code>.anim</code>. No Lua or music: just the converted animations in one ZIP.</p>
+      </div>
+      <a class="action david-link" target="_blank" rel="noopener noreferrer" href="https://sites.google.com/view/rbxm2animbydavid/uhhhhhhhh-reanimate">David's original page ↗</a>
+    </div>
+    <div class="make-grid">
+      <section class="make-card">
+        <div class="make-card-top"><span>01 / CONVERT MODELS</span><span>BULK UP TO 12 FILES</span></div>
+        <form class="make-form" id="bulk-form">
+          <label class="make-field">
+            <span>Roblox KeyframeSequence models <em>Required · .rbxm / .rbxmx</em></span>
+            <span class="maker-drop" id="bulk-drop" role="button" tabindex="0" aria-label="Choose or drop multiple Roblox models">
+              <span class="maker-drop-icon">↑</span>
+              <strong>Select multiple RBXM / RBXMX models</strong>
+              <small>Click or drag models here · 12 files max · 4 MB each</small>
+            </span>
+            <input type="file" id="bulk-models" accept=".rbxm,.rbxmx" multiple hidden>
+          </label>
+          <div class="bulk-selection-top">
+            <strong id="bulk-summary">No files selected</strong>
+            <button class="action" type="button" id="bulk-clear">Clear all</button>
+          </div>
+          <div class="bulk-list" id="bulk-list" aria-live="polite">
+            <div class="make-note">Choose one or more Roblox model files to get started.</div>
+          </div>
+          <div class="form-error" id="bulk-error" role="alert" hidden></div>
+          <button class="primary make-convert" type="submit" id="bulk-convert">Convert &amp; Download Animations ZIP <span>↓</span></button>
+          <div class="make-status" id="bulk-status" aria-live="polite">Ready to convert.</div>
+        </form>
+      </section>
+      <aside class="make-card make-guide">
+        <div class="make-card-top"><span>02 / OUTPUT</span><span>.ANIM FILES ONLY</span></div>
+        <div class="make-guide-inner">
+          <h2>Batch-convert in one go.</h2>
+          <div class="make-step"><span class="step-number">01</span><div><strong>Select raw models</strong><p>Choose up to 12 .rbxm or .rbxmx files. Each may contain multiple KeyframeSequences.</p></div></div>
+          <div class="make-step"><span class="step-number">02</span><div><strong>Convert automatically</strong><p>Convert all selected models into native Uhhhhhh .anim files. Up to 60 animations per batch.</p></div></div>
+          <div class="make-step"><span class="step-number">03</span><div><strong>Download one ZIP</strong><p>Only converted .anim files are included. Use them in Moveset Maker or extract into Uhhhhhh.</p></div></div>
+          <div class="make-output"><div class="output-label">ZIP CONTENTS</div>
+            <code>UhhhhhhReanim/Content/Anims/</code>
+            <code>ModelName_Animation.anim</code>
+          </div>
+          <p class="make-disclaimer">This converter makes .anim files only; it does not create dance or moveset Lua modules. Use Make Animation for dances or Moveset Maker for complete movement modules.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
   <section id="moveset-panel" class="make-panel moveset-panel" role="tabpanel" aria-labelledby="tab-moveset" hidden>
     <div class="make-heading">
       <div>
         <div class="make-overline">UHHHHHH REANIMATE / MOVESET MAKER</div>
         <h1>Moveset Maker</h1>
-        <p>Combine your Uhhhhhh <code>.anim</code> tracks into one custom R6 movement style. Smooth transitions, optional music, and automatic Lua generation.</p>
+        <p>Upload raw Roblox <code>.rbxm</code> / <code>.rbxmx</code> models or existing <code>.anim</code> tracks. Raw models convert automatically before the moveset ZIP is built.</p>
       </div>
       <a class="action david-link" href="https://github.com/STEVE-916-create/Uhhhhhh/blob/main/content/v_moveset1.lua" target="_blank" rel="noopener noreferrer">Uhhhhhh moveset reference ↗</a>
     </div>
@@ -121,15 +173,16 @@
             <textarea id="moveset-description" maxlength="500" rows="3" placeholder="Describe your moveset, movement style, or credits..."></textarea>
             <small class="make-note">Appears in the generated Lua moveset module · up to 500 characters</small></label>
           <div class="moveset-tracks">
-            <div class="moveset-track-heading">MOVEMENT ANIMATIONS <span>Upload .anim tracks</span></div>
+            <div class="moveset-track-heading">MOVEMENT ANIMATIONS <span>.rbxm · .rbxmx · .anim</span></div>
+            <p class="make-note">Raw Roblox KeyframeSequence models convert automatically. Each slot must contain exactly one animation. Idle and Walk are required.</p>
             <div class="moveset-track-grid">
-              <label class="move-slot" for="moveset-idle"><span><strong>Idle</strong><small>Required · standing still</small></span><span id="moveset-idle-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-idle" accept=".anim" required></label>
-              <label class="move-slot" for="moveset-walk"><span><strong>Walk</strong><small>Required · moving</small></span><span id="moveset-walk-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-walk" accept=".anim" required></label>
-              <label class="move-slot" for="moveset-run"><span><strong>Run</strong><small>Optional · faster movement</small></span><span id="moveset-run-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-run" accept=".anim"></label>
-              <label class="move-slot" for="moveset-jump"><span><strong>Jump</strong><small>Optional · jumping</small></span><span id="moveset-jump-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-jump" accept=".anim"></label>
-              <label class="move-slot" for="moveset-fall"><span><strong>Fall</strong><small>Optional · freefall</small></span><span id="moveset-fall-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-fall" accept=".anim"></label>
-              <label class="move-slot" for="moveset-climb"><span><strong>Climb</strong><small>Optional · climbing</small></span><span id="moveset-climb-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-climb" accept=".anim"></label>
-              <label class="move-slot" for="moveset-sit"><span><strong>Sit</strong><small>Optional · sitting</small></span><span id="moveset-sit-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-sit" accept=".anim"></label>
+              <label class="move-slot" for="moveset-idle"><span><strong>Idle</strong><small>Required · standing still</small></span><span id="moveset-idle-name" class="move-file-name">Choose .rbxm / .anim</span><input type="file" id="moveset-idle" accept=".rbxm,.rbxmx,.anim" required></label>
+              <label class="move-slot" for="moveset-walk"><span><strong>Walk</strong><small>Required · moving</small></span><span id="moveset-walk-name" class="move-file-name">Choose .rbxm / .anim</span><input type="file" id="moveset-walk" accept=".rbxm,.rbxmx,.anim" required></label>
+              <label class="move-slot" for="moveset-run"><span><strong>Run</strong><small>Optional · faster movement</small></span><span id="moveset-run-name" class="move-file-name">Choose .rbxm / .anim</span><input type="file" id="moveset-run" accept=".rbxm,.rbxmx,.anim"></label>
+              <label class="move-slot" for="moveset-jump"><span><strong>Jump</strong><small>Optional · jumping</small></span><span id="moveset-jump-name" class="move-file-name">Choose .rbxm / .anim</span><input type="file" id="moveset-jump" accept=".rbxm,.rbxmx,.anim"></label>
+              <label class="move-slot" for="moveset-fall"><span><strong>Fall</strong><small>Optional · freefall</small></span><span id="moveset-fall-name" class="move-file-name">Choose .rbxm / .anim</span><input type="file" id="moveset-fall" accept=".rbxm,.rbxmx,.anim"></label>
+              <label class="move-slot" for="moveset-climb"><span><strong>Climb</strong><small>Optional · climbing</small></span><span id="moveset-climb-name" class="move-file-name">Choose .rbxm / .anim</span><input type="file" id="moveset-climb" accept=".rbxm,.rbxmx,.anim"></label>
+              <label class="move-slot" for="moveset-sit"><span><strong>Sit</strong><small>Optional · sitting</small></span><span id="moveset-sit-name" class="move-file-name">Choose .rbxm / .anim</span><input type="file" id="moveset-sit" accept=".rbxm,.rbxmx,.anim"></label>
             </div>
           </div>
           <label class="make-field" for="moveset-music"><span>Background music <em>Optional · MP3</em></span><input id="moveset-music" type="file" accept=".mp3,audio/mpeg"></label>
