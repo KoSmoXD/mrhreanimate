@@ -17,6 +17,13 @@ Users can upload a moveset ZIP in the **Movesets** tab. It should come from **Mo
 New API endpoints: `GET/POST /api/movesets`, `GET /api/movesets/:id`, `GET /api/movesets/:id/download`, `DELETE /api/movesets/:id`, `GET/POST /api/animations/:id/comments`, `GET/POST /api/movesets/:id/comments`, and `DELETE /api/comments/:id`. The original gallery and maker endpoints remain unchanged.
 
 Because community Lua is user-submitted, downloads should be reviewed before execution.
+## Raw RBXM model conversion and bulk RBXM2ANIM
+
+**Moveset Maker** accepts native `.anim` files, Roblox `.rbxm` models and `.rbxmx` XML models in each Idle/Walk/Run/Jump/Fall/Climb/Sit slot. Raw Roblox files are automatically converted on the server to Uhhhhhh `.anim` before building the final moveset ZIP. Each movement slot must have exactly one KeyframeSequence; supplying more than one gives a helpful error. `.anim` support remains unchanged. Raw models are limited to 4 MB each and existing `.anim` tracks to 8 MB each.
+
+The **RBXM2ANIM** tab accepts 1–12 `.rbxm` / `.rbxmx` files, 4 MB each, 32 MB combined, and up to 60 total converted animations. The endpoint `POST /api/rbxm2anim/bulk` returns one `MrH_RBXM2ANIM_Bulk.zip` with only native `.anim` tracks under `UhhhhhhReanim/Content/Anims/`, without generating Lua modules or adding music. Users may drag and drop models, remove selections, or use the multiple file picker.
+
+Conversions run through STEVE's MIT-licensed Roblox model converter (as already used by Make Animation) under CPU and memory limits. No uploaded scripts are executed. Invalid/multi-animation movement slots and invalid bulk input are rejected.
 ## Moveset Maker (Uhhhhhh only)
 
 The website now includes a **Moveset Maker** tab at `#make-moveset`, alongside Browse Animations and Make Animation.
