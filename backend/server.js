@@ -292,7 +292,7 @@ function luaLiteral(s){return JSON.stringify(String(s).replace(/[\x00-\x1f]/g,' 
 function descriptionFromInput(raw,fallback){
  if(raw==null||raw==='')return fallback;
  if(typeof raw!=='string')throw Error('Description must be text.');
- const value=raw.trim();
+ const value=raw.trim().replace(/\r\n?/g,'\n');
  if(Array.from(value).length>500||Buffer.byteLength(value,'utf8')>2000)throw Error('Description must be 500 characters or fewer.');
  return value||fallback;
 }
