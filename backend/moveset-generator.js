@@ -16,7 +16,7 @@ function makeMoveset({name,description='',roles,music=false,fade=0.20,runSpeed=1
   throw Error('Moveset name must be 2-64 characters.');
  if(!roles?.idle||!roles?.walk)throw Error('Idle and Walk animations are required.');
  if(typeof description!=='string')throw Error('Description must be text.');
- description=description.trim();
+ description=description.trim().replace(/\r\n?/g,'\n');
  if(Array.from(description).length>500||Buffer.byteLength(description,'utf8')>2000)
   throw Error('Description must be 500 characters or fewer.');
  const textDescription=description||'Custom R6 idle, walk and optional movement animations.';
