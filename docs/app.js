@@ -25,6 +25,24 @@ async function request(path,options={}){
 }
 const bytes=n=>n>=1024*1024?(n/1048576).toFixed(1)+' MB':n>=1024?Math.max(1,Math.round(n/1024))+' KB':n+' B';
 const avatar=name=>String(name||'?').trim().slice(0,1).toUpperCase();
+const isOwner=user=>user?.role==='owner';
+function avatarNode(user,cls='avatar'){
+ const host=el('span',cls,avatar(user?.username));
+ if(user?.avatarUrl){
+  const img=el('img','avatar-image');
+  img.src=user.avatarUrl;img.alt='';img.loading='lazy';
+  img.addEventListener('error',()=>img.remove());
+  host.replaceChildren(img);
+ }
+ return host;
+}
+function ownerBadge(user){
+ if(!isOwner(user))return null;
+ const badge=el('span','owner-badge','✅');
+ badge.title='Verified server owner';
+ badge.setAttribute('aria-label','Verified server owner');
+ return badge;
+}
 
 function openModal(id){
  document.querySelectorAll('.modal').forEach(el=>el.hidden=true);
@@ -43,10 +61,18 @@ function setUser(user){
  for(const key of ['login-trigger','register-trigger'])$(key).hidden=active;
  for(const key of ['upload-trigger','account-trigger','logout-trigger','session-label'])$(key).hidden=!active;
  if(active){
-  $('session-label').textContent='@'+state.me.username;
+  $('session-label').textContent='@'+state.me.username+(isOwner(state.me)?' ✅':'');
   $('profile-name').textContent=state.me.username;
-  $('profile-avatar').textContent=avatar(state.me.username);
+  $('profile-badge').hidden=!isOwner(state.me);
+  $('profile-role').textContent=isOwner(state.me)?'Verified owner · Server admin':'Member account';
+  const avatarBox=$('profile-avatar');
+  avatarBox.replaceChildren(...avatarNode(state.me,'profile-avatar').childNodes);
+  if(!avatarBox.children.length)avatarBox.textContent=avatar(state.me.username);
   $('settings-username').value=state.me.username;
+  $('settings-username').readOnly=isOwner(state.me);
+  $('owner-name-note').hidden=!isOwner(state.me);
+  $('delete-account').hidden=isOwner(state.me);
+  $('avatar-remove').disabled=!state.me.avatarUrl;
  }
 }
 function backendError(e){
@@ -65,7 +91,9 @@ function renderCard(item,index){
  const body=el('div','card-body');
  const title=el('h2','anim-title',item.title||'Untitled animation');
  const author=el('div','anim-author');
- author.append(el('span','avatar',avatar(item.username)),el('span','author-name',item.username||'Unknown'));
+ const username=el('span','author-name',item.username||'Unknown');
+ author.append(avatarNode(item),username);
+ const verified=ownerBadge(item);if(verified)author.append(verified);
  const info=el('div','card-info');
  const uploaded=el('div'),size=el('div');
  uploaded.append(el('span','info-label','Uploaded on'),el('span','info-value',dateFormat.format(new Date(item.createdAt))));
@@ -75,7 +103,7 @@ function renderCard(item,index){
  const actions=el('div','card-actions');
  const link=el('a','download','Download ↓');link.href='/api/animations/'+encodeURIComponent(item.id)+'/download';
  link.setAttribute('aria-label','Download '+item.title+' pack');actions.append(link);
- if(state.me && state.me.id===item.userId){
+ if(state.me && (state.me.id===item.userId||isOwner(state.me))){
   const remove=el('button','delete-button','Delete');remove.type='button';
   remove.addEventListener('click',()=>deleteAnimation(item));actions.append(remove);
  }
@@ -116,10 +144,16 @@ async function getSession(){
 }
 function authMode(mode){
  state.mode=mode;
- $('auth-title').textContent=mode==='login'?'Log in':'Create account';
- $('auth-submit').textContent=mode==='login'?'Log in':'Sign up';
+ $('auth-title').textContent=mode==='login'?'Log in':mode==='owner'?'Claim Mr_H owner':'Create account';
+ $('auth-submit').textContent=mode==='login'?'Log in':mode==='owner'?'Claim verified owner':'Sign up';
  $('auth-password').autocomplete=mode==='login'?'current-password':'new-password';
- $('auth-notice').hidden=mode==='login';
+ $('auth-notice').hidden=mode==='login'||mode==='owner';
+ $('owner-setup-label').hidden=mode!=='owner';
+ $('owner-notice').hidden=mode!=='owner';
+ $('owner-setup-key').required=mode==='owner';
+ $('auth-username').readOnly=mode==='owner';
+ if(mode==='owner')$('auth-username').value='Mr_H';
+ else if($('auth-username').value==='Mr_H')$('auth-username').value='';
  document.querySelectorAll('[data-auth-tab]').forEach(btn=>btn.classList.toggle('selected',btn.dataset.authTab===mode));
  errorAt('auth-error','');
 }
@@ -128,11 +162,13 @@ async function submitAuth(e){
  const submit=$('auth-submit');submit.disabled=true;errorAt('auth-error','');
  try{
   const body={username:$('auth-username').value.trim(),password:$('auth-password').value};
-  const result=await request(state.mode==='login'?'/login':'/register',{
+  if(state.mode==='owner')body.setupKey=$('owner-setup-key').value;
+  const endpoint=state.mode==='owner'?'/owner/claim':state.mode==='login'?'/login':'/register';
+  const result=await request(endpoint,{
    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
   });
-  setUser(result.user);$('auth-password').value='';closeModal('auth-modal');
-  toast(state.mode==='login'?'Logged in.':'Account created.');
+  setUser(result.user);$('auth-password').value='';$('owner-setup-key').value='';closeModal('auth-modal');
+  toast(state.mode==='login'?'Logged in.':state.mode==='owner'?'Verified owner account claimed.':'Account created.');
   renderGallery();
  }catch(err){errorAt('auth-error',err.message);}
  finally{submit.disabled=false;}
@@ -169,6 +205,30 @@ async function saveAccount(e){
  }catch(err){errorAt('account-error',err.message);}
  finally{submit.disabled=false;}
 }
+
+async function saveAvatar(e){
+ e.preventDefault();
+ if(!state.me)return;
+ const input=$('avatar-input'),file=input.files?.[0];
+ if(!file)return;
+ errorAt('avatar-error','');
+ if(file.size>2*1048576){errorAt('avatar-error','Picture must be under 2 MB.');return;}
+ const button=$('avatar-upload');button.disabled=true;
+ try{
+  const form=new FormData();form.set('avatar',file);
+  const result=await request('/me/avatar',{method:'PUT',body:form});
+  setUser(result.user);input.value='';
+  toast('Profile picture updated.');await getGallery();
+ }catch(err){errorAt('avatar-error',err.message);}
+ finally{button.disabled=false;}
+}
+async function removeAvatar(){
+ if(!state.me||!state.me.avatarUrl)return;
+ try{
+  const result=await request('/me/avatar',{method:'DELETE'});
+  setUser(result.user);toast('Profile picture removed.');await getGallery();
+ }catch(err){errorAt('avatar-error',err.message);}
+}
 async function deleteAccount(){
  if(!state.me)return;
  const name=prompt('Type your username to permanently delete your account and all uploaded animations:');
@@ -198,6 +258,8 @@ function wire(){
  $('auth-form').addEventListener('submit',submitAuth);
  $('upload-form').addEventListener('submit',submitUpload);
  $('account-form').addEventListener('submit',saveAccount);
+ $('avatar-form').addEventListener('submit',saveAvatar);
+ $('avatar-remove').addEventListener('click',removeAvatar);
  $('delete-account').addEventListener('click',deleteAccount);
  document.querySelectorAll('.close[data-close]').forEach(btn=>btn.addEventListener('click',()=>closeModal(btn.dataset.close)));
  document.querySelectorAll('.modal').forEach(modal=>modal.addEventListener('pointerdown',e=>{if(e.target===modal)closeModal(modal.id);}));
