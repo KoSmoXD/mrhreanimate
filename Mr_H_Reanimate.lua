@@ -1,5 +1,5 @@
 --[[
- Mr H Reanimate 2.2.0
+ Mr H Reanimate 2.3.0
  A maintained runtime fork/patch layer for UhhhhhhModded, not a repackaged source dump.
  Original engine: STEVETHEREALONE, BoredGal, Awes955 Modded.
  Upstream: https://github.com/testing734/UhhhhhhModded
@@ -11,7 +11,7 @@
 ]]
 
 local BRAND = "Mr H Reanimate"
-local VERSION = "2.2.0"
+local VERSION = "2.3.0"
 local BASE_COMMIT = "87467966d37ce4b8b2c219a0bcffaf2aa8f658a9"
 local BASE_URL = "https://raw.githubusercontent.com/testing734/UhhhhhhModded/"
     .. BASE_COMMIT .. "/uhhhhhh%20awes%20fork"
@@ -193,8 +193,8 @@ local function rewrite(source)
     -- Experimental Hats Permadeath: legacy signal attempt, not a confirmed FE bypass.
     source = patch(source,
         [==[HatReanimator.Permadeath = false--not SaveData.Reanimator.HatsPatchmahub]==],
-        [==[HatReanimator.Permadeath = SaveData.Reanimator.MrHExperimentalPermadeath == true and type(replicatesignal) == "function"
-SaveData.Reanimator.MrHExperimentalPermadeath = HatReanimator.Permadeath]==],
+        [==[-- Experimental local hold: no removed Roblox death signal is required.
+HatReanimator.Permadeath = SaveData.Reanimator.MrHExperimentalPermadeath == true]==],
         "experimental saved setting and supported-executor gate")
     source = patch(source,
         [==[UI.CreateText(parent, "permadeath is patched, enable this switch if you want to", 10, Enum.TextXAlignment.Center)
@@ -202,31 +202,24 @@ SaveData.Reanimator.MrHExperimentalPermadeath = HatReanimator.Permadeath]==],
 		HatReanimator.Permadeath = val
 		SaveData.Reanimator.HatsPatchmahub = not val
 	end)]==],
-        [==[UI.CreateText(parent, "EXPERIMENTAL legacy permadeath. Requires replicatesignal. Server FE and network ownership NOT guaranteed.", 10, Enum.TextXAlignment.Center)
-	local permaSwitch = UI.CreateSwitch(parent, "Experimental Permadeath (Hats)", HatReanimator.Permadeath)
+        [==[UI.CreateText(parent, "EXPERIMENTAL LOCAL HOLD: retain original Humanoid instead of killing it. Local-only and NOT real FE permadeath. Keep Hat Collide OFF; rejoin if stuck.", 10, Enum.TextXAlignment.Center)
+	local permaSwitch = UI.CreateSwitch(parent, "Experimental Permadeath (Local Hold)", HatReanimator.Permadeath)
 	permaSwitch.Changed:Connect(function(val)
-		if val and type(replicatesignal) ~= "function" then
-			HatReanimator.Permadeath = false
-			SaveData.Reanimator.MrHExperimentalPermadeath = false
-			HatReanimator.Status.Permadeath = "UNAVAILABLE: replicatesignal missing"
-			permaSwitch.Value = false
-		else
-			HatReanimator.Permadeath = val
-			SaveData.Reanimator.MrHExperimentalPermadeath = val
-			HatReanimator.Status.Permadeath = val and "Experimental enabled (not verified)" or "Disabled"
-		end
+		HatReanimator.Permadeath = val
+		SaveData.Reanimator.MrHExperimentalPermadeath = val
+		HatReanimator.Status.Permadeath = val and "Local hold selected; start/restart Hats reanimation" or "Disabled"
 	end)]==],
         "experimental UI / graceful unsupported fallback")
     source = patch(source,
         [==[		HatReanimator.HasPermadeath, HatReanimator.HasHatCollide = perma, hatcols
 		local hatcolmeth = HatReanimator.HatCollideMethod
 		if not replicatesignal then perma = false end]==],
-        [==[		HatReanimator.HasHatCollide = hatcols
+        [==[		-- Keeping the original body alive is incompatible with methods
+		-- that wait for the server to delete the torso/head.
+		if perma then hatcols = false end
+		HatReanimator.HasHatCollide = hatcols
 		local hatcolmeth = HatReanimator.HatCollideMethod
-		if perma and type(replicatesignal) ~= "function" then
-			perma = false
-			HatReanimator.Status.Permadeath = "UNAVAILABLE: replicatesignal missing"
-		end
+		if not hatcols then hatcolmeth = -1 end
 		HatReanimator.HasPermadeath = perma]==],
         "perma mode flag reflects actual support")
     source = patch(source,
@@ -237,24 +230,10 @@ SaveData.Reanimator.MrHExperimentalPermadeath = HatReanimator.Permadeath]==],
 			HatReanimator.Status.Permadeath = "Fired CDSB Signal."
 			cdsbeffect += Players.RespawnTime
 		end]==],
-        [==[		local cdsbeffect = os.clock()
-		local cdsbtime = os.clock()
+        [==[		-- Removed ConnectDiedSignalBackend is not called. The local hold
+		-- is implemented where upstream normally kills the Humanoid.
 		if perma then
-			local signalOK, diedSignal = pcall(function() return Player.ConnectDiedSignalBackend end)
-			if signalOK and typeof(diedSignal) == "RBXScriptSignal" then
-				local fired, why = pcall(replicatesignal, diedSignal)
-				if fired then
-					HatReanimator.Status.Permadeath = "Legacy death signal attempted; server result UNVERIFIED"
-				else
-					perma = false
-					HatReanimator.HasPermadeath = false
-					HatReanimator.Status.Permadeath = "Legacy signal failed: " .. tostring(why)
-				end
-			else
-				perma = false
-				HatReanimator.HasPermadeath = false
-				HatReanimator.Status.Permadeath = "Legacy backend signal not accessible"
-			end
+			HatReanimator.Status.Permadeath = "Local hold preparing; FE NOT VERIFIED"
 		end]==],
         "attempt legacy death signal with protected call and fallback")
     source = patch(source,
@@ -264,11 +243,76 @@ SaveData.Reanimator.MrHExperimentalPermadeath = HatReanimator.Permadeath]==],
 			HatReanimator.Status.Permadeath = "Disabled, nothing to do."
 		end]==],
         [==[		if perma then
-			HatReanimator.Status.Permadeath = "Legacy signal attempted; server result UNVERIFIED"
+			if not character:IsDescendantOf(workspace) or Humanoid.Health <= 0 then
+				HatReanimator.Status.Permadeath = "Local hold lost: possible death/respawn"
+				HatReanimator.HasPermadeath = false
+			else
+				HatReanimator.Status.Permadeath = "Local hold active on client; FE NOT VERIFIED"
+			end
 		elseif HatReanimator.Status.Permadeath == "Respawn detected." then
-			HatReanimator.Status.Permadeath = "Disabled / unsupported"
+			HatReanimator.Status.Permadeath = "Normal Hats mode"
 		end]==],
         "preserve truthful legacy status")
+    -- Additional guarded changes for experimental local-only character hold.
+    source = patch(source,
+        [==[		if not perma then
+			RootPosition += Vector3.new(0, 12, 0)]==],
+        [==[		-- Keep the living original root above the destruction height.
+		if perma then RootPosition += Vector3.new(0, 12, 0) end
+		if not perma then
+			RootPosition += Vector3.new(0, 12, 0)]==],
+        "root safely above destroy height")
+    source = patch(source,
+        [==[		AvatarEditorService:BustAvatarFetchCache()
+		pcall(replicatesignal, Humanoid.ServerBreakJoints)
+		Humanoid.EvaluateStateMachine = true
+		Humanoid.BreakJointsOnDeath = true
+		Humanoid.Health = 0
+		Humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
+		Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
+		readystate = 3]==],
+        [==[		if perma then
+			-- Experimental: do not deliberately kill the original Humanoid.
+			-- Roblox can take physics ownership away when a Humanoid dies.
+			local held, reason = pcall(function()
+				Humanoid.BreakJointsOnDeath = false
+				Humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+				Humanoid.EvaluateStateMachine = false
+				Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+			end)
+			if held then
+				HatReanimator.Status.Permadeath = "Local hold attempted; FE NOT VERIFIED"
+			else
+				perma = false
+				HatReanimator.HasPermadeath = false
+				HatReanimator.Permadeath = false
+				SaveData.Reanimator.MrHExperimentalPermadeath = false
+				HatReanimator.Status.Permadeath = "Local hold failed: " .. tostring(reason)
+			end
+		end
+		if not perma then
+			AvatarEditorService:BustAvatarFetchCache()
+			pcall(replicatesignal, Humanoid.ServerBreakJoints)
+			Humanoid.EvaluateStateMachine = true
+			Humanoid.BreakJointsOnDeath = true
+			Humanoid.Health = 0
+			Humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
+			Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
+		end
+		readystate = 3]==],
+        "nonlethal character-hold branch")
+    source = patch(source,
+        [==[					if (ReanimOkay and ReanimCharacter) or not HatReanimator.Permadeath then
+						Camera.CameraSubject = ReanimCharacter:FindFirstChildOfClass("Humanoid")
+					else
+						Camera.CameraSubject = Humanoid
+					end]==],
+        [==[					if ReanimCharacter and (ReanimOkay or HatReanimator.Permadeath) then
+						Camera.CameraSubject = ReanimCharacter:FindFirstChildOfClass("Humanoid") or Humanoid
+					else
+						Camera.CameraSubject = Humanoid
+					end]==],
+        "camera fallback follows the fake rig")
     return source
 end
 
