@@ -2,6 +2,22 @@
 
 The website has been redesigned into a **black, minimal public animation browser**. Cards show the animation title, uploader, upload date, total pack size, and download button. Sign up and log in with a username and password. Authenticated users can publish animations, change their username/password, delete their uploads, and delete their account.
 
+## Make Animation tab (Uhhhhhh only)
+
+The public site now has **Browse Animations** and **Make Animation** tabs in the same black theme. The original gallery, registration, profile photos, owner verification, uploads and downloads are preserved.
+
+Make Animation converts Roblox Studio `.rbxm` or `.rbxmx` model files containing one or more `KeyframeSequence` instances into Uhhhhhh's native binary `.anim` format. Users may supply an optional MP3 soundtrack and choose animation looping. The download is a ready-to-extract ZIP with matching auto-generated Uhhhhhh dance Lua modules:
+
+- `UhhhhhhReanim/Content/Anims/<sequence>.anim`
+- `UhhhhhhReanim/Content/Sounds/<sound>.mp3` (when music supplied)
+- `UhhhhhhReanim/Modules/<sequence>.lua`
+
+A single model can include up to 20 sequences (each becomes a dance module). Limits are 4 MiB for the Roblox model and 25 MiB for optional MP3. The model conversion runs in a resource-limited Python subprocess using STEVETHEREALONE's official MIT-licensed `tools/rbxm2anim.py` parser/converter, vendored in `backend/tools/` with attribution and its required license. The server does not execute user-uploaded Lua. Converted modules follow Uhhhhhh's `DANCE` module API.
+
+The **David RBXM2ANIM** source website is linked from the Make Animation tab. It is external, not mirrored or recolored; this is an independently authored converter with the same Uhhhhhh-specific goal. Unrelated sections of David's website are not imported.
+
+The conversion route is `POST /api/make-animation` with multipart fields `model`, optional `music`, optional `name`, and optional `loop`. It does not require an account.
+
 ## Running the full website
 
 **GitHub Pages alone cannot host this version.** User accounts, shared uploads, and community downloads require the Node.js backend. The backend serves the site from ../docs on the same origin.
