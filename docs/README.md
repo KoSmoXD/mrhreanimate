@@ -66,6 +66,24 @@ UhhhhhhReanim/Modules/YourDance.lua
 
 **Important:** The uploaded Lua module must itself correctly reference the matching sound and animation filenames. Packaging valid files does not prove a module runs or is safe. Downloaded Lua is untrusted code; examine it before running it.
 
+
+## Verified owner and profile pictures
+
+Every user can change their profile picture under **Account settings**. Accepted file types are PNG, JPEG, and WebP (up to 2 MiB). Pictures are stored in persistent server storage and shown beside the uploader's name in the animation gallery. Users can replace or remove their pictures.
+
+The server owner is the reserved account **Mr_H**, which receives the **✅** verified mark after its username. This is a server-controlled role, not a username-only client badge. The owner can delete any published animation to moderate the gallery; regular users may only delete their own.
+
+For a secure first claim:
+1. Configure the Railway service variable \`OWNER_SETUP_KEY\` with a long private random value.
+2. Visit the website, choose **Sign up → Owner setup**.
+3. Enter the reserved username **Mr_H**, your chosen new password, and the private owner setup key.
+4. The claim can succeed **once**. After a successful claim, simply use **Log in** with Mr_H and your password.
+5. Keep the setup key private and delete the Railway \`OWNER_SETUP_KEY\` variable after the claim; it is not needed for future logins.
+
+Reserved owner role assignments must **never** be granted solely by matching a username. If a user created Mr_H before the reservation feature, claiming it with the verified deployment setup key resets that account's password and invalidates previous sessions.
+
+The owner's username cannot be changed or deleted through account settings. The owner can update their password and profile picture normally.
+
 ## Accounts and security
 
 Passwords are hashed with bcrypt; login sessions are random tokens stored as hashes in SQLite and sent in HttpOnly, SameSite=Strict cookies (Secure over production HTTPS). Rate limits apply to signups, authentication and uploads. Only upload owners can delete their uploads. Username length is 3–24 characters (letters, digits, underscore), and passwords must be 10–72 UTF-8 bytes.
