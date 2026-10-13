@@ -40,7 +40,7 @@ def published_source() -> str:
         raise AssertionError("Online Modules local scope not closed")
     if end > decoded.index("    -- CUSTOM UI COLORS", begin):
         raise AssertionError("Online Modules leaks locals into the rest of the engine")
-    if "(function()\\n    HatReanimator.MrHCustomOverrides" not in decoded:
+    if "(function()" + chr(10) + "    HatReanimator.MrHCustomOverrides" not in decoded:
         raise AssertionError("Advanced Tools must run in its own function closure")
     if "end)() -- close isolated Advanced Tools function" not in decoded:
         raise AssertionError("Advanced Tools isolated function is not closed")
