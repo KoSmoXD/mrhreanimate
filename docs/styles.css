@@ -197,3 +197,14 @@ h1{font-size:clamp(30px,4.4vw,54px);letter-spacing:-.05em;line-height:1.08;margi
 #comment-more{display:block;margin:3px auto 14px}
 #comment-more[hidden]{display:none}
 @media(max-width:640px){.site-tabs{gap:0}.site-tab{flex:0 0 auto;font-size:12px;padding:13px 12px}.gallery-head .filters{width:100%}.gallery-head .filters input{min-width:0}.detail-panel{padding:16px}.card-actions{padding:12px;gap:6px}}
+
+/* RBXM2ANIM bulk model selector */
+.bulk-selection-top{display:flex;gap:12px;justify-content:space-between;align-items:center}
+.bulk-selection-top strong{font-size:12px}
+.bulk-selection-top .action{padding:7px 11px;font-size:11px}
+.bulk-list{display:grid;gap:8px;max-height:280px;overflow-y:auto}
+.bulk-file{display:flex;gap:10px;align-items:center;padding:12px;background:#171719;border:1px solid #38383d;border-radius:8px}
+.bulk-file span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#eee}
+.bulk-file small{flex-shrink:0;color:#a5a5ab;font-size:11px}
+.bulk-file button{padding:6px 9px;font-size:11px;flex-shrink:0}
+@media(max-width:640px){.bulk-file{gap:6px;padding:10px}.bulk-file span{font-size:11px}}
