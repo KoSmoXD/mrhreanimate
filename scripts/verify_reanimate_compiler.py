@@ -29,7 +29,9 @@ def published_source() -> str:
         (b - ((i * 73 + 91) % 256)) % 256
         for i, b in enumerate(encoded_bytes, start=1)
     ).decode("utf-8")
-    if 'local VERSION = "2.9.0"' not in decoded:
+    if any(ord(ch) > 127 for ch in decoded):
+        raise AssertionError("This hex byte wrapper must contain only ASCII source")
+    if 'local VERSION = "2.9.1"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
