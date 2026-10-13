@@ -57,6 +57,7 @@ function closeModal(id){
 }
 function setUser(user){
  state.me=user||null;
+ window.dispatchEvent(new CustomEvent('mrh-session-change',{detail:{user:state.me}}));
  const active=!!state.me;
  for(const key of ['login-trigger','register-trigger'])$(key).hidden=active;
  for(const key of ['upload-trigger','account-trigger','logout-trigger','session-label'])$(key).hidden=!active;
@@ -87,7 +88,8 @@ function el(tag,classes,text){
  return n;
 }
 function renderCard(item,index){
- const article=el('article','anim-card');article.style.setProperty('--card-delay',(index%12)*45+'ms');
+ const article=el('article','anim-card click-card');article.style.setProperty('--card-delay',(index%12)*45+'ms');
+ article.tabIndex=0;article.setAttribute('role','button');article.setAttribute('aria-label','Open '+item.title+' dance details and comments');
  const body=el('div','card-body');
  const title=el('h2','anim-title',item.title||'Untitled animation');
  const author=el('div','anim-author');
@@ -101,13 +103,18 @@ function renderCard(item,index){
  info.append(uploaded,size);
  body.append(title,author,info);
  const actions=el('div','card-actions');
+ const comments=el('button','action details-button','Comments ('+(item.commentCount||0)+')');
+ comments.type='button';comments.addEventListener('click',()=>window.MRHCommunity?.open('animations',item.id));actions.append(comments);
  const link=el('a','download','Download ↓');link.href='/api/animations/'+encodeURIComponent(item.id)+'/download';
  link.setAttribute('aria-label','Download '+item.title+' pack');actions.append(link);
  if(state.me && (state.me.id===item.userId||isOwner(state.me))){
   const remove=el('button','delete-button','Delete');remove.type='button';
   remove.addEventListener('click',()=>deleteAnimation(item));actions.append(remove);
  }
- article.append(body,actions);return article;
+ article.append(body,actions);
+ article.addEventListener('click',e=>{if(!e.target.closest('a,button'))window.MRHCommunity?.open('animations',item.id);});
+ article.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===article){e.preventDefault();window.MRHCommunity?.open('animations',item.id);}});
+ return article;
 }
 function renderGallery(append=false){
  const holder=$('gallery');
@@ -267,5 +274,6 @@ function wire(){
  for(const id of ['upload-anim','upload-mp3','upload-lua'])$(id).addEventListener('change',updateFileLabels);
 }
 wire();
+window.addEventListener('mrh-dance-comments-updated',()=>getGallery());
 getSession().then(()=>getGallery());
 })();
