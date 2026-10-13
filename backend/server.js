@@ -406,6 +406,96 @@ app.post('/api/make-animation',convertLimiter,(req,res)=>{
  });
 });
 
+// Shared converter for incoming Roblox KeyframeSequence models.
+// Runs STEVE's MIT-licensed converter in a CPU/memory-limited child process.
+async function convertRobloxModel(inputPath,outputDir){
+ await fsp.mkdir(outputDir,{recursive:true});
+ try{
+  await execFileAsync('python3',[
+   path.join(__dirname,'tools','convert_model.py'),inputPath,outputDir
+  ],{timeout:14000,maxBuffer:32768,windowsHide:true});
+ }catch(error){
+  const message=String(error.stderr||error.message||'Invalid Roblox model.').trim().slice(0,200);
+  throw Error('RBXM conversion failed: '+message);
+ }
+ const sequences=JSON.parse(await fsp.readFile(path.join(outputDir,'_results.json'),'utf8'));
+ if(!Array.isArray(sequences)||sequences.length<1||sequences.length>20)throw Error('No usable KeyframeSequences found.');
+ for(const seq of sequences){
+  if(!seq||typeof seq.filename!=='string'||!/^[A-Za-z0-9_ -]{1,60}\.anim$/.test(seq.filename))
+   throw Error('Converter returned an invalid filename.');
+  const track=await fsp.readFile(path.join(outputDir,seq.filename));
+  const info=validateAnim(track);
+  if(info.duration<0.05)throw Error('Animation '+seq.filename+' needs at least 0.05 seconds of keyframes.');
+ }
+ return sequences;
+}
+const bulkLimiter=rateLimit({
+ windowMs:3600000,limit:12,standardHeaders:'draft-7',legacyHeaders:false,
+ message:{error:'Hourly bulk conversion limit reached.'}
+});
+const bulkUpload=multer({
+ storage:multer.diskStorage({
+  destination(req,file,cb){cb(null,TMP);},
+  filename(req,file,cb){cb(null,crypto.randomUUID()+'.tmp');}
+ }),
+ limits:{fileSize:4*1048576,files:12,fields:0,parts:12},
+ fileFilter(req,file,cb){
+  if(file.fieldname==='models'&&/\.(rbxm|rbxmx)$/i.test(file.originalname))return cb(null,true);
+  cb(new Error('Only Roblox .rbxm or .rbxmx model files are allowed.'));
+ }
+}).array('models',12);
+app.post('/api/rbxm2anim/bulk',bulkLimiter,(req,res)=>{
+ bulkUpload(req,res,async error=>{
+  const files=req.files||[];
+  let directory=null,streamStarted=false;
+  let cleanupQueued=false;
+  const cleanup=async()=>{
+   if(cleanupQueued)return;cleanupQueued=true;
+   await Promise.all(files.map(f=>fsp.rm(f.path,{force:true}).catch(()=>{})));
+   if(directory)await fsp.rm(directory,{recursive:true,force:true}).catch(()=>{});
+  };
+  try{
+   if(error)throw Error(error.code==='LIMIT_FILE_SIZE'?'Each model must be under 4 MB.':error.message||'Invalid upload.');
+   if(!Array.isArray(files)||files.length<1||files.length>12)throw Error('Choose 1 to 12 Roblox models.');
+   if(files.reduce((sum,f)=>sum+f.size,0)>32*1048576)throw Error('Maximum combined model size is 32 MB.');
+   directory=await fsp.mkdtemp(path.join(TMP,'bulk-'));
+   const converted=[];
+   const used=new Set();
+   for(let i=0;i<files.length;i++){
+    const f=files[i];
+    if(f.size<32)throw Error('Model '+(i+1)+' is empty or invalid.');
+    const output=path.join(directory,'model-'+i);
+    let seqs;
+    try{seqs=await convertRobloxModel(f.path,output);}
+    catch(e){throw Error(f.originalname+': '+e.message);}
+    if(converted.length+seqs.length>60)throw Error('Batch exceeds 60 converted animations.');
+    for(const seq of seqs){
+     const basename=path.parse(f.originalname).name.replace(/[^A-Za-z0-9_-]/g,'_').slice(0,32)||'model';
+     const base=(basename+'_'+seq.filename.slice(0,-5).replace(/[^A-Za-z0-9_-]/g,'_')).slice(0,78)||'Animation';
+     let filename=base+'.anim',suffix=2;
+     while(used.has(filename.toLowerCase()))filename=base.slice(0,72)+'_'+suffix+++'.anim';
+     used.add(filename.toLowerCase());
+     converted.push({path:path.join(output,seq.filename),name:'UhhhhhhReanim/Content/Anims/'+filename});
+    }
+   }
+   const zip=archiver('zip',{zlib:{level:0}});
+   zip.on('error',e=>res.destroy(e));
+   res.setHeader('Content-Type','application/zip');
+   res.setHeader('Content-Disposition','attachment; filename="MrH_RBXM2ANIM_Bulk.zip"');
+   res.setHeader('Cache-Control','no-store');
+   res.once('finish',cleanup);
+   res.once('close',()=>{if(!res.writableEnded)zip.abort();cleanup();});
+   for(const file of converted)zip.file(file.path,{name:file.name});
+   zip.pipe(res);streamStarted=true;
+   await zip.finalize();
+  }catch(e){
+   if(!streamStarted)await cleanup();
+   if(res.headersSent)return res.destroy(e);
+   return fail(res,400,String(e.message||e).slice(0,320));
+  }
+ });
+});
+
 // Create a Uhhhhhh-compatible MOVESET. The original binary .anim files are
 // preserved; no arbitrary user-supplied Lua is run server-side).
 const movesetLimiter=rateLimit({windowMs:3600000,limit:12,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Hourly moveset creation limit reached.'}});
