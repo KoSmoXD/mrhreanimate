@@ -60,13 +60,13 @@ test('public gallery, registration, authenticated upload, ZIP download and accou
  const page=await fetch(base+'/');
  const markup=await page.text();
  assert.ok(page.headers.get('cache-control')?.includes('no-store'),'HTML must not be cached');
- assert.ok(markup.includes('app.js?v=moveset-maker-20261013'),'auth script must be cache busted');
- const asset=await fetch(base+'/app.js?v=moveset-maker-20261013');
+ assert.ok(markup.includes('app.js?v=description-fields-20261013'),'auth script must be cache busted');
+ const asset=await fetch(base+'/app.js?v=description-fields-20261013');
  const script=await asset.text();
  assert.equal(asset.status,200);
  assert.ok(asset.headers.get('cache-control')?.includes('no-store'),'auth JS must not be cached');
  assert.ok(script.includes("'/owner/claim'"),'owner setup must route to special owner endpoint');
- const stylesheet=await fetch(base+'/styles.css?v=moveset-maker-20261013');
+ const stylesheet=await fetch(base+'/styles.css?v=description-fields-20261013');
  assert.ok(stylesheet.headers.get('cache-control')?.includes('no-store'),'UI CSS must not be cached');
  const guest=await api('/animations');
  assert.equal(guest.status,200);assert.deepEqual(guest.body.items,[]);
@@ -173,6 +173,8 @@ test('Uhhhhhh Make Animation converts Roblox XML KeyframeSequence to install-rea
  fields.set('model',new Blob([xml],{type:'application/xml'}),'SitTest.rbxmx');
  fields.set('name','Sit Animation');
  fields.set('loop','true');
+ const danceDescription='Wave "Hello"!\nSmooth 🔥';
+ fields.set('description',danceDescription);
  const result=await api('/make-animation',{method:'POST',body:fields});
  assert.equal(result.status,200,JSON.stringify(result.body));
  assert.match(result.response.headers.get('content-type'),/application\/zip/);
@@ -181,6 +183,7 @@ test('Uhhhhhh Make Animation converts Roblox XML KeyframeSequence to install-rea
  assert.ok(bytes.includes(Buffer.from('UhhhhhhReanim/Content/Anims/SitTest.anim')),'includes converted track');
  assert.ok(bytes.includes(Buffer.from('UhhhhhhReanim/Modules/')),'includes generated dance module');
  assert.ok(bytes.length>180,'ZIP should contain the animation and module');
+ assert.ok(bytes.includes(Buffer.from('m.Description = '+JSON.stringify(danceDescription))),'dance module must contain exact description');
  const bad=new FormData();
  bad.set('model',new Blob(['<roblox><Item class="Part"/></roblox>']),'NotAnimation.rbxmx');
  const rejected=await api('/make-animation',{method:'POST',body:bad});
@@ -200,6 +203,8 @@ test('Moveset Maker endpoint packages two valid tracks',async()=>{
  payload.set('name','Walk Test');
  payload.set('fade','0.20');
  payload.set('runSpeed','16');
+ const movesetDescription='Retro "R6" moveset\nCreated by Mr_H';
+ payload.set('description',movesetDescription);
  payload.set('idle',new Blob([track]),'idle.anim');
  payload.set('walk',new Blob([track]),'walk.anim');
  const answer=await api('/make-moveset',{method:'POST',body:payload});
@@ -208,6 +213,7 @@ test('Moveset Maker endpoint packages two valid tracks',async()=>{
  assert.equal(zip.readUInt32LE(0),0x04034b50);
  for(const entry of ['MRH_Walk_Test_idle.anim','MRH_Walk_Test_walk.anim','MRH_Walk_Test_Moveset.lua'])
   assert.ok(zip.includes(Buffer.from(entry)),'missing '+entry);
+ assert.ok(zip.includes(Buffer.from('m.Description = '+JSON.stringify(movesetDescription))),'moveset Lua must contain exact description');
  const invalid=new FormData();
  invalid.set('name','Fail Case');invalid.set('fade','0.2');invalid.set('runSpeed','16');
  invalid.set('idle',new Blob([track]),'idle.anim');
