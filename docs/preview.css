@@ -1,0 +1,37 @@
+/* Mr H Animations — standalone offline-capable R6 software-3D viewer. */
+.preview-panel{animation:panel-in .3s ease}
+.preview-heading{margin:26px 0 22px;display:flex;gap:16px;align-items:end;justify-content:space-between}
+.preview-heading h1{margin:6px 0 8px;font-size:clamp(27px,4vw,39px);letter-spacing:-.045em}
+.preview-heading p{max-width:670px;margin:0;color:#a8a8ae;font-size:13px;line-height:1.6}
+.preview-overline{color:#aaaab1;font-size:10px;letter-spacing:.13em;font-weight:800}
+.preview-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,.95fr);gap:18px;align-items:start}
+.preview-canvas-box{background:#0d0e12;border:1px solid #35353b;border-radius:13px;overflow:hidden}
+#preview-stage{width:100%;height:440px;display:block;touch-action:none;cursor:grab}
+#preview-stage:active{cursor:grabbing}
+.preview-track-meta{padding:13px 17px 0;min-height:32px;font-size:12px;font-weight:650;color:#e3e3e8;overflow-wrap:anywhere}
+.preview-controls{display:grid;gap:13px;padding:14px 17px 18px}
+.preview-controls label{display:flex;gap:10px;justify-content:space-between;align-items:center;font-size:12px;color:#c5c5cc;font-weight:650}
+.preview-controls input[type="range"]{width:100%;accent-color:#fafafa;cursor:pointer}
+.preview-controls output{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#ececf0}
+.preview-control-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.preview-control-line .action,.preview-control-line .primary{min-width:90px}
+.preview-check{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12px;color:#d9d9df}
+.preview-check input{accent-color:#f6f6f6}
+.preview-settings{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.preview-source{display:grid;gap:13px}
+.preview-source-card{border:1px solid #36363d;background:#0d0d0f;border-radius:12px;padding:18px;display:grid;gap:12px}
+.preview-source-card h2{font-size:17px;margin:0;font-weight:750;letter-spacing:-.025em}
+.preview-source-card p{font-size:12px;line-height:1.55;color:#9e9ea8;margin:0}
+.preview-source-card label{display:grid;gap:7px;color:#c5c5cf;font-size:12px;font-weight:650}
+.preview-source-card input[type="file"],.preview-source-card select{min-width:0;width:100%;border:1px solid #43434a;border-radius:7px;padding:10px;color:#eeeef1;background:#1a1a1e;font:inherit;font-size:12px}
+.preview-source-card select{appearance:auto}
+.preview-source-card input[type="file"]::file-selector-button{background:#e9e9ec;color:#111;border:0;border-radius:5px;padding:7px 10px;margin-right:8px;cursor:pointer}
+.preview-source-card .action,.preview-source-card .primary{justify-self:start}
+.preview-source-row{display:flex;gap:10px;flex-wrap:wrap}
+.preview-source-row select{flex:1}
+.preview-source-tip{color:#92929d;font-size:11px;line-height:1.55}
+#preview-status{min-height:36px;color:#a6c0df;font-size:12px;line-height:1.55}
+#preview-status.preview-error{color:#ff949b}
+.preview-source-choose{width:100%}
+@media(max-width:900px){.preview-layout{grid-template-columns:1fr}.preview-source{grid-template-columns:repeat(2,minmax(0,1fr))}.preview-source-card:last-child{grid-column:1/-1}}
+@media(max-width:650px){.preview-heading{display:block}.preview-source{grid-template-columns:1fr}.preview-source-card:last-child{grid-column:auto}#preview-stage{height:350px}.preview-settings{grid-template-columns:1fr}.preview-control-line .action,.preview-control-line .primary{min-width:80px}}
