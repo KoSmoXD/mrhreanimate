@@ -98,6 +98,56 @@ const auth=(req,res,next)=>req.user?next():fail(res,401,'Log in to continue.');
 const authLimit=rateLimit({windowMs:15*60*1000,limit:14,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many attempts. Try again later.'}});
 const registerLimit=rateLimit({windowMs:60*60*1000,limit:5,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Hourly signup limit reached.'}});
 const uploadLimit=rateLimit({windowMs:60*60*1000,limit:12,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Hourly upload limit reached.'}});
+
+const avatarLimit=rateLimit({windowMs:15*60*1000,limit:12,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many profile picture changes.'}});
+const ownerLimit=rateLimit({windowMs:60*60*1000,limit:5,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many owner setup attempts.'}});
+function ownerClaimKeyMatches(key){
+ if(!claimSecret||claimSecret.length<32||typeof key!=='string')return false;
+ const expected=crypto.createHash('sha256').update(claimSecret).digest();
+ const incoming=crypto.createHash('sha256').update(key).digest();
+ return crypto.timingSafeEqual(expected,incoming);
+}
+function imageMime(buffer){
+ if(buffer.length>=8&&buffer.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))return 'image/png';
+ if(buffer.length>=3&&buffer[0]===255&&buffer[1]===216&&buffer[2]===255)return 'image/jpeg';
+ if(buffer.length>=12&&buffer.toString('ascii',0,4)==='RIFF'&&buffer.toString('ascii',8,12)==='WEBP')return 'image/webp';
+ return null;
+}
+function avatarFile(id){return path.join(AVATARS,id+'.img');}
+const avatarUpload=multer({storage:multer.memoryStorage(),limits:{fileSize:MAX.avatar,files:1,fields:0,parts:1}}).single('avatar');
+app.get('/api/users/:id/avatar',(req,res)=>{
+ const user=db.prepare('SELECT id,avatar_mime FROM users WHERE id=?').get(req.params.id);
+ if(!user||!user.avatar_mime)return fail(res,404,'No profile picture available.');
+ const file=avatarFile(user.id);
+ if(!fs.existsSync(file))return fail(res,404,'Profile picture unavailable.');
+ res.setHeader('Content-Type',user.avatar_mime);
+ res.setHeader('X-Content-Type-Options','nosniff');
+ res.setHeader('Cache-Control','public,max-age=86400');
+ res.sendFile(file);
+});
+app.put('/api/me/avatar',auth,avatarLimit,(req,res)=>{
+ avatarUpload(req,res,async(err)=>{
+  if(err)return fail(res,400,err.code==='LIMIT_FILE_SIZE'?'Profile picture must be under 2 MB.':err.message||'Invalid upload.');
+  if(!req.file||!req.file.buffer)return fail(res,400,'Choose a PNG, JPG or WebP image.');
+  const mime=imageMime(req.file.buffer);
+  if(!mime)return fail(res,400,'Only PNG, JPG and WebP images are supported.');
+  try{
+   const file=avatarFile(req.user.id),temp=file+'.'+crypto.randomUUID()+'.tmp';
+   await fsp.writeFile(temp,req.file.buffer,{flag:'wx'});
+   await fsp.rename(temp,file);
+   const rev=Date.now();
+   db.prepare('UPDATE users SET avatar_mime=?,avatar_rev=? WHERE id=?').run(mime,rev,req.user.id);
+   res.json({user:publicUser({...req.user,avatar_mime:mime,avatar_rev:rev})});
+  }catch(e){console.error('Avatar upload:',e.message);return fail(res,500,'Could not save profile picture.');}
+ });
+});
+app.delete('/api/me/avatar',auth,avatarLimit,async(req,res,next)=>{
+ try{
+  db.prepare('UPDATE users SET avatar_mime=NULL,avatar_rev=? WHERE id=?').run(Date.now(),req.user.id);
+  await fsp.rm(avatarFile(req.user.id),{force:true});
+  res.json({user:publicUser({...req.user,avatar_mime:null})});
+ }catch(e){next(e);}
+});
 app.get('/api/health',(req,res)=>res.json({ok:true}));
 app.get('/api/me',(req,res)=>req.user?res.json({user:publicUser(req.user)}):fail(res,401,'Not logged in.'));
 app.post('/api/register',registerLimit,async(req,res,next)=>{
