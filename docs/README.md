@@ -1,43 +1,40 @@
-# Mr H Animation Studio
+# Mr H Animations — Pack Uploader
 
-Static animation website for Mr H Reanimate. Inspired by the dark visual style of Roblox script-hub landing pages (independent of mspaint.cc).
+This is a static, dark-themed animation pack website for Mr H Reanimate.
 
-## Hosting with GitHub Pages
+## Required files
 
-1. Open the repository **Settings → Pages**.
-2. Under **Build and deployment**, select **Deploy from a branch**.
-3. Select branch **main**, folder **/docs**, then **Save**.
-4. After GitHub Pages finishes publishing, the expected project URL is `https://kosmoxd.github.io/mrhreanimate/`.
+Each working animation package needs **all three matching files**:
 
-This application needs no server, build step, API key, or external runtime libraries. Open `docs/index.html` locally for offline use (Google Fonts will fall back to system fonts).
+1. **Animation**: `.anim` — custom Uhhhhhh/Mr H keyframe binary.
+2. **Music**: `.mp3` — soundtrack used by the animation.
+3. **Lua**: `.lua` — the actual animation module which references those assets and implements playback using Mr H's module interface.
 
-## Supported format
+The website does **not** automatically generate a valid Lua module or install it in Roblox; the three files must match. Do not run unknown Lua files without reviewing their contents.
 
-This app supports the custom **binary .anim** format read by the pinned engine's `AnimLib.Track.frombuffer`, **not** Roblox `.rbxm`, `.rbxmx`, `.fbx`, `.gif`, or native published animation asset IDs.
+## Website features
 
-Binary format is little-endian:
+- Three mandatory file upload slots and a multi-file drag-and-drop area.
+- Validation of file extensions, safety size limits, and `.anim` binary structure.
+- Native MP3 audio preview in the browser.
+- Pack name, optional creator and notes.
+- **Download animation pack**: browser-built ZIP containing exactly the three original uploaded files (unchanged bytes and filenames).
+- Save/open/download/delete packs locally through IndexedDB where supported.
 
-- u16 byte length + UTF-8 name
-- u32 keyframe count
-- for each keyframe: f32 time, u32 pose count
-- for each pose: u16-length pose name, f32 weight, u16-length easing style, u16-length easing direction, 12 × f32 CFrame matrix components
+**Privacy:** Files remain local to each visitor's browser. The app does not upload or publish files to a shared public gallery. Public sharing would require a separate backend with storage, permissions and moderation.
 
-The page preserves unrecognized pose names on re-export. The preview currently renders standard R6 body parts using **linear interpolation and quaternion rotation blending**. Easing settings are preserved in exported files but not visually simulated. Files larger than 8 MB, animations over 300s and other invalid bounds are rejected.
+The `.anim` parser accepts the binary format defined by `AnimLib.Track.frombuffer` in the pinned upstream engine. It does not accept Roblox `.rbxm`, `.rbxmx`, or published animation asset IDs.
 
-## Features
+## Deployment
 
-- Drag-and-drop multiple `.anim` files or use the file picker.
-- Preview a simplified R6 model with mouse/touch orbit, zoom, grid, and PNG capture.
-- Play, pause, loop, change speed, scrub, navigate/add/delete keyframes.
-- Edit per-joint position/rotation and animation name.
-- Export binary `.anim` compatible with Mr H Animation Maker.
-- Save and restore clips in this browser using IndexedDB when available.
-- Built-in Walk Cycle and Wave Sample demos.
+Use **GitHub → Settings → Pages** and configure **Deploy from a branch**, branch **main**, folder **/docs**. Once GitHub confirms deployment, the expected public URL is:
 
-## Privacy and limitations
+`https://kosmoxd.github.io/mrhreanimate/`
 
-All uploads are processed locally in the user's browser. **Uploading here does not publish the animation for other visitors.** The site has no public/community database or sign-in. Saving to IndexedDB stores files only in the current browser profile. For a public shared upload/gallery feature, a backend with file storage and moderation must be added.
+GitHub Pages hosting is not automatically activated by committing the site files.
 
-To use exported animations with Mr H Reanimate, move files into the executor workspace path `UhhhhhhReanim/Content/Anims/` and open them with the Animation Library.
+No build step or JavaScript dependencies are required. Fonts use a remote Google Fonts stylesheet but fall back to system fonts offline.
 
-Do not treat a browser-side R6 preview as a Roblox rendering/replication test. Roblox physics, rig constraints and animation priority may differ.
+## Limits
+
+Maximum size per file: `.anim` 8 MiB, `.mp3` 35 MiB, `.lua` 2 MiB, total 48 MiB. Browsers can impose lower storage quotas. Saved packs are not synchronized between devices.
