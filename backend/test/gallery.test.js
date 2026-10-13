@@ -60,13 +60,13 @@ test('public gallery, registration, authenticated upload, ZIP download and accou
  const page=await fetch(base+'/');
  const markup=await page.text();
  assert.ok(page.headers.get('cache-control')?.includes('no-store'),'HTML must not be cached');
- assert.ok(markup.includes('app.js?v=owner-setup-cachefix-20261013'),'auth script must be cache busted');
- const asset=await fetch(base+'/app.js?v=owner-setup-cachefix-20261013');
+ assert.ok(markup.includes('app.js?v=make-animation-20261013'),'auth script must be cache busted');
+ const asset=await fetch(base+'/app.js?v=make-animation-20261013');
  const script=await asset.text();
  assert.equal(asset.status,200);
  assert.ok(asset.headers.get('cache-control')?.includes('no-store'),'auth JS must not be cached');
  assert.ok(script.includes("'/owner/claim'"),'owner setup must route to special owner endpoint');
- const stylesheet=await fetch(base+'/styles.css?v=owner-setup-cachefix-20261013');
+ const stylesheet=await fetch(base+'/styles.css?v=make-animation-20261013');
  assert.ok(stylesheet.headers.get('cache-control')?.includes('no-store'),'UI CSS must not be cached');
  const guest=await api('/animations');
  assert.equal(guest.status,200);assert.deepEqual(guest.body.items,[]);
