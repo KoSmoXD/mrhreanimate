@@ -1,4 +1,4 @@
-# Mr H Reanimate 2.1.2
+# Mr H Reanimate 2.2.0
 
 A patch-layer fork of [UhhhhhhModded](https://github.com/testing734/UhhhhhhModded), originally authored by STEVETHEREALONE with patches by BoredGal and Awes955. This package **does not include or relicense upstream source**. The `Mr_H_Reanimate.lua` loader retrieves the exact public commit `87467966d37ce4b8b2c219a0bcffaf2aa8f658a9` and patches it in memory before execution.
 
@@ -14,6 +14,7 @@ A patch-layer fork of [UhhhhhhModded](https://github.com/testing734/UhhhhhhModde
 - Adds a `PlayerGui` nil check during touch handling.
 - **Removes the upstream optional Easter-egg/background routine entirely:** this routine scanned local executor files, downloaded extraneous data, introduced random startup delays, and accepted remote WebSocket commands that executed arbitrary Lua through a `jumpscare` event.
 - **Removes the extra purple Mr H companion HUD entirely.** Only the original upstream interface is launched. FPS and lighting controls that belonged to the removed HUD are no longer available from Mr H.
+- **Adds opt-in Experimental Permadeath (Hats)** to the existing Hats Reanimator settings. The legacy `ConnectDiedSignalBackend` is attempted only when `replicatesignal` and the signal are available. Failures revert to the normal Hats behavior, and the status shows `UNVERIFIED` rather than promising FE replication. The setting is **off by default**; never changes `Players.RespawnTime` to infinity.
 - Uses patch-count preconditions to fail closed if the pinned engine's shape no longer matches the reviewed patterns.
 
 ## Execution
@@ -26,7 +27,15 @@ loadstring(readfile("Mr_H_Reanimate.lua"))()
 
 The upstream engine requires executor-specific file APIs (`readfile`, `writefile`, etc.), HTTP requests, and other nonstandard capabilities. **It does not run as a normal LocalScript in Roblox Studio or through the standard Roblox mobile app alone.** No server-visible FE results can be guaranteed because they depend on physics replication and network ownership.
 
-**Rejoin before testing the new intro** if an older version is already running. Executing v2.1.2 while v2.0 is active removes its legacy purple HUD when possible, but does not restart the upstream reanimation engine or replace its already-created startup text.
+**Rejoin before testing the new intro** if an older version is already running. Executing v2.2.0 while v2.0 is active removes its legacy purple HUD when possible, but does not restart the upstream reanimation engine or replace its already-created startup text.
+
+## Experimental Permadeath (Hats)
+
+Select **Hats Reanimator**, find **Experimental Permadeath (Hats)** and enable it before pressing **Reanimate**. It is disabled by default. When `replicatesignal` is unavailable, the switch reverts to off. If the legacy backend death signal cannot be fired, the engine falls back to its standard Hats behavior.
+
+**This is not confirmed working FE permadeath in current Roblox games.** A successful executor call cannot prove the Roblox server accepted the signal, and network ownership remains controlled by Roblox. Test in a private experience and rejoin if your avatar becomes stuck.
+
+Changing `game:GetService("Players").RespawnTime` to `math.huge` through a client script does not reliably change the server's respawn schedule. For genuine no-respawn gameplay in your own game, use a server-side `Players.CharacterAutoLoads = false` and manage character loading explicitly.
 
 ## Security limits
 
@@ -37,4 +46,4 @@ The upstream engine requires executor-specific file APIs (`readfile`, `writefile
 
 ## Verification
 
-The loader rewrite was checked against pinned upstream source text, including unique patch anchors and the removal of the companion HUD. Compilation happens in the Roblox executor at runtime. The v2.1 startup screens and Roblox avatar mechanics have **not** been tested in a live Roblox client.
+The loader rewrite was checked against the pinned upstream source, including five new exact-match experimental permadeath anchors. Compilation happens at runtime in the executor. **No client/server FE verification has been performed**, and this option may not work on current executors or Roblox servers.
