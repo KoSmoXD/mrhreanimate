@@ -213,7 +213,7 @@ test('Uhhhhhh Make Animation converts Roblox XML KeyframeSequence to install-rea
  assert.ok(bytes.includes(Buffer.from('UhhhhhhReanim/Content/Anims/SitTest.anim')),'includes converted track');
  assert.ok(bytes.includes(Buffer.from('UhhhhhhReanim/Modules/')),'includes generated dance module');
  assert.ok(bytes.length>180,'ZIP should contain the animation and module');
- assert.ok(readZipText(bytes,'.lua').includes('m.Description = '+JSON.stringify(danceDescription)),'dance module must contain exact description');
+ assert.equal(readZipText(bytes,'.lua').split('\n').find(line=>line.includes('m.Description'))?.trim(),'m.Description = '+JSON.stringify(danceDescription),'dance module description mismatch');
  const bad=new FormData();
  bad.set('model',new Blob(['<roblox><Item class="Part"/></roblox>']),'NotAnimation.rbxmx');
  const rejected=await api('/make-animation',{method:'POST',body:bad});
@@ -243,7 +243,7 @@ test('Moveset Maker endpoint packages two valid tracks',async()=>{
  assert.equal(zip.readUInt32LE(0),0x04034b50);
  for(const entry of ['MRH_Walk_Test_idle.anim','MRH_Walk_Test_walk.anim','MRH_Walk_Test_Moveset.lua'])
   assert.ok(zip.includes(Buffer.from(entry)),'missing '+entry);
- assert.ok(readZipText(zip,'.lua').includes('m.Description = '+JSON.stringify(movesetDescription)),'moveset Lua must contain exact description');
+ assert.equal(readZipText(zip,'.lua').split('\n').find(line=>line.includes('m.Description'))?.trim(),'m.Description = '+JSON.stringify(movesetDescription),'moveset description mismatch');
  const invalid=new FormData();
  invalid.set('name','Fail Case');invalid.set('fade','0.2');invalid.set('runSpeed','16');
  invalid.set('idle',new Blob([track]),'idle.anim');
