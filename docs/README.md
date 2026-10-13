@@ -6,6 +6,15 @@ The website has been redesigned into a **black, minimal public animation browser
 
 Both **Make Animation (dance)** and **Moveset Maker** accept an optional description (up to 500 characters). The description is embedded in the generated Uhhhhhh Lua `m.Description` field and supports line breaks, quotes, and Unicode. When left empty, the original default description is used.
 
+## In-game Online Modules (Mr H Reanimate 2.8)
+
+Mr H Reanimate now has **Advanced Tools > Online Modules (Mr H Website)**. The page fetches public dance and moveset catalogs from `https://mrh-animation-web-production.up.railway.app/api/animations` and `/api/movesets`, shows their names, authors and descriptions, and allows paged browsing.
+
+Selecting Install twice confirms the risks of community-submitted Lua before downloading. The installer obtains an individual-file manifest from `GET /api/reanimate/{animations|movesets}/:id/manifest`, and downloads each asset from `/file/:index`. Files are saved under the engine's `UhhhhhhReanim/Content/Anims`, `Content/Sounds`, and `Modules` directories. Existing assets are never overwritten, and no community Lua is executed during download.
+
+The upstream engine loads newly installed modules at startup, so after installing, rejoin and launch Mr H Reanimate again. An executor must support outbound HTTPS and `writefile`/`makefolder` (with `readfile` to check existing filenames). Without those APIs, installation may be unavailable. The installer uses path and file-size checks, but **remote user-submitted Lua remains untrusted code**; install only reviewed/trusted scripts.
+
+Public asset endpoints are rate-limited, and moveset ZIP entry extraction is validated and sandboxed in a resource-limited subprocess. These endpoints are separate from the browser ZIP downloads and do not require signing in to browse.
 ## Community movesets and comments
 
 The black website includes a separate **Movesets** browsing tab alongside **Dances**, **Make Animation**, and **Moveset Maker**. Users can open dance or moveset cards to read detail pages and comment threads.
