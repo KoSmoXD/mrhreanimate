@@ -1,5 +1,5 @@
 --[[
- Mr H Reanimate 2.1.2
+ Mr H Reanimate 2.2.0
  A maintained runtime fork/patch layer for UhhhhhhModded, not a repackaged source dump.
  Original engine: STEVETHEREALONE, BoredGal, Awes955 Modded.
  Upstream: https://github.com/testing734/UhhhhhhModded
@@ -11,7 +11,7 @@
 ]]
 
 local BRAND = "Mr H Reanimate"
-local VERSION = "2.1.2"
+local VERSION = "2.2.0"
 local BASE_COMMIT = "87467966d37ce4b8b2c219a0bcffaf2aa8f658a9"
 local BASE_URL = "https://raw.githubusercontent.com/testing734/UhhhhhhModded/"
     .. BASE_COMMIT .. "/uhhhhhh%20awes%20fork"
@@ -189,6 +189,86 @@ local function rewrite(source)
         "\n\tlocal TopBarClose = Util.Instance(\"TextButton\", TopBarFrame)",
         "\tTopBarText.Text = \"Mr H Reanimate\"\n\tlocal TopBarClose = Util.Instance(\"TextButton\", TopBarFrame)",
         "static startup topbar")
+
+    -- Experimental Hats Permadeath: legacy signal attempt, not a confirmed FE bypass.
+    source = patch(source,
+        [==[HatReanimator.Permadeath = false--not SaveData.Reanimator.HatsPatchmahub]==],
+        [==[HatReanimator.Permadeath = SaveData.Reanimator.MrHExperimentalPermadeath == true and type(replicatesignal) == "function"
+SaveData.Reanimator.MrHExperimentalPermadeath = HatReanimator.Permadeath]==],
+        "experimental saved setting and supported-executor gate")
+    source = patch(source,
+        [==[UI.CreateText(parent, "permadeath is patched, enable this switch if you want to", 10, Enum.TextXAlignment.Center)
+	UI.CreateSwitch(parent, "Permadeath", HatReanimator.Permadeath).Changed:Connect(function(val)
+		HatReanimator.Permadeath = val
+		SaveData.Reanimator.HatsPatchmahub = not val
+	end)]==],
+        [==[UI.CreateText(parent, "EXPERIMENTAL legacy permadeath. Requires replicatesignal. Server FE and network ownership NOT guaranteed.", 10, Enum.TextXAlignment.Center)
+	local permaSwitch = UI.CreateSwitch(parent, "Experimental Permadeath (Hats)", HatReanimator.Permadeath)
+	permaSwitch.Changed:Connect(function(val)
+		if val and type(replicatesignal) ~= "function" then
+			HatReanimator.Permadeath = false
+			SaveData.Reanimator.MrHExperimentalPermadeath = false
+			HatReanimator.Status.Permadeath = "UNAVAILABLE: replicatesignal missing"
+			permaSwitch.Value = false
+		else
+			HatReanimator.Permadeath = val
+			SaveData.Reanimator.MrHExperimentalPermadeath = val
+			HatReanimator.Status.Permadeath = val and "Experimental enabled (not verified)" or "Disabled"
+		end
+	end)]==],
+        "experimental UI / graceful unsupported fallback")
+    source = patch(source,
+        [==[		HatReanimator.HasPermadeath, HatReanimator.HasHatCollide = perma, hatcols
+		local hatcolmeth = HatReanimator.HatCollideMethod
+		if not replicatesignal then perma = false end]==],
+        [==[		HatReanimator.HasHatCollide = hatcols
+		local hatcolmeth = HatReanimator.HatCollideMethod
+		if perma and type(replicatesignal) ~= "function" then
+			perma = false
+			HatReanimator.Status.Permadeath = "UNAVAILABLE: replicatesignal missing"
+		end
+		HatReanimator.HasPermadeath = perma]==],
+        "perma mode flag reflects actual support")
+    source = patch(source,
+        [==[		local cdsbeffect = os.clock()
+		local cdsbtime = os.clock()
+		if perma then
+			--replicatesignal(Player.ConnectDiedSignalBackend)
+			HatReanimator.Status.Permadeath = "Fired CDSB Signal."
+			cdsbeffect += Players.RespawnTime
+		end]==],
+        [==[		local cdsbeffect = os.clock()
+		local cdsbtime = os.clock()
+		if perma then
+			local signalOK, diedSignal = pcall(function() return Player.ConnectDiedSignalBackend end)
+			if signalOK and typeof(diedSignal) == "RBXScriptSignal" then
+				local fired, why = pcall(replicatesignal, diedSignal)
+				if fired then
+					HatReanimator.Status.Permadeath = "Legacy death signal attempted; server result UNVERIFIED"
+				else
+					perma = false
+					HatReanimator.HasPermadeath = false
+					HatReanimator.Status.Permadeath = "Legacy signal failed: " .. tostring(why)
+				end
+			else
+				perma = false
+				HatReanimator.HasPermadeath = false
+				HatReanimator.Status.Permadeath = "Legacy backend signal not accessible"
+			end
+		end]==],
+        "attempt legacy death signal with protected call and fallback")
+    source = patch(source,
+        [==[		if perma then
+			HatReanimator.Status.Permadeath = "no."
+		else
+			HatReanimator.Status.Permadeath = "Disabled, nothing to do."
+		end]==],
+        [==[		if perma then
+			HatReanimator.Status.Permadeath = "Legacy signal attempted; server result UNVERIFIED"
+		elseif HatReanimator.Status.Permadeath == "Respawn detected." then
+			HatReanimator.Status.Permadeath = "Disabled / unsupported"
+		end]==],
+        "preserve truthful legacy status")
     return source
 end
 
