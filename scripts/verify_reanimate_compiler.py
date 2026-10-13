@@ -29,7 +29,7 @@ def published_source() -> str:
         (b - ((i * 73 + 91) % 256)) % 256
         for i, b in enumerate(encoded_bytes, start=1)
     ).decode("utf-8")
-    if 'local VERSION = "2.8.2"' not in decoded:
+    if 'local VERSION = "2.8.3"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
