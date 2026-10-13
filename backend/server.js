@@ -10,6 +10,7 @@ const Database=require('better-sqlite3');
 const bcrypt=require('bcryptjs');
 const archiver=require('archiver');
 const {makeMoveset,ROLES}=require('./moveset-generator');
+const setupCommunity=require('./community');
 const {execFile}=require('node:child_process');
 const {promisify}=require('node:util');
 const execFileAsync=promisify(execFile);
@@ -225,9 +226,11 @@ app.delete('/api/me',auth,authLimit,async(req,res,next)=>{
   if(!own||typeof req.body?.password!=='string'||!await bcrypt.compare(req.body.password,own.password_hash))return fail(res,403,'Current password is incorrect.');
   if(own.role==='owner')return fail(res,403,'The owner account cannot be deleted.');
   const ids=db.prepare('SELECT id FROM animations WHERE user_id=?').all(own.id).map(x=>x.id);
+  const moveIds=db.prepare('SELECT id FROM movesets WHERE user_id=?').all(own.id).map(x=>x.id);
   db.prepare('DELETE FROM users WHERE id=?').run(own.id);
   expireCookie(res);
   await Promise.all(ids.map(id=>fsp.rm(path.join(UPLOADS,id),{recursive:true,force:true}).catch(()=>{})));
+  await Promise.all(moveIds.map(id=>fsp.rm(path.join(ROOT,'movesets',id+'.zip'),{force:true}).catch(()=>{})));
   await fsp.rm(avatarFile(own.id),{force:true}).catch(()=>{});
   res.json({ok:true});
  }catch(e){next(e);}
@@ -235,7 +238,7 @@ app.delete('/api/me',auth,authLimit,async(req,res,next)=>{
 
 const uploader=multer({
  storage:multer.diskStorage({destination(req,file,cb){cb(null,TMP);},filename(req,file,cb){cb(null,crypto.randomUUID()+'.tmp');}}),
- limits:{fileSize:MAX.mp3,files:3,fields:1,parts:4},
+ limits:{fileSize:MAX.mp3,files:3,fields:2,parts:5},
  fileFilter(req,file,cb){
   const ext={anim:'.anim',mp3:'.mp3',lua:'.lua'}[file.fieldname];
   if(!ext||path.extname(file.originalname).toLowerCase()!==ext)return cb(new Error('Upload one .anim, .mp3 and .lua.'));
@@ -270,6 +273,7 @@ function validateAnim(b){
 }
 function card(row){
  return {id:row.id,userId:row.user_id,username:row.username,
+  description:row.description||'',commentCount:row.comment_count||0,
   role:row.role==='owner'?'owner':'user',
   avatarUrl:row.avatar_mime?'/api/users/'+row.user_id+'/avatar?v='+(row.avatar_rev||0):null,
   title:row.title,createdAt:new Date(row.created_at).toISOString(),sizeBytes:row.size_bytes};
@@ -485,6 +489,7 @@ app.post('/api/make-moveset',movesetLimiter,(req,res)=>{
   }
  });
 });
+setupCommunity({app,db,auth,fail,TMP,ROOT});
 app.get('/api/animations',(req,res)=>{
  const limit=Math.min(60,Math.max(1,parseInt(req.query.limit,10)||32));
  const offset=Math.min(50000,Math.max(0,parseInt(req.query.offset,10)||0));
@@ -492,8 +497,8 @@ app.get('/api/animations',(req,res)=>{
  const where=q?'WHERE a.title LIKE ? OR u.username LIKE ?':'';
  const params=q?['%'+q+'%','%'+q+'%']:[];
  const total=db.prepare('SELECT COUNT(*) AS count FROM animations a JOIN users u ON u.id=a.user_id '+where).get(...params).count;
- const items=db.prepare('SELECT a.*,u.username,u.role,u.avatar_mime,u.avatar_rev FROM animations a JOIN users u ON u.id=a.user_id '+where+
-  ' ORDER BY a.created_at DESC,a.id DESC LIMIT ? OFFSET ?').all(...params,limit,offset).map(card);
+ const items=db.prepare('SELECT a.*,u.username,u.role,u.avatar_mime,u.avatar_rev,(SELECT COUNT(*) FROM comments c WHERE c.kind=? AND c.item_id=a.id) AS comment_count FROM animations a JOIN users u ON u.id=a.user_id '+where+
+  ' ORDER BY a.created_at DESC,a.id DESC LIMIT ? OFFSET ?').all('animations',...params,limit,offset).map(card);
  res.json({items,total});
 });
 app.post('/api/animations',auth,uploadLimit,(req,res,next)=>{
@@ -503,6 +508,8 @@ app.post('/api/animations',auth,uploadLimit,(req,res,next)=>{
   const id=crypto.randomUUID(),folder=path.join(UPLOADS,id);
   try{
    const title=String(req.body?.title||'').trim();
+   const description=String(req.body?.description||'').trim().replace(/\r\n?/g,'\n');
+   if([...description].length>500||Buffer.byteLength(description,'utf8')>2000)throw Error('Description must be 500 characters or fewer.');
    if(title.length<2||title.length>80)throw Error('Animation name must be 2-80 characters.');
    if(!file('anim')||!file('mp3')||!file('lua')||Object.values(files).flat().length!==3)throw Error('All three files are required.');
    for(const key of ['anim','mp3','lua'])if(file(key).size<1||file(key).size>MAX[key])throw Error(key+' is too large.');
@@ -515,9 +522,9 @@ app.post('/api/animations',auth,uploadLimit,(req,res,next)=>{
    for(const key of ['anim','mp3','lua'])await fsp.rename(file(key).path,path.join(folder,key));
    const size=['anim','mp3','lua'].reduce((n,k)=>n+file(k).size,0);
    const names=['anim','mp3','lua'].map(k=>safeName(file(k).originalname)),created=Date.now();
-   db.prepare('INSERT INTO animations(id,user_id,title,anim_name,mp3_name,lua_name,size_bytes,created_at) VALUES(?,?,?,?,?,?,?,?)')
-    .run(id,req.user.id,title,...names,size,created);
-   res.status(201).json({animation:card({id,user_id:req.user.id,username:req.user.username,role:req.user.role,avatar_mime:req.user.avatar_mime,avatar_rev:req.user.avatar_rev,title,size_bytes:size,created_at:created})});
+   db.prepare('INSERT INTO animations(id,user_id,title,description,anim_name,mp3_name,lua_name,size_bytes,created_at) VALUES(?,?,?,?,?,?,?,?,?)')
+    .run(id,req.user.id,title,description,...names,size,created);
+   res.status(201).json({animation:card({id,user_id:req.user.id,username:req.user.username,role:req.user.role,avatar_mime:req.user.avatar_mime,avatar_rev:req.user.avatar_rev,title,description,size_bytes:size,created_at:created})});
   }catch(e){await fsp.rm(folder,{recursive:true,force:true}).catch(()=>{});return fail(res,400,e.message||'Upload validation failed.');}
   finally{await removeTmp(files);}
  });
@@ -545,7 +552,10 @@ app.delete('/api/animations/:id',auth,async(req,res,next)=>{
   const row=db.prepare('SELECT id,user_id FROM animations WHERE id=?').get(req.params.id);
   if(!row)return fail(res,404,'Animation not found.');
   if(row.user_id!==req.user.id&&req.user.role!=='owner')return fail(res,403,'Only the uploader or owner can delete this animation.');
-  db.prepare('DELETE FROM animations WHERE id=?').run(row.id);
+  db.transaction(()=>{
+   db.prepare('DELETE FROM comments WHERE kind=? AND item_id=?').run('animations',row.id);
+   db.prepare('DELETE FROM animations WHERE id=?').run(row.id);
+  })();
   await fsp.rm(path.join(UPLOADS,row.id),{force:true,recursive:true});
   res.json({ok:true});
  }catch(e){next(e);}
