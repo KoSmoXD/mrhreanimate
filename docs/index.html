@@ -3,148 +3,136 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#0b0b14">
-  <meta name="description" content="Mr H Animation Studio — upload, preview, edit, and export Roblox R6 .anim keyframe files directly in your browser.">
-  <title>Mr H — Animation Studio</title>
+  <meta name="theme-color" content="#0b0c16">
+  <meta name="description" content="Create complete Mr H Reanimate animation packs with an .anim file, MP3 music, and Lua module.">
+  <title>Mr H Animations — Pack Hub</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
 <body>
-  <div class="background-glow" aria-hidden="true"></div>
-  <header class="site-header">
-    <div class="container nav-inner">
-      <a class="brand" href="#top" aria-label="Mr H Animation Studio home">
-        <span class="brand-icon">H<span class="icon-dot">.</span></span>
-        <span class="brand-text">MR H <span class="brand-sub">/ ANIM STUDIO</span></span>
-      </a>
-      <nav class="nav-links" aria-label="Main">
-        <a href="#features">Features</a>
-        <a href="#studio">Studio</a>
-        <a href="#how-it-works">How it works</a>
+  <div class="ambient" aria-hidden="true"></div>
+  <header class="topbar">
+    <div class="container nav">
+      <a href="#top" class="brand"><span class="mark">H<span>.</span></span><span>MR H <em>/ ANIMATIONS</em></span></a>
+      <nav aria-label="Main navigation">
+        <a href="#uploader">Upload</a>
+        <a href="#library">My packs</a>
+        <a href="#guide">Guide</a>
       </nav>
-      <a class="nav-github" href="https://github.com/KoSmoXD/mrhreanimate" target="_blank" rel="noopener noreferrer">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4.3 1.3-4.3-2.3-6-2.8m12 5v-3.9c0-1.2.4-2 1-2.4-4.1-.5-8-2-8-7.2 0-1.3.5-2.4 1.3-3.3-.1-.4-.6-1.8.1-3.5 0 0 1.2-.4 3.5 1.8a12 12 0 0 1 6.3 0c2.3-2.2 3.5-1.8 3.5-1.8.7 1.7.2 3.1.1 3.5.8.9 1.3 2 1.3 3.3 0 5.2-3.9 6.7-8 7.2.7.5 1 1.4 1 2.6v4" transform="translate(-3,-1)" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        GitHub <span aria-hidden="true">↗</span>
-      </a>
+      <a class="nav-github" href="https://github.com/KoSmoXD/mrhreanimate" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
     </div>
   </header>
 
   <main id="top">
     <section class="hero container">
       <div class="hero-copy">
-        <div class="eyebrow"><span class="pulse"></span> BUILT FOR MR H REANIMATE <span class="eyebrow-sep">/</span> R6</div>
-        <h1>Your animations.<br><em>Your world.</em></h1>
-        <p class="hero-lead">The home for your custom Roblox animations. Drop in any compatible <code>.anim</code> file, bring it to life on an R6 rig, tweak keyframes, and export it back to Mr H.</p>
+        <div class="kicker"><span class="dot"></span> MR H REANIMATE / ANIMATION PACKS</div>
+        <h1>Three files.<br><span>One animation.</span></h1>
+        <p>Keep your animations organized in one place. Add the <strong>.anim</strong>, its <strong>.mp3</strong> music, and the <strong>.lua</strong> module that runs it. Download everything together.</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="#studio">Launch animation studio <span aria-hidden="true">↗</span></a>
-          <button class="button button-secondary" type="button" id="hero-upload">Upload .anim <span aria-hidden="true">↑</span></button>
+          <a class="button primary" href="#uploader">Create animation pack <span>↗</span></a>
+          <a class="button secondary" href="#guide">How it works ↓</a>
         </div>
-        <div class="hero-facts"><span><b>01</b> No sign-up</span><span><b>02</b> Works offline</span><span><b>03</b> Native .anim format</span></div>
+        <div class="hero-info"><span><b>01</b> ANIMATION</span><span><b>02</b> MUSIC</span><span><b>03</b> LUA</span></div>
       </div>
-      <div class="hero-art" aria-label="Animation Studio product preview">
-        <div class="hero-orbit hero-orbit-one"></div>
-        <div class="hero-orbit hero-orbit-two"></div>
-        <div class="art-window">
-          <div class="art-window-bar"><span class="mini-leds"><i></i><i></i><i></i></span><span>R6 PREVIEW / LIVE</span><span class="art-dots">•••</span></div>
-          <div class="art-stage">
-            <div class="art-grid"></div>
-            <div class="art-character">
-              <span class="char-shadow"></span><span class="char-leg char-leg-left"></span><span class="char-leg char-leg-right"></span><span class="char-arm char-arm-left"></span><span class="char-arm char-arm-right"></span><span class="char-torso"></span><span class="char-head"><i></i><i></i></span>
-            </div>
-            <span class="art-tag art-tag-top">R6 <strong>●</strong> ACTIVE</span><span class="art-tag art-tag-bottom">timeline: 00:01.50</span>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="orbit outer"></div><div class="orbit inner"></div>
+        <div class="visual-panel">
+          <div class="visual-bar"><span class="lights"><i></i><i></i><i></i></span><span>ANIMATION PACKAGE / READY</span><span>···</span></div>
+          <div class="visual-body">
+            <div class="visual-line"><span class="file-symbol">◈</span><div><b>dance.anim</b><small>Keyframe animation</small></div><span class="file-ok">✓</span></div>
+            <div class="visual-line"><span class="file-symbol">♫</span><div><b>dance.mp3</b><small>Soundtrack</small></div><span class="file-ok">✓</span></div>
+            <div class="visual-line"><span class="file-symbol">⌘</span><div><b>dance.lua</b><small>Animation module</small></div><span class="file-ok">✓</span></div>
           </div>
-          <div class="art-controls"><span class="art-play">▶</span><span class="art-progress"><i></i></span><span>01:50 / 03:00</span></div>
+          <div class="visual-footer"><span class="pulse-line"></span><span>3 / 3 REQUIRED FILES</span><span class="ready-pill">COMPLETE</span></div>
         </div>
-        <div class="hero-floatcard"><span class="float-spark">✦</span><div><strong>Native format</strong><small>Import · Edit · Export</small></div></div>
+        <div class="mini-float">✦ <span>Pack it. Play it.</span></div>
       </div>
     </section>
 
-    <section id="features" class="features container">
-      <div class="section-overline">WHAT'S INSIDE <span>///</span></div>
-      <div class="feature-grid">
-        <article class="feature"><div class="feature-glyph">↥</div><h3>Upload instantly</h3><p>Drop your .anim file into the browser. No conversion, no extra software.</p></article>
-        <article class="feature"><div class="feature-glyph">◈</div><h3>Preview in 3D</h3><p>Watch the movement on an orbitable R6 model with a live timeline.</p></article>
-        <article class="feature"><div class="feature-glyph">⌘</div><h3>Make it yours</h3><p>Adjust joints and keyframes, then export to the same binary format.</p></article>
-        <article class="feature"><div class="feature-glyph">⌑</div><h3>Private by default</h3><p>Files stay on your device, with optional saving to your browser library.</p></article>
-      </div>
-    </section>
-
-    <section class="studio-section" id="studio">
-      <div class="container studio-titlebar">
-        <div><div class="section-overline">YOUR WORKSPACE <span>///</span></div><h2>The Animation Studio<span class="title-point">.</span></h2><p>Upload a file or start with a sample animation.</p></div>
-        <div class="studio-heading-actions"><span class="local-badge"><i></i> LOCAL WORKSPACE</span><button type="button" id="main-upload" class="button button-primary button-sm">+ Import .anim</button></div>
-      </div>
+    <section id="uploader" class="section-upload">
       <div class="container">
+        <div class="section-top">
+          <div><div class="eyebrow">YOUR WORKSPACE <span>///</span></div><h2>Animation uploader<span>.</span></h2><p>Choose all three files to build a complete animation package.</p></div>
+          <div class="privacy-pill"><i></i> LOCAL UPLOADS</div>
+        </div>
         <div class="workspace">
-          <div class="workspace-head">
-            <div class="workspace-title"><span class="workspace-square">H</span><strong>MR H / STUDIO</strong><span class="workspace-title-divider"></span><span id="workspace-filename">Untitled project</span></div>
-            <div class="workspace-top-actions"><span class="format-pill">R6 .ANIM</span><button type="button" class="mini-button" id="new-project">New</button><button type="button" class="mini-button" id="save-browser">Save locally</button><button type="button" class="mini-button" id="delete-browser" title="Remove the selected clip from this browser">Remove</button><button type="button" class="mini-button mini-button-accent" id="export-file">Export .anim ↓</button></div>
-          </div>
-          <div class="workspace-body">
-            <aside class="library-pane">
-              <div class="pane-heading"><span>01 / LIBRARY</span><span id="library-count">0 FILES</span></div>
-              <div class="library-intro"><strong>My animations</strong><p>Files saved in this browser or imported this session.</p></div>
-              <div class="search-wrap"><span aria-hidden="true">⌕</span><input id="library-search" type="search" placeholder="Search animations…" aria-label="Search animations"></div>
-              <div id="library-items" class="library-items" aria-live="polite"></div>
-              <div class="pane-bottom">
-                <label class="drop-area" id="drop-zone" for="file-input"><span class="drop-icon">↥</span><b>Drop .anim files here</b><small>or click to browse</small></label>
-                <button id="demo-button" class="text-action" type="button">✦ Load a sample animation</button>
+          <div class="workspace-bar"><div class="workspace-title"><span class="small-mark">H</span><strong>PACK BUILDER</strong><i></i><span id="workspace-name">New animation pack</span></div><div class="workspace-actions"><span id="file-progress">0 / 3 FILES</span><button id="reset-pack" type="button" class="mini-btn">Reset</button></div></div>
+          <div class="workspace-content">
+            <section class="file-pane" aria-labelledby="files-heading">
+              <div class="pane-header"><span id="files-heading">01 / REQUIRED FILES</span><small>ALL THREE NEEDED</small></div>
+              <div class="file-instructions">Upload one file for each component. The file names are preserved inside your download.</div>
+              <div class="upload-list">
+                <button id="pick-anim" type="button" class="upload-card" aria-label="Choose animation file">
+                  <span class="upload-icon anim">◈</span>
+                  <span class="upload-card-text"><b>Animation file <em>Required</em></b><small id="anim-name">Choose an .anim file</small></span>
+                  <span class="upload-card-action" id="anim-indicator">↑</span>
+                </button>
+                <button id="pick-mp3" type="button" class="upload-card" aria-label="Choose MP3 music">
+                  <span class="upload-icon music">♫</span>
+                  <span class="upload-card-text"><b>Music / soundtrack <em>Required</em></b><small id="mp3-name">Choose an .mp3 file</small></span>
+                  <span class="upload-card-action" id="mp3-indicator">↑</span>
+                </button>
+                <button id="pick-lua" type="button" class="upload-card" aria-label="Choose Lua module">
+                  <span class="upload-icon lua">⌘</span>
+                  <span class="upload-card-text"><b>Lua animation module <em>Required</em></b><small id="lua-name">Choose a .lua file</small></span>
+                  <span class="upload-card-action" id="lua-indicator">↑</span>
+                </button>
               </div>
-            </aside>
-            <section class="viewport-pane" aria-label="3D animation preview">
-              <div class="pane-heading viewport-heading"><span>02 / R6 VIEWPORT</span><div class="viewport-tools"><button id="reset-camera" type="button" title="Reset camera orbit" aria-label="Reset camera orbit">↻</button><button id="toggle-grid" type="button" title="Toggle floor grid" aria-label="Toggle floor grid" class="tool-active">▦</button><button id="png-export" type="button" title="Save viewport as PNG" aria-label="Save viewport as PNG">▧</button></div></div>
-              <div class="viewport-canvas-wrap" id="viewport-canvas-wrap">
-                <canvas id="rig-canvas" aria-label="Interactive 3D R6 animation preview; drag to orbit"></canvas>
-                <div class="viewport-chip chip-left">● <span id="viewport-mode">R6 PREVIEW</span></div>
-                <div class="viewport-chip chip-right">DRAG TO ROTATE ↔</div>
-                <div class="axis-key"><span class="axis-x">X</span><span class="axis-y">Y</span><span class="axis-z">Z</span></div>
+              <div class="drop-area" id="drop-zone" tabindex="0" role="button" aria-label="Drop the animation, music and Lua files or choose files">
+                <div class="drop-art">↥</div><strong>Drop the three files here</strong><small>or click to browse · .anim / .mp3 / .lua</small>
               </div>
-              <div class="playback">
-                <div class="playback-controls">
-                  <button type="button" id="play-button" class="round-play" aria-label="Play animation">▶</button>
-                  <button type="button" id="stop-button" class="icon-button" aria-label="Stop animation" title="Stop">■</button>
-                  <span class="playback-time" id="time-current">00:00.00</span>
-                  <div class="scrub-container"><input id="time-scrub" type="range" min="0" max="1" step="0.001" value="0" aria-label="Animation playback time"></div>
-                  <span class="playback-time" id="time-end">00:01.00</span>
+              <div class="file-help"><span class="help-dot">i</span><p>These must belong to the same animation. The Lua module determines how the animation and music are used in Mr H.</p></div>
+            </section>
+            <section class="details-pane" aria-labelledby="details-heading">
+              <div class="pane-header"><span id="details-heading">02 / PACKAGE DETAILS</span><small>READY TO BUNDLE</small></div>
+              <div class="details-content">
+                <label class="field">ANIMATION NAME<input type="text" maxlength="80" id="pack-title" placeholder="e.g. Moonwalk Dance" autocomplete="off"></label>
+                <label class="field">CREATOR <span class="optional">(OPTIONAL)</span><input type="text" maxlength="80" id="pack-author" placeholder="Your name" autocomplete="off"></label>
+                <label class="field">NOTES <span class="optional">(OPTIONAL)</span><textarea id="pack-notes" rows="3" maxlength="800" placeholder="Describe the animation, which rig it supports, or any install notes..."></textarea></label>
+                <div class="preview-block">
+                  <div class="preview-title"><span>♫ MUSIC PREVIEW</span><span id="audio-label">NO MP3 SELECTED</span></div>
+                  <audio id="music-preview" controls preload="none"></audio>
+                  <p>Preview the soundtrack here before bundling.</p>
                 </div>
-                <div class="playback-options"><label class="inline-check"><input type="checkbox" id="loop-toggle" checked><span>Loop</span></label><label class="speed-label">Speed <select id="speed-select" aria-label="Playback speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option selected value="1">1×</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label><span class="playback-tip">Mouse drag to orbit · Scroll to zoom</span></div>
-              </div>
-              <div class="timeline">
-                <div class="timeline-heading"><span>KEYFRAME TIMELINE</span><div><button class="timeline-button" id="add-frame" type="button">+ Add frame</button><button class="timeline-button" id="delete-frame" type="button">Delete selected</button></div></div>
-                <div id="timeline-track" class="timeline-track" role="group" aria-label="Keyframes"></div>
+                <div class="summary">
+                  <div><span>ANIMATION</span><strong id="summary-anim">Missing</strong></div>
+                  <div><span>MUSIC</span><strong id="summary-mp3">Missing</strong></div>
+                  <div><span>MODULE</span><strong id="summary-lua">Missing</strong></div>
+                </div>
+                <button type="button" id="download-pack" class="button primary full" disabled>Download animation pack .zip <span>↓</span></button>
+                <button type="button" id="save-pack" class="button secondary full" disabled>Save to my browser library</button>
+                <p class="local-notice">Files stay in your browser. Downloading bundles the three original files into one ZIP; it does not upload them publicly.</p>
               </div>
             </section>
-            <aside class="inspector-pane">
-              <div class="pane-heading"><span>03 / INSPECTOR</span><span class="inspector-bubble">LIVE EDIT</span></div>
-              <div class="inspector-content">
-                <div class="inspector-section"><span class="field-title">ANIMATION NAME</span><input type="text" id="clip-name" maxlength="80" value="Untitled Animation" aria-label="Animation name"></div>
-                <div class="clip-stats"><div><span>KEYFRAMES</span><strong id="stat-frames">2</strong></div><div><span>DURATION</span><strong id="stat-duration">1.00s</strong></div></div>
-                <div class="inspector-divider"></div>
-                <div class="inspector-section"><span class="field-title">SELECTED KEYFRAME</span><div class="field-inline"><input type="number" id="frame-time" min="0" max="300" step="0.05" value="0" aria-label="Selected keyframe time"><span class="unit">seconds</span></div></div>
-                <div class="inspector-section"><span class="field-title">BODY PART</span><select id="joint-select" aria-label="Body part to edit"><option>Torso</option><option>Head</option><option>Left Arm</option><option>Right Arm</option><option>Left Leg</option><option>Right Leg</option></select></div>
-                <div class="transform-title"><span>POSITION</span><span>STUDS</span></div>
-                <div id="position-controls" class="transform-controls"></div>
-                <div class="transform-title"><span>ROTATION</span><span>DEGREES</span></div>
-                <div id="rotation-controls" class="transform-controls"></div>
-                <button type="button" id="reset-pose" class="outline-button">↺ Reset joint transform</button>
-                <p class="inspector-note">Edits update the selected keyframe. Export to use the animation in Mr H Reanimate.</p>
-              </div>
-            </aside>
           </div>
-          <div class="workspace-status"><span><span class="status-indicator"></span><span id="status-line">Ready · Sample animation loaded</span></span><span id="status-extra">All processing happens in your browser</span></div>
+          <div class="workspace-footer"><span><i class="ok-led"></i><span id="status-line">Select your .anim, .mp3, and .lua files.</span></span><span id="storage-note">Private · No server upload</span></div>
         </div>
       </div>
     </section>
 
-    <section id="how-it-works" class="how-section container">
-      <div class="section-overline">THE PROCESS <span>///</span></div>
-      <h2>From file to motion<br><span>in three steps.</span></h2>
-      <div class="steps"><div class="step"><span>01</span><h3>Import</h3><p>Choose a .anim file from Mr H's animation folder or drop it directly into the studio.</p></div><div class="step"><span>02</span><h3>Customize</h3><p>Preview the R6 rig, select a keyframe, and adjust any limb's position and rotation.</p></div><div class="step"><span>03</span><h3>Export</h3><p>Save your edited .anim and move it into <code>UhhhhhhReanim/Content/Anims/</code>.</p></div></div>
+    <section class="library-section container" id="library">
+      <div class="section-top"><div><div class="eyebrow">YOUR COLLECTION <span>///</span></div><h2>My saved packs<span>.</span></h2><p>Animation packs saved in this browser. Click a pack to load it.</p></div><span class="count-pill" id="library-count">0 PACKS</span></div>
+      <div id="saved-packs" class="saved-packs" aria-live="polite"><div class="empty-library">Nothing saved yet. Make a pack above, then select “Save to my browser library.”</div></div>
     </section>
+
+    <section class="guide-section" id="guide"><div class="container">
+      <div class="eyebrow">THE FORMAT <span>///</span></div><h2>What makes an animation<br><span>work with Mr H?</span></h2>
+      <div class="guide-grid">
+        <article><span>01</span><div class="guide-icon">◈</div><h3>Animation .anim</h3><p>The actual keyframes and movement data in the format used by the Uhhhhhh-based Mr H engine.</p></article>
+        <article><span>02</span><div class="guide-icon">♫</div><h3>Music .mp3</h3><p>The audio that goes with the animation. Include the correct soundtrack file.</p></article>
+        <article><span>03</span><div class="guide-icon">⌘</div><h3>Module .lua</h3><p>The Lua source connecting the animation, playback behavior, and music. It must match the engine's module API.</p></article>
+      </div>
+      <div class="guide-note"><strong>Important:</strong> This uploader packages files—it does not automatically generate a working Lua module or install the pack in Roblox. Check the Lua code before running it. Compatibility requires the module to reference the correct assets.</div>
+    </div></section>
   </main>
-  <footer class="site-footer"><div class="container footer-inner"><div><span class="footer-brand">H<span>.</span></span><strong>MR H ANIMATION STUDIO</strong><p>Made for the community. Not affiliated with Roblox or mspaint.cc.</p></div><div><a href="https://github.com/KoSmoXD/mrhreanimate" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="#studio">Launch studio ↑</a></div></div></footer>
-  <input id="file-input" type="file" accept=".anim,application/octet-stream" multiple hidden>
+
+  <footer class="footer"><div class="container footer-inner"><div><div class="footer-logo">H<span>.</span> <b>MR H ANIMATIONS</b></div><p>Independent fan tool. Not affiliated with Roblox or mspaint.cc.</p></div><div><a href="#uploader">Create pack ↑</a><a href="https://github.com/KoSmoXD/mrhreanimate" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></div></footer>
+  <input type="file" id="anim-input" accept=".anim,application/octet-stream" hidden>
+  <input type="file" id="mp3-input" accept=".mp3,audio/mpeg" hidden>
+  <input type="file" id="lua-input" accept=".lua,text/plain" hidden>
+  <input type="file" id="all-input" accept=".anim,.mp3,.lua" multiple hidden>
   <div id="toast-stack" role="status" aria-live="polite"></div>
 </body>
 </html>
