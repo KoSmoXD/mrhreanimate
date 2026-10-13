@@ -6,14 +6,16 @@
 <meta name="theme-color" content="#050505">
 <meta name="description" content="Browse, upload, and download community animation packs for Mr H Reanimate.">
 <title>Mr H Animations</title>
-<meta name="mrh-frontend-version" content="raw-rbxm-converter-20261013">
+<meta name="mrh-frontend-version" content="preview-3d-20261013">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./styles.css?v=raw-rbxm-converter-20261013">
-<script src="./app.js?v=raw-rbxm-converter-20261013" defer></script>
-<script src="./make.js?v=raw-rbxm-converter-20261013" defer></script>
-<script src="./moveset.js?v=raw-rbxm-converter-20261013" defer></script>
-<script src="./community.js?v=raw-rbxm-converter-20261013" defer></script>
-<script src="./bulk.js?v=raw-rbxm-converter-20261013" defer></script>
+<link rel="stylesheet" href="./styles.css?v=preview-3d-20261013">
+<link rel="stylesheet" href="./preview.css?v=preview-3d-20261013">
+<script src="./app.js?v=preview-3d-20261013" defer></script>
+<script src="./make.js?v=preview-3d-20261013" defer></script>
+<script src="./moveset.js?v=preview-3d-20261013" defer></script>
+<script src="./community.js?v=preview-3d-20261013" defer></script>
+<script src="./bulk.js?v=preview-3d-20261013" defer></script>
+<script src="./preview.js?v=preview-3d-20261013" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -34,6 +36,7 @@
     <button type="button" id="tab-make" class="site-tab" role="tab" aria-controls="make-panel" aria-selected="false">Make Animation</button>
     <button type="button" id="tab-rbxm2anim" class="site-tab" role="tab" aria-controls="rbxm2anim-panel" aria-selected="false">RBXM2ANIM</button>
     <button type="button" id="tab-moveset" class="site-tab" role="tab" aria-controls="moveset-panel" aria-selected="false">Moveset Maker</button>
+    <button type="button" id="tab-preview" class="site-tab" role="tab" aria-controls="preview-panel" aria-selected="false">3D Preview</button>
   </nav>
   <section id="browse-panel" role="tabpanel" aria-labelledby="tab-browse">
   <div class="gallery-head">
@@ -215,7 +218,46 @@
             <code>UhhhhhhReanim/Content/Sounds/</code>
             <code>UhhhhhhReanim/Modules/</code>
           </div>
-          <p class="make-disclaimer">The Lua module uses Uhhhhhh's <code>AnimLib.Animator</code> and <code>MOVESET</code> API. It doesn't modify Roblox server-side animation replication. Preview and test your downloaded moveset inside Mr H Reanimate.</p>
+          <p class="make-disclaimer">The Lua module uses Uhhhhhh's <code>AnimLib.Animator</code> and <code>MOVESET</code> API. It doesn't modify Roblox server-side animation replication. Preview your downloaded animation in the 3D Preview tab, then test it inside Mr H Reanimate.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="preview-panel" class="preview-panel" role="tabpanel" aria-labelledby="tab-preview" hidden>
+    <header class="preview-heading"><div><div class="preview-overline">MR H ANIMATIONS / R6 PREVIEW</div><h1>3D Animation Preview</h1>
+      <p>Play actual Uhhhhhh <code>.anim</code> R6 keyframes in a movable 3D viewer. Preview community dances and movesets, or select tracks from your device. No downloaded Lua is executed.</p></div></header>
+    <div class="preview-layout">
+      <div class="preview-canvas-box">
+        <canvas id="preview-stage" role="img" aria-label="Interactive 3D R6 dummy animation viewer. Drag horizontally to orbit the camera."></canvas>
+        <div id="preview-track-meta" class="preview-track-meta">Select a local track or a community upload.</div>
+        <div class="preview-controls">
+          <div class="preview-control-line"><button type="button" id="preview-play" class="primary action">Play</button><button type="button" id="preview-restart" class="action">Restart</button>
+            <label class="preview-check"><input id="preview-loop" type="checkbox" checked> Loop</label><output id="preview-timing">0.00s / 0.00s</output></div>
+          <label for="preview-scrub">Timeline <span>Drag to scrub</span></label><input id="preview-scrub" type="range" min="0" max="100" step=".1" value="0" aria-label="Animation timeline">
+          <div class="preview-settings">
+            <div><label for="preview-speed">Speed <output id="preview-speed-value">1.00×</output></label><input type="range" id="preview-speed" min=".25" max="3" step=".25" value="1"></div>
+            <div><label for="preview-angle">Camera rotation <span>0–360°</span></label><input type="range" id="preview-angle" min="0" max="360" step="1" value="25"></div>
+          </div>
+          <div class="preview-source-tip">Drag left or right on the viewer to rotate the dummy. Use your mouse wheel to adjust camera elevation. Playback is a visual approximation of R6 keyframe poses.</div>
+        </div>
+      </div>
+      <aside class="preview-source">
+        <div class="preview-source-card">
+          <h2>Community uploads</h2><p>Load tracks from dances or movesets already published on Mr H Animations.</p>
+          <label for="preview-kind">Library<select id="preview-kind"><option value="animations">Dances</option><option value="movesets">Movesets</option></select></label>
+          <label for="preview-published">Uploaded pack<select id="preview-published"><option value="">Loading uploads…</option></select></label>
+          <div class="preview-source-row"><button id="preview-load" type="button" class="primary action">Load Tracks</button><button id="preview-refresh" type="button" class="action">Refresh</button></div>
+        </div>
+        <div class="preview-source-card">
+          <h2>Preview your own .anim</h2><p>Files stay inside your browser. Select multiple .anim tracks to switch between them.</p>
+          <label for="preview-local">Animation files<input type="file" id="preview-local" accept=".anim" multiple></label>
+        </div>
+        <div class="preview-source-card">
+          <h2>Animation tracks</h2><label for="preview-tracks">Choose track<select id="preview-tracks" disabled><option>No tracks loaded</option></select></label>
+          <input id="preview-source" type="hidden" value="community">
+          <div id="preview-status" role="status" aria-live="polite">Choose a community animation or local .anim file.</div>
+          <p class="preview-source-tip">Only the binary animation is read. Community Lua modules are never downloaded or run by the preview.</p>
         </div>
       </aside>
     </div>
