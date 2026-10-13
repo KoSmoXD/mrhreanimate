@@ -272,6 +272,29 @@ body::selection{background:#c8c8cf;color:#070707}
 
 /* Keep effects inexpensive on touch screens, and fully disable for reduced motion. */
 @media(hover:none){.upload-card:hover,.saved-card:hover,.button:hover{transform:none}}
+
+/* The three required assets fill this line with a smooth one-third step. */
+.pack-progress{height:3px;background:#1b1b1e;overflow:hidden;position:relative}
+#pack-progress-fill{
+  display:block;height:100%;width:0%;
+  background:linear-gradient(90deg,#797982,#ededf2);
+  box-shadow:0 0 15px rgba(255,255,255,.24);
+  transition:width .72s var(--ease-out),background .4s ease;
+}
+.workspace.pack-ready #pack-progress-fill{
+  background:linear-gradient(90deg,#5ea580,#a0ecc1);
+  box-shadow:0 0 15px rgba(139,225,177,.32);
+}
+.saved-card{animation:savedCardAppear .55s var(--ease-out) both}
+.saved-card:nth-child(2){animation-delay:.06s}
+.saved-card:nth-child(3){animation-delay:.12s}
+.saved-card:nth-child(4){animation-delay:.18s}
+.saved-card:nth-child(5){animation-delay:.24s}
+@keyframes savedCardAppear{
+  from{opacity:0;transform:translate3d(0,12px,0)}
+  to{opacity:1;transform:translate3d(0,0,0)}
+}
+
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .js-motion .motion-reveal{opacity:1;transform:none}
