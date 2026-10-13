@@ -155,11 +155,32 @@ app.post('/api/register',registerLimit,async(req,res,next)=>{
   const username=String(req.body?.username||'').trim(),password=req.body?.password;
   if(!usernameValid(username))return fail(res,400,'Username must be 3-24 characters, letters/numbers/underscore.');
   if(!passwordValid(password))return fail(res,400,'Password must be 10-72 UTF-8 bytes.');
+  if(ownerIsReserved(username))return fail(res,403,'Mr_H is reserved for the server owner. Use Owner setup.');
   if(db.prepare('SELECT id FROM users WHERE username=?').get(username))return fail(res,409,'Username is already taken.');
   const hash=await bcrypt.hash(password,12),user={id:crypto.randomUUID(),username};
   try{db.prepare('INSERT INTO users(id,username,password_hash,created_at) VALUES(?,?,?,?)').run(user.id,username,hash,Date.now());}
   catch(e){if(e.code?.startsWith('SQLITE_CONSTRAINT'))return fail(res,409,'Username is already taken.');throw e;}
   issueSession(res,user.id);res.status(201).json({user});
+ }catch(e){next(e);}
+});
+// One-time secure setup: the owner code only exists in the server environment,
+// and only this endpoint can grant admin permissions.
+app.post('/api/owner/claim',ownerLimit,async(req,res,next)=>{
+ try{
+  const key=req.body?.setupKey,password=req.body?.password;
+  if(!ownerClaimKeyMatches(key))return fail(res,403,'Invalid owner setup key.');
+  if(!passwordValid(password))return fail(res,400,'Owner password must be 10-72 UTF-8 bytes.');
+  if(db.prepare("SELECT id FROM users WHERE role='owner' LIMIT 1").get())
+   return fail(res,409,'Owner account already claimed. Log in as Mr_H.');
+  const existing=db.prepare('SELECT id FROM users WHERE username=?').get(OWNER_NAME);
+  const hash=await bcrypt.hash(password,12),ownerId=existing?.id||crypto.randomUUID();
+  db.transaction(()=>{
+   if(existing)db.prepare("UPDATE users SET username=?,password_hash=?,role='owner' WHERE id=?").run(OWNER_NAME,hash,ownerId);
+   else db.prepare("INSERT INTO users(id,username,password_hash,created_at,role) VALUES(?,?,?,?,'owner')").run(ownerId,OWNER_NAME,hash,Date.now());
+   db.prepare('DELETE FROM sessions WHERE user_id=?').run(ownerId);
+  })();
+  issueSession(res,ownerId);
+  res.status(201).json({user:publicUser(db.prepare('SELECT * FROM users WHERE id=?').get(ownerId))});
  }catch(e){next(e);}
 });
 app.post('/api/login',authLimit,async(req,res,next)=>{
@@ -180,6 +201,8 @@ app.patch('/api/me',auth,authLimit,async(req,res,next)=>{
   const username=String(req.body?.username||'').trim();
   const current=req.body?.currentPassword,newPassword=req.body?.newPassword;
   if(!usernameValid(username))return fail(res,400,'Username must be 3-24 characters, letters/numbers/underscore.');
+  if(ownerIsReserved(username)&&req.user.role!=='owner')return fail(res,403,'The name Mr_H is reserved for the server owner.');
+  if(req.user.role==='owner'&&username!==OWNER_NAME)return fail(res,403,'The owner username cannot be changed.');
   if(typeof current!=='string')return fail(res,400,'Current password is required.');
   if(newPassword&&!passwordValid(newPassword))return fail(res,400,'New password must be 10-72 UTF-8 bytes.');
   const own=db.prepare('SELECT * FROM users WHERE id=?').get(req.user.id);
@@ -188,17 +211,19 @@ app.patch('/api/me',auth,authLimit,async(req,res,next)=>{
   const hash=newPassword?await bcrypt.hash(newPassword,12):own.password_hash;
   db.prepare('UPDATE users SET username=?,password_hash=? WHERE id=?').run(username,hash,own.id);
   if(newPassword){db.prepare('DELETE FROM sessions WHERE user_id=?').run(own.id);issueSession(res,own.id);}
-  res.json({user:{id:own.id,username}});
+  res.json({user:publicUser({...own,username})});
  }catch(e){next(e);}
 });
 app.delete('/api/me',auth,authLimit,async(req,res,next)=>{
  try{
   const own=db.prepare('SELECT * FROM users WHERE id=?').get(req.user.id);
   if(!own||typeof req.body?.password!=='string'||!await bcrypt.compare(req.body.password,own.password_hash))return fail(res,403,'Current password is incorrect.');
+  if(own.role==='owner')return fail(res,403,'The owner account cannot be deleted.');
   const ids=db.prepare('SELECT id FROM animations WHERE user_id=?').all(own.id).map(x=>x.id);
   db.prepare('DELETE FROM users WHERE id=?').run(own.id);
   expireCookie(res);
   await Promise.all(ids.map(id=>fsp.rm(path.join(UPLOADS,id),{recursive:true,force:true}).catch(()=>{})));
+  await fsp.rm(avatarFile(own.id),{force:true}).catch(()=>{});
   res.json({ok:true});
  }catch(e){next(e);}
 });
