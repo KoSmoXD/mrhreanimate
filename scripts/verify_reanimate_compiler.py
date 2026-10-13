@@ -29,7 +29,7 @@ def published_source() -> str:
         (b - ((i * 73 + 91) % 256)) % 256
         for i, b in enumerate(encoded_bytes, start=1)
     ).decode("utf-8")
-    if 'local VERSION = "2.8.1"' not in decoded:
+    if 'local VERSION = "2.8.2"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
@@ -40,6 +40,11 @@ def published_source() -> str:
         raise AssertionError("Online Modules local scope not closed")
     if end > decoded.index("    -- CUSTOM UI COLORS", begin):
         raise AssertionError("Online Modules leaks locals into the rest of the engine")
+    if "(function()\\n    HatReanimator.MrHCustomOverrides" not in decoded:
+        raise AssertionError("Advanced Tools must run in its own function closure")
+    if "end)() -- close isolated Advanced Tools function" not in decoded:
+        raise AssertionError("Advanced Tools isolated function is not closed")
+
     return decoded
 
 def long_literal(s: str) -> str:
