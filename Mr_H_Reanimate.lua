@@ -203,7 +203,7 @@ HatReanimator.Permadeath = SaveData.Reanimator.MrHExperimentalPermadeath == true
 		SaveData.Reanimator.HatsPatchmahub = not val
 	end)]==],
         [==[UI.CreateText(parent, "EXPERIMENTAL LOCAL HOLD: retain original Humanoid instead of killing it. Local-only and NOT real FE permadeath. Keep Hat Collide OFF; rejoin if stuck.", 10, Enum.TextXAlignment.Center)
-	local permaSwitch = UI.CreateSwitch(parent, "Experimental Permadeath (Local Hold)", HatReanimator.Permadeath)
+	local permaSwitch = UI.CreateSwitch(parent, "Experimental Permadeath", HatReanimator.Permadeath)
 	permaSwitch.Changed:Connect(function(val)
 		HatReanimator.Permadeath = val
 		SaveData.Reanimator.MrHExperimentalPermadeath = val
