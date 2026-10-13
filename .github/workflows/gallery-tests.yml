@@ -34,6 +34,8 @@ jobs:
         run: |
           node --check backend/server.js
           node --check docs/app.js
+          node --check docs/make.js
+          node --check docs/preview.js
       - name: Run gallery integration tests
         run: npm test
         working-directory: backend
