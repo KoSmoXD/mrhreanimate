@@ -257,13 +257,16 @@ function validateAnim(b){
  const f32=()=>{need(4);const x=b.readFloatLE(i);i+=4;if(!Number.isFinite(x)||Math.abs(x)>1000000)throw Error('Invalid .anim float.');return x;};
  const str=()=>{const n=u16();if(n>512)throw Error('Oversized animation string.');need(n);i+=n;};
  str();const count=u32();
+ let duration=0;
  if(count<1||count>1500)throw Error('Invalid keyframe count.');
  for(let f=0;f<count;f++){
   const time=f32();if(time<0||time>300)throw Error('Animation time outside supported range.');
+  duration=Math.max(duration,time);
   const n=u32();if(n>100)throw Error('Too many poses.');
   for(let p=0;p<n;p++){str();f32();str();str();for(let k=0;k<12;k++)f32();}
  }
  if(i!==b.length)throw Error('Unexpected data at end of animation.');
+ return {duration,count};
 }
 function card(row){
  return {id:row.id,userId:row.user_id,username:row.username,
@@ -418,7 +421,8 @@ app.post('/api/make-moveset',movesetLimiter,(req,res)=>{
     total+=file.size;
     // Reuse the established Uhhhhhh binary track validator.
     const data=await fsp.readFile(file.path);
-    validateAnim(data);
+    const info=validateAnim(data);
+    if(info.duration<0.05)throw Error(role+' needs a duration of at least 0.05 seconds for smooth looping.');
     tracks[role]=file;
    }
    const music=files.music?.[0]||null;
