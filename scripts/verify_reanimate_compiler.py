@@ -29,7 +29,7 @@ def published_source() -> str:
         (b - ((i * 73 + 91) % 256)) % 256
         for i, b in enumerate(encoded_bytes, start=1)
     ).decode("utf-8")
-    if 'local VERSION = "2.8.3"' not in decoded:
+    if 'local VERSION = "2.8.4"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
@@ -68,6 +68,10 @@ def generate(target_dir: pathlib.Path):
         upstream = response.read().decode("utf-8")
     if len(upstream) < 150000:
         raise AssertionError("Pinned upstream source is unexpectedly small")
+    if 'ForceModuleReload("SKIPHASH")' not in rewriting:
+        raise AssertionError("Boot must skip the remote hash scan.")
+    if "Hash request timed out after 6 seconds" not in rewriting:
+        raise AssertionError("Manual remote hash scan needs a timeout.")
     if not target_dir.is_dir():
         target_dir.mkdir(parents=True)
     test_script = (
