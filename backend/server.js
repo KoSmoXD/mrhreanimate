@@ -220,7 +220,7 @@ app.get('/api/animations/:id/download',(req,res,next)=>{
  res.setHeader('Cache-Control','no-store');
  const archive=archiver('zip',{zlib:{level:0}});
  archive.on('error',e=>{if(res.headersSent)res.destroy(e);else next(e);});
- req.on('close',()=>{if(!res.writableEnded)archive.abort();});
+ res.on('close',()=>{if(!res.writableEnded)archive.abort();});
  archive.pipe(res);
  archive.file(path.join(dir,'anim'),{name:'UhhhhhhReanim/Content/Anims/'+safeName(item.anim_name)});
  archive.file(path.join(dir,'mp3'),{name:'UhhhhhhReanim/Content/Sounds/'+safeName(item.mp3_name)});
