@@ -23,6 +23,17 @@ Open `http://localhost:3000` for local testing. For an **internet-facing** site,
 
 You can deploy the Dockerfile to a service that supports persistent volumes (or a VPS with Docker). Set `PUBLIC_ORIGIN=https://your-real-domain.example` to require that exact origin on state-changing requests, and `DATA_DIR=/data`.
 
+### Railway deployment (persistent accounts and uploads)
+
+1. Open [Railway](https://railway.com/) and create a new project with **Deploy from GitHub repo**.
+2. Select **KoSmoXD/mrhreanimate**, branch **main**, root directory **/**. Railway detects the repository root Dockerfile.
+3. Add a **volume** mounted at `/data`. This is essential: it stores all passwords (as hashes), session data, animation uploads, and gallery records across redeploys.
+4. Under **Variables**, configure `NODE_ENV=production`, `DATA_DIR=/data`, and `RAILWAY_RUN_UID=0` (Railway volumes are root-owned).
+5. Under **Settings → Networking**, generate a public HTTPS domain. Optionally set `PUBLIC_ORIGIN` to the exact generated URL (such as `https://your-service.up.railway.app`).
+6. Deploy and open `https://your-domain/api/health`; it should return `{"ok":true}`. Then test registering, uploading a valid pack, downloading the ZIP, and updating account settings.
+
+Do **not** set the web service's root directory to `/backend`; the Dockerfile and `docs` are at the repository root. The site and API must be served from the **same origin** for session cookies to work.
+
 ### Option B: Node.js
 
 ```sh
