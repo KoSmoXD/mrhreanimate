@@ -1,0 +1,44 @@
+name: Mr H Reanimate Luau Compile
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Mr_H_Reanimate.lua'
+      - 'scripts/verify_reanimate_compiler.py'
+      - '.github/workflows/reanimate-compile.yml'
+  pull_request:
+    paths:
+      - 'Mr_H_Reanimate.lua'
+      - 'scripts/verify_reanimate_compiler.py'
+      - '.github/workflows/reanimate-compile.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Mr H source
+        uses: actions/checkout@v4
+      - name: Checkout pinned Luau compiler
+        uses: actions/checkout@v4
+        with:
+          repository: luau-lang/luau
+          ref: 8387cfb461b38ce09e37c1e4c2811538ef1bf5cb
+          path: .ci/luau
+      - name: Build Luau CLI and compiler
+        run: |
+          cmake -S .ci/luau -B .ci/luau-build -DCMAKE_BUILD_TYPE=Release -DLUAU_BUILD_TESTS=OFF
+          cmake --build .ci/luau-build --target Luau.Repl.CLI Luau.Compile.CLI --parallel 4
+      - name: Reconstruct pinned patched engine
+        run: |
+          python3 scripts/verify_reanimate_compiler.py .ci
+          .ci/luau-build/luau .ci/rewrite_verify.luau > .ci/patched_engine.luau
+          test -s .ci/patched_engine.luau
+      - name: Compile full patched engine
+        run: |
+          .ci/luau-build/luau-compile .ci/patched_engine.luau > /dev/null
+          echo "Patched upstream engine compiles within Luau register limits."
