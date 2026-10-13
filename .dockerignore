@@ -1,0 +1,7 @@
+**
+!backend/
+!backend/**
+!docs/
+!docs/**
+backend/node_modules/
+backend/data/
