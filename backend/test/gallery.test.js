@@ -125,7 +125,7 @@ test('owner claim is reserved and one-time; avatar upload and owner moderation w
  const ownerId=r.body.user.id;
  const image=await api('/users/'+ownerId+'/avatar');
  assert.equal(image.status,200);
- assert.match(image.response.headers.get('content-type'),'image/png');
+ assert.ok(image.response.headers.get('content-type').includes('image/png'));
  const ownerFile=new FormData();
  ownerFile.set('title','Official Mr_H dance');
  ownerFile.set('anim',new Blob([makeAnim()]),'Official.anim');
