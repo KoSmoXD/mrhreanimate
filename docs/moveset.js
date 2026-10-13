@@ -61,6 +61,7 @@
   if(name.length<2||name.length>64){showError('Enter a moveset name (2–64 characters).');return;}
   const data=new FormData();
   data.set('name',name);
+  data.set('description',$('moveset-description').value.trim());
   data.set('fade',$('moveset-fade').value);
   data.set('runSpeed',$('moveset-run-speed').value);
   let total=0;
