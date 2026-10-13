@@ -6,13 +6,12 @@ The website has been redesigned into a **black, minimal public animation browser
 
 Both **Make Animation (dance)** and **Moveset Maker** accept an optional description (up to 500 characters). The description is embedded in the generated Uhhhhhh Lua `m.Description` field and supports line breaks, quotes, and Unicode. When left empty, the original default description is used.
 
-## 3D Animation Preview (Mr H Reanimate v2.9)
+## 3D Animation Preview (Mr H Animations website)
 
-In **Advanced Tools > Online Modules**, each uploaded dance or moveset has a **Preview 3D** button. Opening it creates an isolated Roblox `ViewportFrame` containing a six-part R6 preview dummy. It downloads only the selected binary `.anim` track from the website's existing public per-file API; it **never executes the uploaded Lua module** or changes the live player rig.
+The **3D Preview** tab (`#3d-preview`) now displays a six-part R6 dummy in a browser-based 3D perspective viewer. Choose a published dance or moveset from the public catalog, select an individual `.anim` track, or open one or more local `.anim` files without uploading them. The tab supports play/pause, restart, timeline scrubbing, 0.25–3x speed, looping, and 360° mouse/touch orbit controls. Camera height can be adjusted by mouse wheel.
 
-For multi-animation movesets, the preview page lists all included `.anim` tracks. Controls include play/pause, restart, a scrub-able percentage timeline, 0.25–3x playback speed, looping, and a 360° orbit camera slider with mouse/touch horizontal drag. The UI indicates the track name, frame count and duration. The parser bounds animation size, keyframe and pose counts, durations, and numeric values. Back navigation halts playback and invalidates pending previews.
+Only binary animation assets are requested via the existing manifest and per-file endpoints; no third-party Lua or script is executed by the preview. The strict parser bounds asset size, pose count, keyframe count, time and numeric values. The in-game 3D preview and its UI have been removed from Mr H Reanimate's Online Modules page; installation of community modules remains unchanged.
 
-This is a preview of R6 keyframe poses, not a full physics simulation or in-game playback verification. It does not install files or run module code; installation still requires a separate confirmation.
 ## In-game Online Modules (Mr H Reanimate 2.8)
 
 Mr H Reanimate now has **Advanced Tools > Online Modules (Mr H Website)**. The page fetches public dance and moveset catalogs from `https://mrh-animation-web-production.up.railway.app/api/animations` and `/api/movesets`, shows their names, authors and descriptions, and allows paged browsing.
