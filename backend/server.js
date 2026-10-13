@@ -9,6 +9,7 @@ const multer=require('multer');
 const Database=require('better-sqlite3');
 const bcrypt=require('bcryptjs');
 const archiver=require('archiver');
+const {makeMoveset,ROLES}=require('./moveset-generator');
 const {execFile}=require('node:child_process');
 const {promisify}=require('node:util');
 const execFileAsync=promisify(execFile);
@@ -379,6 +380,88 @@ app.post('/api/make-animation',convertLimiter,(req,res)=>{
    if(!streamed&&folder)await fsp.rm(folder,{recursive:true,force:true}).catch(()=>{});
    if(res.headersSent)return res.destroy(error);
    return fail(res,400,'Conversion failed: '+String(error.message||error).slice(0,240));
+  }
+ });
+});
+
+// Create a Uhhhhhh-compatible MOVESET. The original binary .anim files are
+// preserved; no arbitrary user-supplied Lua is run server-side).
+const movesetLimiter=rateLimit({windowMs:3600000,limit:12,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Hourly moveset creation limit reached.'}});
+const movesetFields=[...ROLES.map(name=>({name,maxCount:1})),{name:'music',maxCount:1}];
+const movesetUploader=multer({
+ storage:multer.diskStorage({
+  destination(req,file,cb){cb(null,TMP);},
+  filename(req,file,cb){cb(null,crypto.randomUUID()+'.tmp');}
+ }),
+ limits:{fileSize:20*1048576,files:8,fields:3,parts:11},
+ fileFilter(req,file,cb){
+  const extension=path.extname(file.originalname).toLowerCase();
+  if(ROLES.includes(file.fieldname)&&extension==='.anim')return cb(null,true);
+  if(file.fieldname==='music'&&extension==='.mp3')return cb(null,true);
+  cb(new Error('Only .anim movement tracks and optional MP3 are supported.'));
+ }
+}).fields(movesetFields);
+app.post('/api/make-moveset',movesetLimiter,(req,res)=>{
+ movesetUploader(req,res,async error=>{
+  const files=req.files||{};
+  let completed=false;
+  try{
+   if(error)throw Error(error.code==='LIMIT_FILE_SIZE'?'File too large.':error.message||'Invalid moveset upload.');
+   if(!files.idle?.[0]||!files.walk?.[0])throw Error('Both Idle and Walk .anim files are required.');
+   const tracks={};
+   const name=String(req.body?.name||'').trim();
+   let total=0;
+   for(const role of ROLES){
+    const file=files[role]?.[0];
+    if(!file)continue;
+    if(file.size<8||file.size>8*1048576)throw Error(role+' animation must be between 8 bytes and 8 MB.');
+    total+=file.size;
+    // Reuse the established Uhhhhhh binary track validator.
+    const data=await fsp.readFile(file.path);
+    validateAnim(data);
+    tracks[role]=file;
+   }
+   const music=files.music?.[0]||null;
+   if(music){
+    if(music.size<128||music.size>20*1048576)throw Error('MP3 must be between 128 bytes and 20 MB.');
+    total+=music.size;
+    const handle=await fsp.open(music.path,'r'),header=Buffer.alloc(4);
+    try{await handle.read(header,0,4,0);}finally{await handle.close();}
+    if(!(header.toString('ascii',0,3)==='ID3'||(header[0]===255&&(header[1]&224)===224)))
+      throw Error('Music file is not recognized as MP3.');
+   }
+   if(total>50*1048576)throw Error('Moveset exceeds 50 MB total.');
+   const output=makeMoveset({
+    name,roles:tracks,music:!!music,
+    fade:req.body?.fade,runSpeed:req.body?.runSpeed
+   });
+   const zip=archiver('zip',{zlib:{level:0}});
+   zip.on('error',err=>res.destroy(err));
+   res.setHeader('Content-Type','application/zip');
+   res.setHeader('Cache-Control','no-store');
+   res.setHeader('Content-Disposition',
+      'attachment; filename="'+output.filename.replace(/\.lua$/,'.zip')+'"');
+   res.once('close',()=>{if(!res.writableEnded)zip.abort();});
+   for(const role of ROLES){
+    if(!tracks[role])continue;
+    zip.file(tracks[role].path,{name:'UhhhhhhReanim/Content/Anims/'+output.assets[role]});
+   }
+   if(music)zip.file(music.path,{name:'UhhhhhhReanim/Content/Sounds/'+output.assets.music});
+   zip.append(output.source,{name:'UhhhhhhReanim/Modules/'+output.filename});
+   zip.pipe(res);
+   completed=true;
+   await zip.finalize();
+  }catch(err){
+   if(!res.headersSent)return fail(res,400,String(err.message||err).slice(0,240));
+   res.destroy(err);
+  }finally{
+   // Disk entries must remain until ZIP streams finish reading.
+   if(!completed){await removeTmp(files);}
+   else{
+    const cleanup=()=>removeTmp(files);
+    if(res.writableFinished||res.destroyed)await cleanup();
+    else res.once('close',cleanup);
+   }
   }
  });
 });
