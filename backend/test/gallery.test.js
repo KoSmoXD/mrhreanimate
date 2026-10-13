@@ -186,3 +186,31 @@ test('Uhhhhhh Make Animation converts Roblox XML KeyframeSequence to install-rea
  const rejected=await api('/make-animation',{method:'POST',body:bad});
  assert.equal(rejected.status,400,'models without KeyframeSequence must fail safely');
 });
+
+test('Moveset Maker endpoint packages two valid tracks',async()=>{
+ const original=makeAnim();
+ const n=original.readUInt16LE(0);
+ const p=2+n+4;
+ const header=Buffer.from(original.subarray(0,p));
+ header.writeUInt32LE(2,2+n);
+ const frame=original.subarray(p);
+ const next=Buffer.from(frame);next.writeFloatLE(1,0);
+ const track=Buffer.concat([header,frame,next]);
+ const payload=new FormData();
+ payload.set('name','Walk Test');
+ payload.set('fade','0.20');
+ payload.set('runSpeed','16');
+ payload.set('idle',new Blob([track]),'idle.anim');
+ payload.set('walk',new Blob([track]),'walk.anim');
+ const answer=await api('/make-moveset',{method:'POST',body:payload});
+ assert.equal(answer.status,200,JSON.stringify(answer.body));
+ const zip=Buffer.from(await answer.response.arrayBuffer());
+ assert.equal(zip.readUInt32LE(0),0x04034b50);
+ for(const entry of ['MRH_Walk_Test_idle.anim','MRH_Walk_Test_walk.anim','MRH_Walk_Test_Moveset.lua'])
+  assert.ok(zip.includes(Buffer.from(entry)),'missing '+entry);
+ const invalid=new FormData();
+ invalid.set('name','Fail Case');invalid.set('fade','0.2');invalid.set('runSpeed','16');
+ invalid.set('idle',new Blob([track]),'idle.anim');
+ const bad=await api('/make-moveset',{method:'POST',body:invalid});
+ assert.equal(bad.status,400);
+});
