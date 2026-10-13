@@ -332,7 +332,17 @@ app.delete('/api/animations/:id',auth,async(req,res,next)=>{
   res.json({ok:true});
  }catch(e){next(e);}
 });
-app.use(express.static(WEB,{index:'index.html',dotfiles:'deny',maxAge:'1h'}));
+// HTML, JS and CSS are UI/auth critical: never cache old scripts after a deploy.
+app.use(express.static(WEB,{
+ index:'index.html',dotfiles:'deny',maxAge:0,
+ setHeaders(res,filePath){
+  if(/\.(?:html|js|css)$/i.test(filePath)){
+   res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');
+   res.setHeader('Pragma','no-cache');
+   res.setHeader('Expires','0');
+  }
+ }
+}));
 app.get('/',(req,res)=>res.sendFile(path.join(WEB,'index.html')));
 app.use((req,res)=>fail(res,404,'Not found.'));
 app.use((err,req,res,next)=>{
