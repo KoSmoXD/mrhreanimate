@@ -5,6 +5,7 @@ const crypto=require('node:crypto');
 const fs=require('node:fs');
 const os=require('node:os');
 const path=require('node:path');
+const zlib=require('node:zlib');
 const {spawn}=require('node:child_process');
 
 const port=23000+Math.floor(Math.random()*20000);
@@ -44,6 +45,35 @@ async function api(uri,options={}){
  if((r.headers.get('content-type')||'').includes('json'))json=await r.json();
  return {status:r.status,body:json,response:r};
 }
+
+function readZipText(zip,ending){
+ // ZIP central directory contains real sizes and offsets, even when streaming
+ // local headers use data descriptors and file data is compressed.
+ const footer=zip.lastIndexOf(Buffer.from([0x50,0x4b,0x05,0x06]));
+ assert.ok(footer>=0,'ZIP end-of-central-directory marker missing');
+ const count=zip.readUInt16LE(footer+10);
+ let cursor=zip.readUInt32LE(footer+16);
+ for(let i=0;i<count;i++){
+  assert.equal(zip.readUInt32LE(cursor),0x02014b50,'invalid ZIP central directory');
+  const compression=zip.readUInt16LE(cursor+10);
+  const compressedSize=zip.readUInt32LE(cursor+20);
+  const nameLength=zip.readUInt16LE(cursor+28);
+  const extraLength=zip.readUInt16LE(cursor+30);
+  const commentLength=zip.readUInt16LE(cursor+32);
+  const localOffset=zip.readUInt32LE(cursor+42);
+  const name=zip.subarray(cursor+46,cursor+46+nameLength).toString('utf8');
+  if(name.endsWith(ending)){
+   assert.equal(zip.readUInt32LE(localOffset),0x04034b50);
+   const dataStart=localOffset+30+zip.readUInt16LE(localOffset+26)+zip.readUInt16LE(localOffset+28);
+   const payload=zip.subarray(dataStart,dataStart+compressedSize);
+   const raw=compression===8?zlib.inflateRawSync(payload):payload;
+   return raw.toString('utf8');
+  }
+  cursor+=46+nameLength+extraLength+commentLength;
+ }
+ throw Error('ZIP entry ending '+ending+' not found');
+}
+
 function makeAnim(){
  const name=Buffer.from('Sit Test'),bone=Buffer.from('Torso'),style=Buffer.from('Linear'),dir=Buffer.from('In');
  const parts=[];
@@ -183,7 +213,7 @@ test('Uhhhhhh Make Animation converts Roblox XML KeyframeSequence to install-rea
  assert.ok(bytes.includes(Buffer.from('UhhhhhhReanim/Content/Anims/SitTest.anim')),'includes converted track');
  assert.ok(bytes.includes(Buffer.from('UhhhhhhReanim/Modules/')),'includes generated dance module');
  assert.ok(bytes.length>180,'ZIP should contain the animation and module');
- assert.ok(bytes.includes(Buffer.from('m.Description = '+JSON.stringify(danceDescription))),'dance module must contain exact description');
+ assert.ok(readZipText(bytes,'.lua').includes('m.Description = '+JSON.stringify(danceDescription)),'dance module must contain exact description');
  const bad=new FormData();
  bad.set('model',new Blob(['<roblox><Item class="Part"/></roblox>']),'NotAnimation.rbxmx');
  const rejected=await api('/make-animation',{method:'POST',body:bad});
@@ -213,7 +243,7 @@ test('Moveset Maker endpoint packages two valid tracks',async()=>{
  assert.equal(zip.readUInt32LE(0),0x04034b50);
  for(const entry of ['MRH_Walk_Test_idle.anim','MRH_Walk_Test_walk.anim','MRH_Walk_Test_Moveset.lua'])
   assert.ok(zip.includes(Buffer.from(entry)),'missing '+entry);
- assert.ok(zip.includes(Buffer.from('m.Description = '+JSON.stringify(movesetDescription))),'moveset Lua must contain exact description');
+ assert.ok(readZipText(zip,'.lua').includes('m.Description = '+JSON.stringify(movesetDescription)),'moveset Lua must contain exact description');
  const invalid=new FormData();
  invalid.set('name','Fail Case');invalid.set('fade','0.2');invalid.set('runSpeed','16');
  invalid.set('idle',new Blob([track]),'idle.anim');
