@@ -11,10 +11,15 @@ function lua(value){
  const sanitized=String(value||'').replace(/[^ -~]/g,' ').slice(0,100);
  return JSON.stringify(sanitized);
 }
-function makeMoveset({name,roles,music=false,fade=0.20,runSpeed=16}){
+function makeMoveset({name,description='',roles,music=false,fade=0.20,runSpeed=16}){
  if(typeof name!=='string'||name.trim().length<2||name.trim().length>64)
   throw Error('Moveset name must be 2-64 characters.');
  if(!roles?.idle||!roles?.walk)throw Error('Idle and Walk animations are required.');
+ if(typeof description!=='string')throw Error('Description must be text.');
+ description=description.trim();
+ if(Array.from(description).length>500||Buffer.byteLength(description,'utf8')>2000)
+  throw Error('Description must be 500 characters or fewer.');
+ const textDescription=description||'Custom R6 idle, walk and optional movement animations.';
  const safe=slug(name),assets={};
  for(const role of ROLES)if(roles[role])assets[role]='MRH_'+safe+'_'+role+'.anim';
  if(music)assets.music='MRH_'+safe+'_music.mp3';
@@ -32,7 +37,7 @@ function makeMoveset({name,roles,music=false,fade=0.20,runSpeed=16}){
   '    m.ModuleType = "MOVESET"',
   '    m.Name = '+lua(name.trim()),
   '    m.InternalName = '+lua('MRH_'+safe.toUpperCase()),
-  '    m.Description = "Custom R6 idle, walk and optional movement animations."',
+  '    m.Description = '+JSON.stringify(textDescription),
   '    m.Assets = {'+assetNames.map(lua).join(', ')+'}',
   '    m.Config = function(parent) end',
   '    local files = {',
