@@ -1,139 +1,85 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#050506">
-  <meta name="description" content="Create complete Mr H Reanimate animation packs with an .anim file, MP3 music, and Lua module.">
-  <title>Mr H Animations — Pack Hub</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css">
-  <script src="app.js" defer></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#050505">
+<meta name="description" content="Browse, upload, and download community animation packs for Mr H Reanimate.">
+<title>Mr H Animations</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./styles.css">
+<script src="./app.js" defer></script>
 </head>
 <body>
-  <div class="ambient" aria-hidden="true"></div>
-  <header class="topbar">
-    <div class="container nav">
-      <a href="#top" class="brand"><span class="mark">H<span>.</span></span><span>MR H <em>/ ANIMATIONS</em></span></a>
-      <nav aria-label="Main navigation">
-        <a href="#uploader">Upload</a>
-        <a href="#library">My packs</a>
-        <a href="#guide">Guide</a>
-      </nav>
-      <a class="nav-github" href="https://github.com/KoSmoXD/mrhreanimate" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+<header class="site-header">
+  <a class="logo" href="./" aria-label="Animations home"><span class="logo-mark">H.</span><span>ANIMATIONS</span></a>
+  <nav class="account-actions" aria-label="Account">
+    <span id="session-label" class="session-label" hidden></span>
+    <button id="upload-trigger" class="primary action" hidden>+ Upload</button>
+    <button id="login-trigger" class="action">Log in</button>
+    <button id="register-trigger" class="primary action">Sign up</button>
+    <button id="account-trigger" class="action" hidden>Account settings</button>
+    <button id="logout-trigger" class="action" hidden>Log out</button>
+  </nav>
+</header>
+<main class="main">
+  <div class="gallery-head">
+    <div><h1>Animations</h1><p>Community uploads. Choose a pack to download.</p></div>
+    <div class="filters"><input type="search" id="search" maxlength="80" placeholder="Search animations..." aria-label="Search animations"><button id="refresh" type="button" class="action" title="Refresh animations">↻</button></div>
+  </div>
+  <div id="connection-warning" class="connection-warning" hidden></div>
+  <div id="gallery" class="gallery" aria-live="polite"><div class="state-message">Loading animations...</div></div>
+  <div class="pagination"><button id="load-more" type="button" class="action" hidden>Load more</button></div>
+</main>
+
+<div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title" hidden>
+  <div class="modal-panel">
+    <div class="modal-header"><h2 id="auth-title">Log in</h2><button class="close" data-close="auth-modal" type="button" aria-label="Close">×</button></div>
+    <div class="auth-tabs"><button type="button" data-auth-tab="login" class="selected">Log in</button><button type="button" data-auth-tab="register">Sign up</button></div>
+    <form id="auth-form" class="form">
+      <label>Username<input id="auth-username" name="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" autocomplete="username" required placeholder="Your username"></label>
+      <label>Password<input id="auth-password" name="password" type="password" minlength="10" maxlength="128" autocomplete="current-password" required placeholder="Your password"></label>
+      <p id="auth-notice" class="small-note" hidden>Accounts use a username and password. There is no email recovery, so keep your password safe.</p>
+      <div class="form-error" id="auth-error" role="alert" hidden></div>
+      <button type="submit" id="auth-submit" class="primary full">Log in</button>
+    </form>
+  </div>
+</div>
+
+<div id="upload-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="upload-title" hidden>
+  <div class="modal-panel wide">
+    <div class="modal-header"><h2 id="upload-title">Upload animation</h2><button class="close" data-close="upload-modal" type="button" aria-label="Close">×</button></div>
+    <form id="upload-form" class="form">
+      <label>Animation name<input id="upload-name" name="title" type="text" minlength="2" maxlength="80" required placeholder="e.g. Sit animation"></label>
+      <p class="small-note">Each uploaded pack needs the animation, MP3 soundtrack, and matching Lua dance module. Other users can download the full ZIP.</p>
+      <div class="file-choices">
+        <label class="file-choice"><span><b>Animation .anim</b><small id="anim-file-label">Choose file</small></span><input id="upload-anim" name="anim" type="file" accept=".anim" required></label>
+        <label class="file-choice"><span><b>Music .mp3</b><small id="mp3-file-label">Choose file</small></span><input id="upload-mp3" name="mp3" type="file" accept=".mp3,audio/mpeg" required></label>
+        <label class="file-choice"><span><b>Dance module .lua</b><small id="lua-file-label">Choose file</small></span><input id="upload-lua" name="lua" type="file" accept=".lua,text/plain" required></label>
+      </div>
+      <div class="form-error" id="upload-error" role="alert" hidden></div>
+      <button type="submit" id="upload-submit" class="primary full">Publish animation</button>
+    </form>
+  </div>
+</div>
+
+<div id="account-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title" hidden>
+  <div class="modal-panel">
+    <div class="modal-header"><h2 id="account-title">Account settings</h2><button class="close" data-close="account-modal" type="button" aria-label="Close">×</button></div>
+    <div class="profile">
+      <div class="profile-avatar" id="profile-avatar">?</div>
+      <div><strong id="profile-name">Username</strong><p>Member account</p></div>
     </div>
-  </header>
-
-  <main id="top">
-    <section class="hero container">
-      <div class="hero-copy">
-        <div class="kicker"><span class="dot"></span> MR H REANIMATE / ANIMATION PACKS</div>
-        <h1>Three files.<br><span>One animation.</span></h1>
-        <p>Keep your animations organized in one place. Add the <strong>.anim</strong>, its <strong>.mp3</strong> music, and the <strong>.lua</strong> module that runs it. Download everything together.</p>
-        <div class="hero-actions">
-          <a class="button primary" href="#uploader">Create animation pack <span>↗</span></a>
-          <a class="button secondary" href="#guide">How it works ↓</a>
-        </div>
-        <div class="hero-info"><span><b>01</b> ANIMATION</span><span><b>02</b> MUSIC</span><span><b>03</b> LUA</span></div>
-      </div>
-      <div class="hero-visual" aria-hidden="true">
-        <div class="orbit outer"></div><div class="orbit inner"></div>
-        <div class="visual-panel">
-          <div class="visual-bar"><span class="lights"><i></i><i></i><i></i></span><span>ANIMATION PACKAGE / READY</span><span>···</span></div>
-          <div class="visual-body">
-            <div class="visual-line"><span class="file-symbol">◈</span><div><b>dance.anim</b><small>Keyframe animation</small></div><span class="file-ok">✓</span></div>
-            <div class="visual-line"><span class="file-symbol">♫</span><div><b>dance.mp3</b><small>Soundtrack</small></div><span class="file-ok">✓</span></div>
-            <div class="visual-line"><span class="file-symbol">⌘</span><div><b>dance.lua</b><small>Animation module</small></div><span class="file-ok">✓</span></div>
-          </div>
-          <div class="visual-footer"><span class="pulse-line"></span><span>3 / 3 REQUIRED FILES</span><span class="ready-pill">COMPLETE</span></div>
-        </div>
-        <div class="mini-float">✦ <span>Pack it. Play it.</span></div>
-      </div>
-    </section>
-
-    <section id="uploader" class="section-upload">
-      <div class="container">
-        <div class="section-top">
-          <div><div class="eyebrow">YOUR WORKSPACE <span>///</span></div><h2>Animation uploader<span>.</span></h2><p>Choose all three files to build a complete animation package.</p></div>
-          <div class="privacy-pill"><i></i> LOCAL UPLOADS</div>
-        </div>
-        <div class="workspace">
-          <div class="workspace-bar"><div class="workspace-title"><span class="small-mark">H</span><strong>PACK BUILDER</strong><i></i><span id="workspace-name">New animation pack</span></div><div class="workspace-actions"><span id="file-progress">0 / 3 FILES</span><button id="reset-pack" type="button" class="mini-btn">Reset</button></div></div>
-          <div class="pack-progress" aria-hidden="true"><span id="pack-progress-fill"></span></div>
-          <div class="workspace-content">
-            <section class="file-pane" aria-labelledby="files-heading">
-              <div class="pane-header"><span id="files-heading">01 / REQUIRED FILES</span><small>ALL THREE NEEDED</small></div>
-              <div class="file-instructions">Upload one file for each component. The file names are preserved inside your download.</div>
-              <div class="upload-list">
-                <button id="pick-anim" type="button" class="upload-card" aria-label="Choose animation file">
-                  <span class="upload-icon anim">◈</span>
-                  <span class="upload-card-text"><b>Animation file <em>Required</em></b><small id="anim-name">Choose an .anim file</small></span>
-                  <span class="upload-card-action" id="anim-indicator">↑</span>
-                </button>
-                <button id="pick-mp3" type="button" class="upload-card" aria-label="Choose MP3 music">
-                  <span class="upload-icon music">♫</span>
-                  <span class="upload-card-text"><b>Music / soundtrack <em>Required</em></b><small id="mp3-name">Choose an .mp3 file</small></span>
-                  <span class="upload-card-action" id="mp3-indicator">↑</span>
-                </button>
-                <button id="pick-lua" type="button" class="upload-card" aria-label="Choose Lua module">
-                  <span class="upload-icon lua">⌘</span>
-                  <span class="upload-card-text"><b>Lua animation module <em>Required</em></b><small id="lua-name">Choose a .lua file</small></span>
-                  <span class="upload-card-action" id="lua-indicator">↑</span>
-                </button>
-              </div>
-              <div class="drop-area" id="drop-zone" tabindex="0" role="button" aria-label="Drop the animation, music and Lua files or choose files">
-                <div class="drop-art">↥</div><strong>Drop the three files here</strong><small>or click to browse · .anim / .mp3 / .lua</small>
-              </div>
-              <div class="file-help"><span class="help-dot">i</span><p>These must belong to the same animation. The Lua module determines how the animation and music are used in Mr H.</p></div>
-            </section>
-            <section class="details-pane" aria-labelledby="details-heading">
-              <div class="pane-header"><span id="details-heading">02 / PACKAGE DETAILS</span><small>READY TO BUNDLE</small></div>
-              <div class="details-content">
-                <label class="field">ANIMATION NAME<input type="text" maxlength="80" id="pack-title" placeholder="e.g. Moonwalk Dance" autocomplete="off"></label>
-                <label class="field">CREATOR <span class="optional">(OPTIONAL)</span><input type="text" maxlength="80" id="pack-author" placeholder="Your name" autocomplete="off"></label>
-                <label class="field">NOTES <span class="optional">(OPTIONAL)</span><textarea id="pack-notes" rows="3" maxlength="800" placeholder="Describe the animation, which rig it supports, or any install notes..."></textarea></label>
-                <div class="preview-block">
-                  <div class="preview-title"><span>♫ MUSIC PREVIEW</span><span id="audio-label">NO MP3 SELECTED</span></div>
-                  <audio id="music-preview" controls preload="none"></audio>
-                  <p>Preview the soundtrack here before bundling.</p>
-                </div>
-                <div class="summary">
-                  <div><span>ANIMATION</span><strong id="summary-anim">Missing</strong></div>
-                  <div><span>MUSIC</span><strong id="summary-mp3">Missing</strong></div>
-                  <div><span>MODULE</span><strong id="summary-lua">Missing</strong></div>
-                </div>
-                <button type="button" id="download-pack" class="button primary full" disabled>Download animation pack .zip <span>↓</span></button>
-                <button type="button" id="save-pack" class="button secondary full" disabled>Save to my browser library</button>
-                <p class="local-notice">Files stay in your browser. Downloading bundles the three original files into one ZIP; it does not upload them publicly.</p>
-              </div>
-            </section>
-          </div>
-          <div class="workspace-footer"><span><i class="ok-led"></i><span id="status-line">Select your .anim, .mp3, and .lua files.</span></span><span id="storage-note">Private · No server upload</span></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="library-section container" id="library">
-      <div class="section-top"><div><div class="eyebrow">YOUR COLLECTION <span>///</span></div><h2>My saved packs<span>.</span></h2><p>Animation packs saved in this browser. Click a pack to load it.</p></div><span class="count-pill" id="library-count">0 PACKS</span></div>
-      <div id="saved-packs" class="saved-packs" aria-live="polite"><div class="empty-library">Nothing saved yet. Make a pack above, then select “Save to my browser library.”</div></div>
-    </section>
-
-    <section class="guide-section" id="guide"><div class="container">
-      <div class="eyebrow">THE FORMAT <span>///</span></div><h2>What makes an animation<br><span>work with Mr H?</span></h2>
-      <div class="guide-grid">
-        <article><span>01</span><div class="guide-icon">◈</div><h3>Animation .anim</h3><p>The actual keyframes and movement data in the format used by the Uhhhhhh-based Mr H engine.</p></article>
-        <article><span>02</span><div class="guide-icon">♫</div><h3>Music .mp3</h3><p>The audio that goes with the animation. Include the correct soundtrack file.</p></article>
-        <article><span>03</span><div class="guide-icon">⌘</div><h3>Module .lua</h3><p>The Lua source connecting the animation, playback behavior, and music. It must match the engine's module API.</p></article>
-      </div>
-      <div class="guide-note"><strong>Important:</strong> This uploader packages files—it does not automatically generate a working Lua module or install the pack in Roblox. Check the Lua code before running it. Compatibility requires the module to reference the correct assets.</div>
-    </div></section>
-  </main>
-
-  <footer class="footer"><div class="container footer-inner"><div><div class="footer-logo">H<span>.</span> <b>MR H ANIMATIONS</b></div><p>Independent fan tool. Not affiliated with Roblox or mspaint.cc.</p></div><div><a href="#uploader">Create pack ↑</a><a href="https://github.com/KoSmoXD/mrhreanimate" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></div></footer>
-  <input type="file" id="anim-input" accept=".anim,application/octet-stream" hidden>
-  <input type="file" id="mp3-input" accept=".mp3,audio/mpeg" hidden>
-  <input type="file" id="lua-input" accept=".lua,text/plain" hidden>
-  <input type="file" id="all-input" accept=".anim,.mp3,.lua" multiple hidden>
-  <div id="toast-stack" role="status" aria-live="polite"></div>
+    <form id="account-form" class="form">
+      <label>Username<input type="text" id="settings-username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" autocomplete="username" required></label>
+      <label>New password (optional)<input type="password" id="settings-new-password" minlength="10" maxlength="128" autocomplete="new-password" placeholder="Leave blank to keep password"></label>
+      <label>Current password (required to save)<input type="password" id="settings-current-password" minlength="10" maxlength="128" autocomplete="current-password" required></label>
+      <div class="form-error" id="account-error" role="alert" hidden></div>
+      <button type="submit" class="primary full" id="account-submit">Save account settings</button>
+    </form>
+    <div class="account-danger"><button id="delete-account" type="button">Delete my account and uploads</button></div>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>
