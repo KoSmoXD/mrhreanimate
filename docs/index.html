@@ -6,11 +6,12 @@
 <meta name="theme-color" content="#050505">
 <meta name="description" content="Browse, upload, and download community animation packs for Mr H Reanimate.">
 <title>Mr H Animations</title>
-<meta name="mrh-frontend-version" content="make-animation-20261013">
+<meta name="mrh-frontend-version" content="moveset-maker-20261013">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./styles.css?v=make-animation-20261013">
-<script src="./app.js?v=make-animation-20261013" defer></script>
-<script src="./make.js?v=make-animation-20261013" defer></script>
+<link rel="stylesheet" href="./styles.css?v=moveset-maker-20261013">
+<script src="./app.js?v=moveset-maker-20261013" defer></script>
+<script src="./make.js?v=moveset-maker-20261013" defer></script>
+<script src="./moveset.js?v=moveset-maker-20261013" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -28,6 +29,7 @@
   <nav class="site-tabs" role="tablist" aria-label="Animation website sections">
     <button type="button" id="tab-browse" class="site-tab active" role="tab" aria-controls="browse-panel" aria-selected="true">Browse Animations</button>
     <button type="button" id="tab-make" class="site-tab" role="tab" aria-controls="make-panel" aria-selected="false">Make Animation</button>
+    <button type="button" id="tab-moveset" class="site-tab" role="tab" aria-controls="moveset-panel" aria-selected="false">Moveset Maker</button>
   </nav>
   <section id="browse-panel" role="tabpanel" aria-labelledby="tab-browse">
   <div class="gallery-head">
@@ -82,6 +84,69 @@
             <code>UhhhhhhReanim/Modules/</code>
           </div>
           <p class="make-disclaimer">Only Uhhhhhh-compatible KeyframeSequence animations are supported. This is an independently integrated converter using STEVE's MIT-licensed tool—not a copy of David's full Google Sites website. Existing gallery, sign-in and upload features are unchanged.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="moveset-panel" class="make-panel moveset-panel" role="tabpanel" aria-labelledby="tab-moveset" hidden>
+    <div class="make-heading">
+      <div>
+        <div class="make-overline">UHHHHHH REANIMATE / MOVESET MAKER</div>
+        <h1>Moveset Maker</h1>
+        <p>Combine your Uhhhhhh <code>.anim</code> tracks into one custom R6 movement style. Smooth transitions, optional music, and automatic Lua generation.</p>
+      </div>
+      <a class="action david-link" href="https://github.com/STEVE-916-create/Uhhhhhh/blob/main/content/v_moveset1.lua" target="_blank" rel="noopener noreferrer">Uhhhhhh moveset reference ↗</a>
+    </div>
+    <div class="make-grid">
+      <section class="make-card">
+        <div class="make-card-top"><span>01 / BUILD MOVESET</span><span>UHHHHHH ONLY</span></div>
+        <form id="moveset-form" class="make-form">
+          <label class="make-field" for="moveset-name"><span>Moveset name <em>Required</em></span>
+            <input id="moveset-name" type="text" minlength="2" maxlength="64" placeholder="e.g. Mr H Classic" required></label>
+          <div class="moveset-tracks">
+            <div class="moveset-track-heading">MOVEMENT ANIMATIONS <span>Upload .anim tracks</span></div>
+            <div class="moveset-track-grid">
+              <label class="move-slot" for="moveset-idle"><span><strong>Idle</strong><small>Required · standing still</small></span><span id="moveset-idle-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-idle" accept=".anim" required></label>
+              <label class="move-slot" for="moveset-walk"><span><strong>Walk</strong><small>Required · moving</small></span><span id="moveset-walk-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-walk" accept=".anim" required></label>
+              <label class="move-slot" for="moveset-run"><span><strong>Run</strong><small>Optional · faster movement</small></span><span id="moveset-run-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-run" accept=".anim"></label>
+              <label class="move-slot" for="moveset-jump"><span><strong>Jump</strong><small>Optional · jumping</small></span><span id="moveset-jump-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-jump" accept=".anim"></label>
+              <label class="move-slot" for="moveset-fall"><span><strong>Fall</strong><small>Optional · freefall</small></span><span id="moveset-fall-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-fall" accept=".anim"></label>
+              <label class="move-slot" for="moveset-climb"><span><strong>Climb</strong><small>Optional · climbing</small></span><span id="moveset-climb-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-climb" accept=".anim"></label>
+              <label class="move-slot" for="moveset-sit"><span><strong>Sit</strong><small>Optional · sitting</small></span><span id="moveset-sit-name" class="move-file-name">Choose .anim</span><input type="file" id="moveset-sit" accept=".anim"></label>
+            </div>
+          </div>
+          <label class="make-field" for="moveset-music"><span>Background music <em>Optional · MP3</em></span><input id="moveset-music" type="file" accept=".mp3,audio/mpeg"></label>
+          <div class="moveset-slider-row">
+            <label for="moveset-fade">Smooth transition <output id="moveset-fade-value" for="moveset-fade">0.20s</output></label>
+            <input id="moveset-fade" type="range" min="0.05" max="1.5" step="0.05" value="0.20">
+            <small>Blend between movement states instead of snapping between poses.</small>
+          </div>
+          <div class="moveset-slider-row">
+            <label for="moveset-run-speed">Run starts at <output id="moveset-run-speed-value" for="moveset-run-speed">16 studs/s</output></label>
+            <input id="moveset-run-speed" type="range" min="4" max="80" step="1" value="16">
+            <small>Movement speed threshold for switching from Walk to Run.</small>
+          </div>
+          <div class="moveset-completeness" id="moveset-completeness">0 / 2 required tracks uploaded</div>
+          <div class="form-error" id="moveset-error" role="alert" hidden></div>
+          <button type="submit" id="moveset-create" class="primary make-convert">Create Moveset ZIP <span>↓</span></button>
+          <div id="moveset-status" class="make-status" aria-live="polite">Select Idle and Walk to get started.</div>
+        </form>
+      </section>
+      <aside class="make-card make-guide">
+        <div class="make-card-top"><span>02 / OUTPUT</span><span>MOVESET MODULE</span></div>
+        <div class="make-guide-inner">
+          <h2>One moveset. Seven movement states.</h2>
+          <div class="make-step"><span class="step-number">01</span><div><strong>Supply the movement tracks</strong><p>Use your converted Uhhhhhh <code>.anim</code> files for Idle and Walk. Add Run, Jump, Fall, Climb, and Sit if you have them.</p></div></div>
+          <div class="make-step"><span class="step-number">02</span><div><strong>Tune your movement</strong><p>Set transition smoothness, run threshold and optional music. Missing states use compatible fallback tracks.</p></div></div>
+          <div class="make-step"><span class="step-number">03</span><div><strong>Download and install</strong><p>Get the animations, music (if supplied) and a generated <code>MOVESET</code> Lua module in the correct Uhhhhhh folders.</p></div></div>
+          <div class="make-output">
+            <div class="output-label">READY-TO-INSTALL ZIP</div>
+            <code>UhhhhhhReanim/Content/Anims/</code>
+            <code>UhhhhhhReanim/Content/Sounds/</code>
+            <code>UhhhhhhReanim/Modules/</code>
+          </div>
+          <p class="make-disclaimer">The Lua module uses Uhhhhhh's <code>AnimLib.Animator</code> and <code>MOVESET</code> API. It doesn't modify Roblox server-side animation replication. Preview and test your downloaded moveset inside Mr H Reanimate.</p>
         </div>
       </aside>
     </div>
