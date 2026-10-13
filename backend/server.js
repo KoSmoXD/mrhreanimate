@@ -175,13 +175,14 @@ app.post('/api/owner/claim',ownerLimit,async(req,res,next)=>{
   const existing=db.prepare('SELECT id FROM users WHERE username=?').get(OWNER_NAME);
   const hash=await bcrypt.hash(password,12),ownerId=existing?.id||crypto.randomUUID();
   db.transaction(()=>{
+   if(db.prepare("SELECT id FROM users WHERE role='owner' LIMIT 1").get())throw Error('OWNER_ALREADY_CLAIMED');
    if(existing)db.prepare("UPDATE users SET username=?,password_hash=?,role='owner' WHERE id=?").run(OWNER_NAME,hash,ownerId);
    else db.prepare("INSERT INTO users(id,username,password_hash,created_at,role) VALUES(?,?,?,?,'owner')").run(ownerId,OWNER_NAME,hash,Date.now());
    db.prepare('DELETE FROM sessions WHERE user_id=?').run(ownerId);
   })();
   issueSession(res,ownerId);
   res.status(201).json({user:publicUser(db.prepare('SELECT * FROM users WHERE id=?').get(ownerId))});
- }catch(e){next(e);}
+ }catch(e){if(e.message==='OWNER_ALREADY_CLAIMED')return fail(res,409,'Owner account already claimed.');next(e);}
 });
 app.post('/api/login',authLimit,async(req,res,next)=>{
  try{
