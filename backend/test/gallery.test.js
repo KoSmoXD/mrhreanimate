@@ -119,6 +119,26 @@ test('public gallery, registration, authenticated upload, ZIP download and accou
  assert.equal(zip.status,200);
  const binary=Buffer.from(await zip.response.arrayBuffer());
  assert.equal(binary.readUInt32LE(0),0x04034b50,'ZIP has expected local header signature');
+ let manifest=await api('/reanimate/animations/'+id+'/manifest');
+ assert.equal(manifest.status,200,JSON.stringify(manifest.body));
+ assert.equal(manifest.body.kind,'animations');
+ assert.equal(manifest.body.files.length,3);
+ assert.deepEqual(manifest.body.files.map(f=>f.path),[
+  'UhhhhhhReanim/Content/Anims/Sit.anim',
+  'UhhhhhhReanim/Content/Sounds/Sit.mp3',
+  'UhhhhhhReanim/Modules/Sit.lua'
+ ]);
+ for(const [i,file] of manifest.body.files.entries()){
+  assert.equal(file.index,i);
+  const asset=await api('/reanimate/animations/'+id+'/file/'+i);
+  assert.equal(asset.status,200,'dance asset must download');
+  const data=Buffer.from(await asset.response.arrayBuffer());
+  assert.equal(data.length,file.sizeBytes,'dance file matches manifest size');
+  if(i===2)assert.equal(data.toString('utf8'),'local modules = {}\nreturn modules\n');
+ }
+ const missing=await api('/reanimate/animations/'+id+'/file/3');
+ assert.equal(missing.status,404);
+
  r=await api('/me',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({username:uname+'2',currentPassword:'SecretPassphrase123',newPassword:'StrongerPassphrase456'})});
  assert.equal(r.status,200,JSON.stringify(r.body));
  assert.equal(r.body.user.username,uname+'2');
@@ -278,6 +298,24 @@ test('Movesets are a separate shared gallery with comments and owner moderation'
  const received=Buffer.from(await r.response.arrayBuffer());
  assert.equal(received.readUInt32LE(0),0x04034b50);
  assert.ok(received.includes(Buffer.from('MRH_Community_Test_Moveset.lua')));
+ const moduleManifest=await api('/reanimate/movesets/'+id+'/manifest');
+ assert.equal(moduleManifest.status,200,JSON.stringify(moduleManifest.body));
+ assert.equal(moduleManifest.body.kind,'movesets');
+ assert.ok(moduleManifest.body.files.length>=3);
+ const luaEntry=moduleManifest.body.files.find(file=>file.path.endsWith('.lua'));
+ const animEntry=moduleManifest.body.files.find(file=>file.path.endsWith('.anim'));
+ assert.ok(luaEntry&&animEntry,'manifest contains moveset Lua and .anim tracks');
+ const luaDownload=await api('/reanimate/movesets/'+id+'/file/'+luaEntry.index);
+ assert.equal(luaDownload.status,200,JSON.stringify(luaDownload.body));
+ const luaContent=await luaDownload.response.text();
+ assert.match(luaContent,/m\.ModuleType = "MOVESET"/);
+ assert.equal(Buffer.byteLength(luaContent),luaEntry.sizeBytes);
+ const animDownload=await api('/reanimate/movesets/'+id+'/file/'+animEntry.index);
+ assert.equal(animDownload.status,200,JSON.stringify(animDownload.body));
+ assert.equal((await animDownload.response.arrayBuffer()).byteLength,animEntry.sizeBytes);
+ const invalidAsset=await api('/reanimate/movesets/'+id+'/file/45');
+ assert.equal(invalidAsset.status,400,'unlisted ZIP entries cannot be downloaded');
+
  const invalidZip=new FormData();
  invalidZip.set('title','Unsafe Package');
  invalidZip.set('archive',new Blob(['not actually zip']),'wrong.zip');
@@ -318,6 +356,9 @@ test('Movesets are a separate shared gallery with comments and owner moderation'
  r=await api('/movesets/'+id,{method:'DELETE'});
  assert.equal(r.status,200,'owner can delete public movesets');
  r=await api('/movesets/'+id);assert.equal(r.status,404);
+ r=await api('/reanimate/movesets/'+id+'/manifest');
+ assert.equal(r.status,404,'deleted uploads disappear from in-game browser');
+
  r=await api('/movesets/'+id+'/comments');assert.equal(r.status,404);
 });
 
