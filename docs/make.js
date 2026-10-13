@@ -2,25 +2,33 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const browse=$('browse-panel'),maker=$('make-panel');
-const browseTab=$('tab-browse'),makeTab=$('tab-make');
+const browse=$('browse-panel'),maker=$('make-panel'),moveset=$('moveset-panel');
+const browseTab=$('tab-browse'),makeTab=$('tab-make'),movesetTab=$('tab-moveset');
 const form=$('make-form'),picker=$('maker-model'),music=$('maker-music');
 const drop=$('maker-drop'),error=$('maker-error'),button=$('maker-convert'),status=$('maker-status');
 let modelFile=null;
 
+function tabFromHash(){
+ if(location.hash==='#make-moveset')return 'moveset';
+ if(location.hash==='#make-animation')return 'make';
+ return 'browse';
+}
 function showTab(tab,updateUrl=true){
- const creating=tab==='make';
- browse.hidden=creating;maker.hidden=!creating;
- browseTab.classList.toggle('active',!creating);
- makeTab.classList.toggle('active',creating);
- browseTab.setAttribute('aria-selected',String(!creating));
- makeTab.setAttribute('aria-selected',String(creating));
- if(updateUrl)history.replaceState(null,'',creating?'#make-animation':'#browse-animations');
+ for(const [name,section,button] of [
+  ['browse',browse,browseTab],['make',maker,makeTab],['moveset',moveset,movesetTab]
+ ]){
+  const active=name===tab;
+  section.hidden=!active;
+  button.classList.toggle('active',active);
+  button.setAttribute('aria-selected',String(active));
+ }
+ if(updateUrl)history.replaceState(null,'',tab==='moveset'?'#make-moveset':tab==='make'?'#make-animation':'#browse-animations');
 }
 browseTab.addEventListener('click',()=>showTab('browse'));
 makeTab.addEventListener('click',()=>showTab('make'));
-window.addEventListener('hashchange',()=>showTab(location.hash==='#make-animation'?'make':'browse',false));
-showTab(location.hash==='#make-animation'?'make':'browse',false);
+movesetTab.addEventListener('click',()=>showTab('moveset'));
+window.addEventListener('hashchange',()=>showTab(tabFromHash(),false));
+showTab(tabFromHash(),false);
 
 function invalid(message){error.textContent=message;error.hidden=!message;}
 function setModel(file){
