@@ -97,7 +97,7 @@ function draw(){
  const cube=(t,size,color,baseAlpha=1)=>{
   const vs=vertices(...size).map(v=>transform(t,v));
   for(const ids of FACES){
-   const p=ids.map(i=>vs[i]),n=norm(cross(sub(p[1],p[0]),sub(p[2],p[0])));
+   const p=ids.map(i=>vs[i]),n=norm(cross(sub(p[2],p[0]),sub(p[1],p[0])));
    if(dot(n,sub(eye,p[0]))<=0)continue;
    const depth=p.reduce((s,v)=>s+dot(sub(v,eye),forward),0)/4;
    const lit=clamp(.48+Math.max(0,dot(n,LIGHT))*.52,.4,1);
@@ -233,6 +233,7 @@ function frame(now){
  requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+state.active=!$('preview-panel').hidden;
 listRemote();
 draw();
 })();
