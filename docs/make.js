@@ -79,6 +79,7 @@ form.addEventListener('submit',async e=>{
  data.set('model',modelFile,modelFile.name);
  if(audio)data.set('music',audio,audio.name);
  data.set('name',$('maker-name').value.trim().slice(0,80));
+ data.set('description',$('maker-description').value.trim());
  data.set('loop',String($('maker-loop').checked));
  button.disabled=true;button.textContent='Converting animation...';
  status.textContent='Reading Roblox model and building Uhhhhhh ZIP...';
