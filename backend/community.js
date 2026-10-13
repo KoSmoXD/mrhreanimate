@@ -69,6 +69,96 @@ module.exports=function community({app,db,auth,fail,TMP,ROOT}){
    finally{if(temp)await fsp.rm(temp,{force:true}).catch(()=>{});}
   });
  });
+
+ // Downloadable individual Uhhhhhh assets for the in-game Online Modules page.
+ // The public catalog remains GET /api/animations and GET /api/movesets.
+ const marketLimit=rateLimit({windowMs:15*60000,limit:180,standardHeaders:'draft-7',legacyHeaders:false,
+  message:{error:'Too many marketplace requests.'}});
+ const UPLOADS=path.join(ROOT,'uploads');
+ const safeBase=value=>path.basename(String(value||'').replace(/\\/g,'/'))
+  .replace(/[^a-zA-Z0-9._ ()-]/g,'_').slice(0,110)||'animation';
+ const danceFiles=row=>[
+  {path:'UhhhhhhReanim/Content/Anims/'+safeBase(row.anim_name),source:path.join(UPLOADS,row.id,'anim')},
+  {path:'UhhhhhhReanim/Content/Sounds/'+safeBase(row.mp3_name),source:path.join(UPLOADS,row.id,'mp3')},
+  {path:'UhhhhhhReanim/Modules/'+safeBase(row.lua_name),source:path.join(UPLOADS,row.id,'lua')}
+ ];
+ const responseFiles=(kind,id,files)=>files.map((file,i)=>({
+  index:kind==='animations'?i:file.index,
+  path:file.path,sizeBytes:file.sizeBytes,
+  url:'/api/reanimate/'+kind+'/'+id+'/file/'+(kind==='animations'?i:file.index)
+ }));
+ async function listMarketplaceFiles(kind,id){
+  const row=db.prepare('SELECT * FROM '+kind+' WHERE id=?').get(id);
+  if(!row)return null;
+  if(kind==='animations'){
+   const files=danceFiles(row);
+   const withSize=[];
+   for(let i=0;i<files.length;i++){
+    const file=files[i];
+    const info=await fsp.stat(file.source).catch(()=>null);
+    if(!info||!info.isFile())throw Error('Uploaded dance asset is unavailable.');
+    withSize.push({path:file.path,sizeBytes:info.size,index:i});
+   }
+   return responseFiles(kind,id,withSize);
+  }
+  const zipPath=path.join(MOVES,id+'.zip');
+  if(!fs.existsSync(zipPath))throw Error('Moveset ZIP unavailable.');
+  const result=await run('python3',[path.join(__dirname,'tools/marketplace_zip.py'),'list',zipPath],
+   {timeout:12000,maxBuffer:28000,windowsHide:true});
+  const files=JSON.parse(result.stdout);
+  if(!Array.isArray(files)||files.length<3||files.length>45)throw Error('Unexpected moveset contents.');
+  return responseFiles(kind,id,files);
+ }
+ function marketKind(req,res){
+  if(!['animations','movesets'].includes(req.params.kind)){
+   fail(res,404,'Unknown module type.');return null;
+  }
+  if(!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/.test(req.params.id)){
+   fail(res,400,'Invalid module ID.');return null;
+  }
+  return req.params.kind;
+ }
+ app.get('/api/reanimate/:kind/:id/manifest',marketLimit,async(req,res)=>{
+  const kind=marketKind(req,res);if(!kind)return;
+  try{
+   const files=await listMarketplaceFiles(kind,req.params.id);
+   if(!files)return fail(res,404,'Module not found.');
+   res.setHeader('Cache-Control','no-store');
+   res.json({id:req.params.id,kind,files});
+  }catch(err){return fail(res,410,'Module assets unavailable: '+String(err.message||err).slice(0,160));}
+ });
+ app.get('/api/reanimate/:kind/:id/file/:index',marketLimit,async(req,res,next)=>{
+  const kind=marketKind(req,res);if(!kind)return;
+  const idx=Number(req.params.index);
+  if(!Number.isInteger(idx)||idx<0||idx>45)return fail(res,400,'Invalid file index.');
+  const row=db.prepare('SELECT * FROM '+kind+' WHERE id=?').get(req.params.id);
+  if(!row)return fail(res,404,'Module not found.');
+  res.setHeader('Cache-Control','no-store');
+  res.setHeader('Content-Type','application/octet-stream');
+  res.setHeader('Content-Disposition','attachment; filename="module-asset.bin"');
+  if(kind==='animations'){
+   const files=danceFiles(row);
+   if(!files[idx])return fail(res,404,'Asset not found.');
+   return res.sendFile(files[idx].source,error=>{
+    if(error&&!res.headersSent)next(error);
+   });
+  }
+  const zipPath=path.join(MOVES,row.id+'.zip');
+  if(!fs.existsSync(zipPath))return fail(res,410,'Moveset ZIP unavailable.');
+  const temp=path.join(TMP,'market-'+crypto.randomUUID()+'.bin');
+  try{
+   await run('python3',[path.join(__dirname,'tools/marketplace_zip.py'),
+    'extract',zipPath,String(idx),temp],{timeout:12000,maxBuffer:4096,windowsHide:true});
+   res.sendFile(temp,error=>{
+    fsp.rm(temp,{force:true}).catch(()=>{});
+    if(error&&!res.headersSent)next(error);
+   });
+  }catch(e){
+   await fsp.rm(temp,{force:true}).catch(()=>{});
+   return fail(res,400,'Invalid moveset asset index.');
+  }
+ });
+
  app.get('/api/movesets/:id/download',(req,res,next)=>{
   const row=get('movesets',req.params.id);if(!row)return fail(res,404,'Moveset not found.');
   const file=path.join(MOVES,row.id+'.zip');if(!fs.existsSync(file))return fail(res,410,'ZIP unavailable.');
