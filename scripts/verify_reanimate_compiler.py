@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""Prepare a reproducible Luau compiler test for the published Mr H loader.
+
+The loader decodes a pinned upstream Uhhhhhh engine and rewrites selected
+sections before compilation. Testing the encoded loader alone is insufficient:
+the rewritten runtime engine must also compile within Luau's 200-register limit.
+"""
+import pathlib
+import re
+import sys
+import urllib.request
+
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+LOADER = REPO_ROOT / "Mr_H_Reanimate.lua"
+UPSTREAM = (
+    "https://raw.githubusercontent.com/testing734/UhhhhhhModded/"
+    "87467966d37ce4b8b2c219a0bcffaf2aa8f658a9/"
+    "uhhhhhh%20awes%20fork"
+)
+
+def published_source() -> str:
+    raw = LOADER.read_text(encoding="utf-8")
+    encoded = raw.split("local _0=table.concat({", 1)[1].split("})", 1)[0]
+    chunks = re.findall(r'"([0-9A-F]+)"', encoded)
+    if len(chunks) < 10:
+        raise AssertionError("Expected encoded loader string blocks")
+    encoded_bytes = bytes.fromhex("".join(chunks))
+    decoded = bytes(
+        (b - ((i * 73 + 91) % 256)) % 256
+        for i, b in enumerate(encoded_bytes, start=1)
+    ).decode("utf-8")
+    if 'local VERSION = "2.8.1"' not in decoded:
+        raise AssertionError("Unexpected public version")
+    begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
+    segment_start = decoded.rfind("    do\n", 0, begin)
+    if segment_start < 0 or begin - segment_start > 12:
+        raise AssertionError("Online Modules must use its own do/end scope")
+    end = decoded.index("end -- end Online Modules local scope", begin)
+    if end <= begin:
+        raise AssertionError("Online Modules local scope not closed")
+    if end > decoded.index("    -- CUSTOM UI COLORS", begin):
+        raise AssertionError("Online Modules leaks locals into the rest of the engine")
+    return decoded
+
+def long_literal(s: str) -> str:
+    for count in range(4, 50):
+        eq = "=" * count
+        if f"]{eq}]" not in s:
+            return f"[{eq}[{s}]{eq}]"
+    raise AssertionError("No safe Lua long-string delimiter")
+
+def generate(target_dir: pathlib.Path):
+    decoded = published_source()
+    start = decoded.index("local function escapePattern(str)")
+    end = decoded.index("\nif env.UhhhhhhLoaded or _G.UhhhhhhLoaded", start)
+    rewriting = decoded[start:end]
+    if not rewriting.rstrip().endswith("end"):
+        raise AssertionError("Rewrite function extraction appears incomplete")
+    request = urllib.request.Request(
+        UPSTREAM, headers={"User-Agent": "MrH-Reanimate-Compiler-CI"}
+    )
+    with urllib.request.urlopen(request, timeout=30) as response:
+        upstream = response.read().decode("utf-8")
+    if len(upstream) < 150000:
+        raise AssertionError("Pinned upstream source is unexpectedly small")
+    if not target_dir.is_dir():
+        target_dir.mkdir(parents=True)
+    test_script = (
+        "-- Generated test: run the real pinned upstream through Mr H patch rules.\n"
+        "local state = {patches = {}}\n"
+        + rewriting
+        + "\nlocal upstream = "
+        + long_literal(upstream)
+        + "\nlocal rewritten = rewrite(upstream)\n"
+        + 'print(rewritten)\n'
+    )
+    destination = target_dir / "rewrite_verify.luau"
+    destination.write_text(test_script, encoding="utf-8")
+    print(f"Prepared {destination} from pinned upstream source", file=sys.stderr)
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        raise SystemExit("Usage: python scripts/verify_reanimate_compiler.py OUTPUT_DIR")
+    generate(pathlib.Path(sys.argv[1]))
