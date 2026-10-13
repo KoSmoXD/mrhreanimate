@@ -615,6 +615,17 @@
       const c=blankClip();state.clips.push(c);activate(c.id,true);
     });
     $('save-browser').addEventListener('click',async()=>{if(clip())await saveToBrowser(clip(),false);});
+    $('delete-browser').addEventListener('click', async ()=>{
+      const current=clip();
+      if(!current)return;
+      if(!confirm('Remove "'+current.filename+'" from this browser library?'))return;
+      const id=current.id;
+      state.clips=state.clips.filter(c=>c.id!==id);
+      await removeFromBrowser(id);
+      if(!state.clips.length)state.clips.push(makeDemo('Walk Cycle','Walk'));
+      activate(state.clips[0].id,true);
+      toast('Removed from this browser library.');
+    });
     $('export-file').addEventListener('click',()=>{
       const c=clip();if(!c)return;
       try{
