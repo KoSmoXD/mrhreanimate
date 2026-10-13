@@ -6,10 +6,11 @@
 <meta name="theme-color" content="#050505">
 <meta name="description" content="Browse, upload, and download community animation packs for Mr H Reanimate.">
 <title>Mr H Animations</title>
-<meta name="mrh-frontend-version" content="owner-setup-cachefix-20261013">
+<meta name="mrh-frontend-version" content="make-animation-20261013">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./styles.css?v=owner-setup-cachefix-20261013">
-<script src="./app.js?v=owner-setup-cachefix-20261013" defer></script>
+<link rel="stylesheet" href="./styles.css?v=make-animation-20261013">
+<script src="./app.js?v=make-animation-20261013" defer></script>
+<script src="./make.js?v=make-animation-20261013" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -24,6 +25,11 @@
   </nav>
 </header>
 <main class="main">
+  <nav class="site-tabs" role="tablist" aria-label="Animation website sections">
+    <button type="button" id="tab-browse" class="site-tab active" role="tab" aria-controls="browse-panel" aria-selected="true">Browse Animations</button>
+    <button type="button" id="tab-make" class="site-tab" role="tab" aria-controls="make-panel" aria-selected="false">Make Animation</button>
+  </nav>
+  <section id="browse-panel" role="tabpanel" aria-labelledby="tab-browse">
   <div class="gallery-head">
     <div><h1>Animations</h1><p>Community uploads. Choose a pack to download.</p></div>
     <div class="filters"><input type="search" id="search" maxlength="80" placeholder="Search animations..." aria-label="Search animations"><button id="refresh" type="button" class="action" title="Refresh animations">↻</button></div>
@@ -31,6 +37,55 @@
   <div id="connection-warning" class="connection-warning" hidden></div>
   <div id="gallery" class="gallery" aria-live="polite"><div class="state-message">Loading animations...</div></div>
   <div class="pagination"><button id="load-more" type="button" class="action" hidden>Load more</button></div>
+  </section>
+  <section id="make-panel" class="make-panel" role="tabpanel" aria-labelledby="tab-make" hidden>
+    <div class="make-heading">
+      <div><div class="make-overline">UHHHHHH REANIMATE / RBXM2ANIM</div><h1>Make Animation</h1>
+        <p>Convert a Roblox KeyframeSequence to Mr H's Uhhhhhh animation format, with a matching Lua dance module.</p></div>
+      <a class="action david-link" href="https://sites.google.com/view/rbxm2animbydavid/uhhhhhhhh-reanimate" target="_blank" rel="noopener noreferrer">David's original page ↗</a>
+    </div>
+    <div class="make-grid">
+      <section class="make-card">
+        <div class="make-card-top"><span>01 / CONVERT</span><span>UHHHHHH ONLY</span></div>
+        <form id="make-form" class="make-form">
+          <label class="make-field"><span>Roblox KeyframeSequence model <em>Required</em></span>
+            <span class="maker-drop" id="maker-drop" tabindex="0" role="button" aria-label="Choose or drop a Roblox animation model">
+              <span class="maker-drop-icon">↑</span>
+              <strong id="maker-file-name">Drop an .rbxm or .rbxmx file here</strong>
+              <small>Or click to browse · 4 MB maximum</small>
+            </span>
+            <input type="file" id="maker-model" accept=".rbxm,.rbxmx" required hidden>
+          </label>
+          <label class="make-field" for="maker-name"><span>Animation name <em>Optional</em></span>
+            <input id="maker-name" type="text" maxlength="80" placeholder="Defaults to the KeyframeSequence name"></label>
+          <label class="make-field" for="maker-music"><span>Music for this dance <em>Optional · MP3</em></span>
+            <input id="maker-music" type="file" accept=".mp3,audio/mpeg">
+            <small class="make-note">Include music for synchronized playback; otherwise the generated module uses elapsed time.</small>
+          </label>
+          <label class="make-check"><input type="checkbox" id="maker-loop" checked><span>Loop animation continuously</span></label>
+          <div id="maker-error" class="form-error" role="alert" hidden></div>
+          <button type="submit" id="maker-convert" class="primary make-convert">Convert &amp; Download ZIP <span>↓</span></button>
+          <div id="maker-status" class="make-status" aria-live="polite">Ready for a KeyframeSequence model.</div>
+        </form>
+      </section>
+      <aside class="make-card make-guide">
+        <div class="make-card-top"><span>02 / OUTPUT</span><span>READY FOR MR H</span></div>
+        <div class="make-guide-inner">
+          <h2>From Roblox Studio to Uhhhhhh.</h2>
+          <div class="make-step"><span class="step-number">01</span><div><strong>Export your animation</strong><p>Save the KeyframeSequence as a <code>.rbxm</code> or <code>.rbxmx</code> file from Roblox Studio.</p></div></div>
+          <div class="make-step"><span class="step-number">02</span><div><strong>Convert here</strong><p>Upload the model. Add music if needed, then generate the Uhhhhhh <code>.anim</code> file and a matching <code>.lua</code> dance module.</p></div></div>
+          <div class="make-step"><span class="step-number">03</span><div><strong>Install the ZIP</strong><p>The ZIP contains the correct Uhhhhhh folder layout. Extract it into your executor's workspace.</p></div></div>
+          <div class="make-output">
+            <div class="output-label">OUTPUT FOLDERS</div>
+            <code>UhhhhhhReanim/Content/Anims/</code>
+            <code>UhhhhhhReanim/Content/Sounds/</code>
+            <code>UhhhhhhReanim/Modules/</code>
+          </div>
+          <p class="make-disclaimer">Only Uhhhhhh-compatible KeyframeSequence animations are supported. This is an independently integrated converter using STEVE's MIT-licensed tool—not a copy of David's full Google Sites website. Existing gallery, sign-in and upload features are unchanged.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
 </main>
 
 <div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title" hidden>
