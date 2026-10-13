@@ -46,7 +46,7 @@ def long_literal(s: str) -> str:
     for count in range(4, 50):
         eq = "=" * count
         if f"]{eq}]" not in s:
-            return f"[{eq}[{s}]{eq}]"
+            return "[" + eq + "[" + s + "]" + eq + "]"
     raise AssertionError("No safe Lua long-string delimiter")
 
 def generate(target_dir: pathlib.Path):
