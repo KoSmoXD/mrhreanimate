@@ -22,3 +22,11 @@ test('Moveset generator validates input and optional states',()=>{
  assert.ok(!made.source.includes('SetOverrideMovesetMusic('));
  assert.ok(made.source.includes('return animators.walk and "walk" or "idle"'));
 });
+
+test('Moveset description supports Unicode, quotes and newlines, and rejects oversized input',()=>{
+ const description='Smooth "Retro"!\\r\\nРусский текст 🔥';
+ const made=makeMoveset({name:'Described',description,roles:{idle:true,walk:true},fade:0.25,runSpeed:16});
+ assert.ok(made.source.includes('m.Description = '+JSON.stringify(description)));
+ assert.ok(makeMoveset({name:'Fallback',roles:{idle:true,walk:true},fade:0.25,runSpeed:16}).source.includes('Custom R6 idle, walk'));
+ assert.throws(()=>makeMoveset({name:'Oversized',description:'x'.repeat(501),roles:{idle:true,walk:true},fade:0.25,runSpeed:16}),/500 characters/);
+});
