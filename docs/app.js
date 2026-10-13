@@ -15,9 +15,17 @@
 
   function toast(text,isError=false){
     const item=document.createElement('div');item.className='toast'+(isError?' error':'');item.textContent=String(text);
-    $('toast-stack').appendChild(item);setTimeout(()=>item.remove(),4300);
+    $('toast-stack').appendChild(item);
+    setTimeout(()=>item.classList.add('toast-leave'),3400);
+    setTimeout(()=>item.remove(),3900);
   }
-  function status(message){$('status-line').textContent=message;}
+  function status(message){
+    const label=$('status-line');
+    label.textContent=message;
+    label.classList.remove('status-updated');
+    void label.offsetWidth;
+    label.classList.add('status-updated');
+  }
   const formatBytes=n=>n>=1024*1024?(n/1024/1024).toFixed(2)+' MB':n>=1024?(n/1024).toFixed(1)+' KB':n+' B';
   const trim=s=>String(s||'').trim();
   function safeFileName(name){return (trim(name).replace(/[\/\\]/g,'_').replace(/[^\w.\- ()]/g,'_').slice(0,110)||'animation');}
@@ -48,6 +56,8 @@
       sum.classList.toggle('complete',Boolean(file));
     }
     $('file-progress').textContent=count+' / 3 FILES';
+    $('pack-progress-fill').style.width=(count/3*100)+'%';
+    document.querySelector?.('.workspace')?.classList.toggle('pack-ready',count===3);
     $('download-pack').disabled=!allPresent()||state.busy;
     $('save-pack').disabled=!allPresent()||state.busy;
     $('workspace-name').textContent=trim($('pack-title').value)||'New animation pack';
@@ -351,8 +361,37 @@
     $('pack-title').addEventListener('input',()=>{$('pack-title').dataset.autofilled='no';updateView();});
     window.addEventListener('beforeunload',resetAudio);
   }
+
+  function setupMotion(){
+    const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    if(reduced || typeof IntersectionObserver==='undefined' || !document.querySelectorAll)return;
+    const candidates=document.querySelectorAll(
+      '.hero-copy, .hero-visual, .section-upload .section-top, .workspace, '+
+      '.library-section .section-top, .guide-section > .container > .eyebrow, '+
+      '.guide-section h2, .guide-grid article, .guide-note, .footer-inner'
+    );
+    const observer=new IntersectionObserver((entries)=>{
+      for(const entry of entries){
+        if(entry.isIntersecting){
+          entry.target.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      }
+    },{threshold:.09,rootMargin:'0px 0px -25px 0px'});
+    let group=0;
+    for(const element of candidates){
+      if(element.closest('.guide-grid')){
+        group++;
+        element.dataset.motionOrder=String(Math.min(group,4));
+      }
+      element.classList.add('motion-reveal');
+      observer.observe(element);
+    }
+    document.body.classList.add('js-motion');
+  }
   async function initialize(){
     attach();updateView();
+    setupMotion();
     try{state.db=await openDb();await reloadLibrary();}
     catch(e){state.db=null;toast('Local saving is unavailable; ZIP downloads still work.',true);}
     updateView();
