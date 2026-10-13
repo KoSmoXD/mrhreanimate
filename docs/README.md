@@ -2,6 +2,10 @@
 
 The website has been redesigned into a **black, minimal public animation browser**. Cards show the animation title, uploader, upload date, total pack size, and download button. Sign up and log in with a username and password. Authenticated users can publish animations, change their username/password, delete their uploads, and delete their account.
 
+## Description fields
+
+Both **Make Animation (dance)** and **Moveset Maker** accept an optional description (up to 500 characters). The description is embedded in the generated Uhhhhhh Lua `m.Description` field and supports line breaks, quotes, and Unicode. When left empty, the original default description is used.
+
 ## Moveset Maker (Uhhhhhh only)
 
 The website now includes a **Moveset Maker** tab at `#make-moveset`, alongside Browse Animations and Make Animation.
