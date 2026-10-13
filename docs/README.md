@@ -1,40 +1,66 @@
-# Mr H Animations — Pack Uploader
+# Mr H Animations — community gallery
 
-This is a static, dark-themed animation pack website for Mr H Reanimate.
+The website has been redesigned into a **black, minimal public animation browser**. Cards show the animation title, uploader, upload date, total pack size, and download button. Sign up and log in with a username and password. Authenticated users can publish animations, change their username/password, delete their uploads, and delete their account.
 
-## Required files
+## Running the full website
 
-Each working animation package needs **all three matching files**:
+**GitHub Pages alone cannot host this version.** User accounts, shared uploads, and community downloads require the Node.js backend. The backend serves the site from ../docs on the same origin.
 
-1. **Animation**: `.anim` — custom Uhhhhhh/Mr H keyframe binary.
-2. **Music**: `.mp3` — soundtrack used by the animation.
-3. **Lua**: `.lua` — the actual animation module which references those assets and implements playback using Mr H's module interface.
+### Option A: Docker (recommended)
 
-The website does **not** automatically generate a valid Lua module or install it in Roblox; the three files must match. Do not run unknown Lua files without reviewing their contents.
+At the repository root:
 
-## Website features
+```sh
+docker build -t mrh-animations .
+docker volume create mrh-gallery-data
+docker run -d --name mrh-animations -p 3000:3000 \
+  -v mrh-gallery-data:/data \
+  -e NODE_ENV=development \
+  mrh-animations
+```
 
-- Three mandatory file upload slots and a multi-file drag-and-drop area.
-- Validation of file extensions, safety size limits, and `.anim` binary structure.
-- Native MP3 audio preview in the browser.
-- Pack name, optional creator and notes.
-- **Download animation pack**: browser-built ZIP containing exactly the three original uploaded files (unchanged bytes and filenames).
-- Save/open/download/delete packs locally through IndexedDB where supported.
+Open `http://localhost:3000` for local testing. For an **internet-facing** site, use an HTTPS domain and set `NODE_ENV=production` (Secure cookies require HTTPS). Mount **persistent** writable storage at `/data`; without it all accounts, uploaded files and SQLite data will be lost if the container restarts/redeploys with a new filesystem.
 
-**Privacy:** Files remain local to each visitor's browser. The app does not upload or publish files to a shared public gallery. Public sharing would require a separate backend with storage, permissions and moderation.
+You can deploy the Dockerfile to a service that supports persistent volumes (or a VPS with Docker). Set `PUBLIC_ORIGIN=https://your-real-domain.example` to require that exact origin on state-changing requests, and `DATA_DIR=/data`.
 
-The `.anim` parser accepts the binary format defined by `AnimLib.Track.frombuffer` in the pinned upstream engine. It does not accept Roblox `.rbxm`, `.rbxmx`, or published animation asset IDs.
+### Option B: Node.js
 
-## Deployment
+```sh
+cd backend
+npm install
+NODE_ENV=development DATA_DIR=./data npm start
+```
 
-Use **GitHub → Settings → Pages** and configure **Deploy from a branch**, branch **main**, folder **/docs**. Once GitHub confirms deployment, the expected public URL is:
+Then open `http://localhost:3000`. Production requires Node.js 20+, HTTPS, and persistent writable data. Use a trusted reverse proxy when deploying; the backend trusts one reverse-proxy hop by default. Configure `TRUST_PROXY=false` when not behind a reverse proxy.
 
-`https://kosmoxd.github.io/mrhreanimate/`
+## API and data
 
-GitHub Pages hosting is not automatically activated by committing the site files.
+- `POST /api/register` — register username/password.
+- `POST /api/login`, `POST /api/logout` — cookie-based sessions.
+- `GET /api/me`, `PATCH /api/me`, `DELETE /api/me` — account details, username/password settings, account deletion (deletes all uploads).
+- `GET /api/animations` — public paginated gallery; optional search.
+- `POST /api/animations` — authenticated multipart upload: `title`, `anim`, `mp3`, `lua`.
+- `GET /api/animations/:id/download` — public ZIP download with the engine's expected paths.
+- `DELETE /api/animations/:id` — uploader only.
+- `GET /api/health` — deployment health check.
 
-No build step or JavaScript dependencies are required. Fonts use a remote Google Fonts stylesheet but fall back to system fonts offline.
+Uploads require all three matching assets: `.anim` (max 8 MiB), `.mp3` (max 35 MiB), `.lua` (max 2 MiB). File extensions, sizes, basic MP3 header, text-only Lua, and binary `.anim` structure are checked. The backend never executes uploaded Lua.
 
-## Limits
+ZIP downloads contain:
+```text
+UhhhhhhReanim/Content/Anims/YourAnimation.anim
+UhhhhhhReanim/Content/Sounds/YourMusic.mp3
+UhhhhhhReanim/Modules/YourDance.lua
+```
 
-Maximum size per file: `.anim` 8 MiB, `.mp3` 35 MiB, `.lua` 2 MiB, total 48 MiB. Browsers can impose lower storage quotas. Saved packs are not synchronized between devices.
+**Important:** The uploaded Lua module must itself correctly reference the matching sound and animation filenames. Packaging valid files does not prove a module runs or is safe. Downloaded Lua is untrusted code; examine it before running it.
+
+## Accounts and security
+
+Passwords are hashed with bcrypt; login sessions are random tokens stored as hashes in SQLite and sent in HttpOnly, SameSite=Strict cookies (Secure over production HTTPS). Rate limits apply to signups, authentication and uploads. Only upload owners can delete their uploads. Username length is 3–24 characters (letters, digits, underscore), and passwords must be 10–72 UTF-8 bytes.
+
+**There is no password recovery or email verification**, because the requested accounts use username/password only. Users should keep passwords safe. Before opening a public service, add abuse moderation, backups, upload scanning/review and an admin workflow.
+
+## Verification
+
+Repository-side static checks and syntax validation can be performed without deploying the backend. An integration test is included in `backend/test/`: once dependencies are installed, run `npm test` from `backend/`. Actual public accounts and shared uploads only function once the backend is deployed and accessible. The GitHub Pages URL, if enabled, is **not** the full deployed service.
