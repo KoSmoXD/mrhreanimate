@@ -18,12 +18,15 @@ app.disable('x-powered-by');
 app.set('trust proxy',process.env.TRUST_PROXY==='false'?false:1);
 const PORT=Number(process.env.PORT||3000);
 const ROOT=path.resolve(process.env.DATA_DIR||path.join(__dirname,'data'));
-const TMP=path.join(ROOT,'tmp'),UPLOADS=path.join(ROOT,'uploads');
+const TMP=path.join(ROOT,'tmp'),UPLOADS=path.join(ROOT,'uploads'),AVATARS=path.join(ROOT,'avatars');
 const WEB=path.resolve(__dirname,'../docs');
 const PROD=process.env.NODE_ENV==='production';
 const COOKIE='mrh_sid',SESSION_MS=14*24*60*60*1000;
-const MAX={anim:8*1048576,mp3:35*1048576,lua:2*1048576};
-for(const dir of [ROOT,TMP,UPLOADS])fs.mkdirSync(dir,{recursive:true});
+const MAX={anim:8*1048576,mp3:35*1048576,lua:2*1048576,avatar:2*1048576};
+const OWNER_NAME='Mr_H';
+const ownerIsReserved=name=>typeof name==='string'&&name.toLowerCase()===OWNER_NAME.toLowerCase();
+const claimSecret=String(process.env.OWNER_SETUP_KEY||'');
+for(const dir of [ROOT,TMP,UPLOADS,AVATARS])fs.mkdirSync(dir,{recursive:true});
 const db=new Database(path.join(ROOT,'gallery.sqlite'));
 db.pragma('journal_mode=WAL');
 db.pragma('foreign_keys=ON');
@@ -36,10 +39,21 @@ db.exec([
 'CREATE INDEX IF NOT EXISTS animation_created ON animations(created_at DESC);',
 'CREATE INDEX IF NOT EXISTS animation_user ON animations(user_id);'
 ].join('\n'));
+// Upgrade old databases without losing registered accounts or animation files.
+const userColumns=db.prepare('PRAGMA table_info(users)').all().map(row=>row.name);
+for(const [column,sql] of [
+ ['role',"ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'"],
+ ['avatar_mime','ALTER TABLE users ADD COLUMN avatar_mime TEXT'],
+ ['avatar_rev','ALTER TABLE users ADD COLUMN avatar_rev INTEGER NOT NULL DEFAULT 0']
+])if(!userColumns.includes(column))db.exec(sql);
 const hashToken=token=>crypto.createHash('sha256').update(token).digest('hex');
 const usernameValid=s=>typeof s==='string'&&/^[A-Za-z0-9_]{3,24}$/.test(s);
 const passwordValid=s=>typeof s==='string'&&Buffer.byteLength(s,'utf8')>=10&&Buffer.byteLength(s,'utf8')<=72;
-const publicUser=user=>({id:user.id,username:user.username});
+const publicUser=user=>({
+ id:user.id,username:user.username,
+ role:user.role==='owner'?'owner':'user',
+ avatarUrl:user.avatar_mime?'/api/users/'+user.id+'/avatar?v='+(user.avatar_rev||0):null
+});
 const fail=(res,status,message)=>res.status(status).json({error:message});
 app.use(helmet({contentSecurityPolicy:{directives:{
  defaultSrc:["'self'"],scriptSrc:["'self'"],styleSrc:["'self'","'unsafe-inline'"],
@@ -75,7 +89,7 @@ app.use('/api',(req,res,next)=>{
  const token=sessionToken(req);
  if(token){
   const hash=hashToken(token);
-  const user=db.prepare('SELECT u.id,u.username FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token_hash=? AND s.expires_at>?').get(hash,Date.now());
+  const user=db.prepare('SELECT u.id,u.username,u.role,u.avatar_mime,u.avatar_rev FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token_hash=? AND s.expires_at>?').get(hash,Date.now());
   if(user){req.user=user;req.sessionHash=hash;}
  }
  next();
