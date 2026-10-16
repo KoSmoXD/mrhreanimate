@@ -31,7 +31,7 @@ def published_source() -> str:
     ).decode("utf-8")
     if any(ord(ch) > 127 for ch in decoded):
         raise AssertionError("This hex byte wrapper must contain only ASCII source")
-    if 'local VERSION = "2.9.3"' not in decoded:
+    if 'local VERSION = "2.9.4"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
@@ -64,6 +64,12 @@ def published_source() -> str:
 
     if 'local data = [====[' not in decoded:
         raise AssertionError("Bundled UI changer is required; never block startup on a second HTTP fetch")
+    if 'stage("engine compiled; starting UI")' not in decoded or 'timedRequest(' not in decoded:
+        raise AssertionError("Monitored boot and bounded pinned HTTP requests are required")
+    if 'Never restore an alternate UI during engine startup' not in decoded:
+        raise AssertionError("Alternate libraries must not hide Original during startup")
+    if 'published loader entered; decoding source' not in raw:
+        raise AssertionError("Raw published loader must log entry before decoding")
     for required in (
         'UI Changer',
         '"Original", "Obsidian", "Linoria"',
