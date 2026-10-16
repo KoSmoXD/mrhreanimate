@@ -5,12 +5,14 @@
 const $=id=>document.getElementById(id);
 const start=$('mocap-start'),stop=$('mocap-stop'),status=$('mocap-status');
 const code=$('mocap-code'),video=$('mocap-video'),canvas=$('mocap-overlay');
+const calibrate=$('mocap-calibrate');
 if(!start||!stop||!video||!canvas)return;
 const ctx=canvas.getContext('2d');
 const EDGES=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],
  [23,24],[23,25],[25,27],[24,26],[26,28]];
 const PARTS=['head','torso','leftArm','rightArm','leftLeg','rightLeg'];
 let stream=null,tracker=null,running=false,session=null,pending=false,raf=0,lastSent=0,frames=0;
+const solver=window.MrHMocapSolver?.createSolver();
 const clamp=(v,limit)=>Math.max(-limit,Math.min(limit,v));
 const mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:(a.z+b.z)/2});
 function detected(lm,...ids){return ids.every(i=>lm[i]&&(lm[i].visibility??1)>0.48);}
@@ -81,8 +83,11 @@ function onPose(result){
  if(!running)return;
  const landmarks=result.poseLandmarks;
  overlay(landmarks);
- const mapped=toPose(landmarks);
- if(!mapped){status.textContent='Body not detected. Stand back so your head, arms and legs are visible.';return;}
+ // Prefer real-world 3D landmarks and 3x3 joint matrices (protocol v2).
+ // Fall back to the legacy 2D Euler approximation only on old browsers.
+ const mapped=result.poseWorldLandmarks&&solver
+   ?solver.solve(result.poseWorldLandmarks,landmarks):toPose(landmarks);
+ if(!mapped){status.textContent='Body not detected. Stand back so your shoulders and hips are visible.';return;}
  const now=performance.now();
  if(now-lastSent>170&&!pending){lastSent=now;void publish(mapped);}
 }
@@ -94,7 +99,7 @@ async function loop(){
 }
 async function stopCapture(){
  running=false;cancelAnimationFrame(raf);
- start.disabled=false;stop.disabled=true;
+ start.disabled=false;stop.disabled=true;if(calibrate)calibrate.disabled=true;
  if(stream){for(const track of stream.getTracks())track.stop();stream=null;}
  video.srcObject=null;
  if(tracker){try{await tracker.close();}catch{}tracker=null;}
@@ -111,6 +116,7 @@ start.addEventListener('click',async()=>{
  status.textContent='Requesting camera permission and loading pose model...';
  try{
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access needs HTTPS and a supported browser.');
+  solver?.reset();
   stream=await navigator.mediaDevices.getUserMedia({
    audio:false,video:{facingMode:'user',width:{ideal:640},height:{ideal:480}}
   });
@@ -123,11 +129,15 @@ start.addEventListener('click',async()=>{
   session=await call('/api/mocap/session','POST',{});
   code.textContent=session.code;
   running=true;frames=0;lastSent=0;
-  stop.disabled=false;
+  stop.disabled=false;if(calibrate)calibrate.disabled=false;
   status.textContent='Camera started. Enter the pairing code in the Camera Motion moveset.';
   raf=requestAnimationFrame(loop);
  }catch(e){status.textContent='Cannot start capture: '+e.message;await stopCapture();status.textContent='Cannot start capture: '+e.message;}
 });
 stop.addEventListener('click',()=>void stopCapture());
+if(calibrate)calibrate.addEventListener('click',()=>{
+ solver?.reset();
+ status.textContent='Calibrated. Stand upright for a moment, then move naturally.';
+});
 window.addEventListener('pagehide',()=>{if(running)void stopCapture();});
 })();
