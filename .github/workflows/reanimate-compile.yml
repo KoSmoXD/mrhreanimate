@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'Mr_H_Reanimate.lua'
+      - 'ui/ui_changer.lua'
       - 'scripts/verify_reanimate_compiler.py'
       - '.github/workflows/reanimate-compile.yml'
   pull_request:
@@ -41,4 +42,6 @@ jobs:
       - name: Compile full patched engine
         run: |
           .ci/luau-build/luau-compile .ci/patched_engine.luau > /dev/null
+          .ci/luau-build/luau-compile ui/ui_changer.lua > /dev/null
+          echo "Three UI modes compiled (Original / Obsidian / Linoria)."
           echo "Patched upstream engine compiles within Luau register limits."
