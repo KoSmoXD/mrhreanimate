@@ -6,6 +6,7 @@ return function(UI, originalWindow, saved)
     local BRIDGE = {
         pages = {}, lookup = {}, lastId = 0, style = 1,
         library = nil, window = nil, rendering = false, rebuilding = false,
+        syncConnections = {},
         current = nil, lastNotice = "",
     }
     local services = game:GetService("HttpService")
@@ -208,7 +209,7 @@ return function(UI, originalWindow, saved)
             warn("[Mr H UI] Failed to mirror " .. label .. ": " .. tostring(result))
         elseif result and item.value and item.kind ~= "button" and item.kind ~= "label" then
             -- Sync updates from the native reanimation engine back to the new UI.
-            item.value.Changed:Connect(function()
+            local connection = item.value.Changed:Connect(function()
                 if BRIDGE.library ~= library or BRIDGE.rendering then return end
                 local target = (library.Options and library.Options[idx])
                     or (library.Toggles and library.Toggles[idx])
@@ -221,12 +222,24 @@ return function(UI, originalWindow, saved)
                     end
                 end
             end)
+            table.insert(BRIDGE.syncConnections, connection)
         end
     end
     local function teardown(self)
+        for _, connection in ipairs(self.syncConnections) do
+            connection:Disconnect()
+        end
+        table.clear(self.syncConnections)
         local old = self.library
         self.library, self.window = nil, nil
         if old and type(old.Unload) == "function" then pcall(function() old:Unload() end) end
+    end
+    function BRIDGE:activatePage(page)
+        for _, info in ipairs(self.pages) do
+            local selected = info.page == page
+            info.page.Visible = selected
+            info.page.Interactable = selected
+        end
     end
     local function render(self, style)
         local lib, err = fromRemote(style)
@@ -257,6 +270,10 @@ return function(UI, originalWindow, saved)
             })
             group:AddButton("Restore Original", function() self:SetStyle(1) end)
             group:AddLabel("Right Control: show/hide this menu.")
+            local mainInfo = self.pages[1]
+            if mainInfo then
+                self:activatePage(mainInfo.page)
+            end
             local usedNames = {}
             for index, page in ipairs(self.pages) do
                 if #page.items > 0 then
@@ -264,6 +281,15 @@ return function(UI, originalWindow, saved)
                     if usedNames[tabTitle] then tabTitle = tabTitle .. " " .. index end
                     usedNames[page.title] = true
                     local tab = window:AddTab(tabTitle)
+                    local show = tab.Show or tab.ShowTab
+                    if type(show) == "function" then
+                        local function onShow(selfTab, ...)
+                            BRIDGE:activatePage(page.page)
+                            return show(selfTab, ...)
+                        end
+                        if tab.Show then tab.Show = onShow
+                        else tab.ShowTab = onShow end
+                    end
                     local left = tab:AddLeftGroupbox("Controls")
                     local right = tab:AddRightGroupbox("More Controls")
                     local count = 0
