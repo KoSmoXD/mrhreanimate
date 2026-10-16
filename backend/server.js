@@ -669,7 +669,7 @@ app.delete('/api/animations/:id',auth,async(req,res,next)=>{
  }catch(e){next(e);}
 });
 // Serve only the bundled 3D rendering engine, never a third-party script CDN.
-app.get('/vendor/three/build/three.module.js',(req,res)=>res.set('Cache-Control','public,max-age=86400').type('application/javascript').sendFile(path.join(__dirname,'node_modules/three/build/three.module.js')));
+app.use('/vendor/three/build',express.static(path.join(__dirname,'node_modules/three/build'),{index:false,dotfiles:'deny',maxAge:'1d'}));
 // HTML, JS and CSS are UI/auth critical: never cache old scripts after a deploy.
 app.use(express.static(WEB,{
  index:'index.html',dotfiles:'deny',maxAge:0,
