@@ -11,6 +11,7 @@ const bcrypt=require('bcryptjs');
 const archiver=require('archiver');
 const {makeMoveset,ROLES}=require('./moveset-generator');
 const setupCommunity=require('./community');
+const robloxPreview=require('./roblox-avatar');
 const {execFile}=require('node:child_process');
 const {promisify}=require('node:util');
 const execFileAsync=promisify(execFile);
@@ -67,6 +68,7 @@ app.use(helmet({contentSecurityPolicy:{directives:{
  baseUri:["'none'"],formAction:["'self'"]
 }}}));
 app.use(express.json({limit:'16kb'}));
+app.use('/api/roblox-preview',robloxPreview);
 app.use('/api',rateLimit({windowMs:15*60*1000,limit:260,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many requests. Please retry later.'}}));
 app.use('/api',(req,res,next)=>{
  if(['GET','HEAD','OPTIONS'].includes(req.method))return next();
@@ -666,6 +668,8 @@ app.delete('/api/animations/:id',auth,async(req,res,next)=>{
   res.json({ok:true});
  }catch(e){next(e);}
 });
+// Serve only the bundled 3D rendering engine, never a third-party script CDN.
+app.get('/vendor/three/build/three.module.js',(req,res)=>res.set('Cache-Control','public,max-age=86400').type('application/javascript').sendFile(path.join(__dirname,'node_modules/three/build/three.module.js')));
 // HTML, JS and CSS are UI/auth critical: never cache old scripts after a deploy.
 app.use(express.static(WEB,{
  index:'index.html',dotfiles:'deny',maxAge:0,
