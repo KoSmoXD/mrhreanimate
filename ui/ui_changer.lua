@@ -29,6 +29,7 @@ return function(UI, originalWindow, saved)
         return nil
     end
     local function add(parent, kind, label, data)
+        if kind == "dropdown" and label == "UI Changer" then return end
         local page = pageFor(parent)
         if not page then return end
         BRIDGE.lastId += 1
@@ -40,6 +41,9 @@ return function(UI, originalWindow, saved)
         table.insert(page.items, item)
         BRIDGE:queueRefresh()
         return item
+    end
+    function BRIDGE:SetSelector(selector)
+        self.selector = selector
     end
     function BRIDGE:SetTitle(page, title)
         local info = self.lookup[page]
@@ -253,9 +257,13 @@ return function(UI, originalWindow, saved)
             })
             group:AddButton("Restore Original", function() self:SetStyle(1) end)
             group:AddLabel("Right Control: show/hide this menu.")
-            for _, page in ipairs(self.pages) do
+            local usedNames = {}
+            for index, page in ipairs(self.pages) do
                 if #page.items > 0 then
-                    local tab = window:AddTab(page.title)
+                    local tabTitle = page.title
+                    if usedNames[tabTitle] then tabTitle = tabTitle .. " " .. index end
+                    usedNames[page.title] = true
+                    local tab = window:AddTab(tabTitle)
                     local left = tab:AddLeftGroupbox("Controls")
                     local right = tab:AddRightGroupbox("More Controls")
                     local count = 0
@@ -279,12 +287,12 @@ return function(UI, originalWindow, saved)
         style = tonumber(style) or 1
         if style ~= 1 and style ~= 2 and style ~= 3 then return false end
         if self.rendering then return false end
-        local oldStyle = self.style
-        if oldStyle == style and (style == 1 or self.library) then return true end
+        if self.style == style and (style == 1 or self.library) then return true end
         -- Unload an existing alternate window before creating the next one.
         teardown(self)
         if style == 1 then
             self.style, saved.MrHUIStyle = 1, 1
+            if self.selector and self.selector.Value ~= 1 then self.selector.Value = 1 end
             originalWindow.Visible = true
             return true
         end
@@ -292,10 +300,12 @@ return function(UI, originalWindow, saved)
         local success, err = render(self, style)
         if success then
             self.style, saved.MrHUIStyle = style, style
+            if self.selector and self.selector.Value ~= style then self.selector.Value = style end
             originalWindow.Visible = false
             return true
         end
         self.style, saved.MrHUIStyle = 1, 1
+        if self.selector and self.selector.Value ~= 1 then self.selector.Value = 1 end
         originalWindow.Visible = true
         self.lastNotice = err
         warn("[Mr H UI] " .. tostring(err) .. " - restored Original.")
