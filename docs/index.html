@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="./preview.css?v=avatar-northkoreaplayer9-20261016">
 <script src="./app.js?v=avatar-northkoreaplayer9-20261016" defer></script>
 <script src="./make.js?v=avatar-northkoreaplayer9-20261016" defer></script>
+<script src="./mocap.js?v=cam-v1-20261016" defer></script>
 <script src="./moveset.js?v=avatar-northkoreaplayer9-20261016" defer></script>
 <script src="./community.js?v=avatar-northkoreaplayer9-20261016" defer></script>
 <script src="./bulk.js?v=avatar-northkoreaplayer9-20261016" defer></script>
@@ -38,6 +39,7 @@
     <button type="button" id="tab-rbxm2anim" class="site-tab" role="tab" aria-controls="rbxm2anim-panel" aria-selected="false">RBXM2ANIM</button>
     <button type="button" id="tab-moveset" class="site-tab" role="tab" aria-controls="moveset-panel" aria-selected="false">Moveset Maker</button>
     <button type="button" id="tab-preview" class="site-tab" role="tab" aria-controls="preview-panel" aria-selected="false">3D Preview</button>
+    <button type="button" id="tab-mocap" class="site-tab" role="tab" aria-controls="mocap-panel" aria-selected="false">Camera Motion</button>
   </nav>
   <section id="browse-panel" role="tabpanel" aria-labelledby="tab-browse">
   <div class="gallery-head">
@@ -274,6 +276,40 @@
   </section>
 </main>
 
+
+  <section id="mocap-panel" role="tabpanel" aria-labelledby="tab-mocap" hidden>
+    <div class="gallery-head">
+      <div><h1>Camera Motion</h1><p>Move your real body to control the arms, legs, head, and torso of your Mr H Reanimate rig.</p></div>
+    </div>
+    <div class="mocap-layout">
+      <div class="mocap-card">
+        <div class="mocap-video-wrap">
+          <video id="mocap-video" autoplay muted playsinline></video>
+          <canvas id="mocap-overlay"></canvas>
+          <span class="mocap-video-label">LOCAL CAMERA · BODY TRACKING</span>
+        </div>
+        <div class="mocap-actions">
+          <button id="mocap-start" type="button" class="primary action">Start Camera</button>
+          <button id="mocap-stop" type="button" class="action" disabled>Stop Camera</button>
+        </div>
+        <p id="mocap-status" class="small-note" role="status" aria-live="polite">Camera inactive. Your video stays on this device.</p>
+      </div>
+      <div class="mocap-card mocap-guide">
+        <div class="output-label">LIVE PAIRING CODE</div>
+        <div id="mocap-code" class="mocap-code" aria-live="polite">----------</div>
+        <p class="small-note">Each code lasts up to 30 minutes. Keep the camera page open while your Roblox character is moving.</p>
+        <h2>Use it in Mr H Reanimate</h2>
+        <ol>
+          <li>Run the latest Mr H Reanimate loader in Roblox.</li>
+          <li>Enable reanimation, then select <b>Movesets → Camera Motion</b>.</li>
+          <li>Click <b>Start Camera</b> here and allow webcam access.</li>
+          <li>Enter this code in the moveset settings and click <b>Connect Webcam</b>.</li>
+          <li>Stand far enough back for your whole body to appear on camera.</li>
+        </ol>
+        <p class="small-note">Tracking is approximate R6 motion capture, not full-body physics or server-side replication. No Python installation is needed. Camera frames never leave this browser; only estimated joint angles pass through a temporary session. On mobile, use a second device for the camera so this page remains active.</p>
+      </div>
+    </div>
+  </section>
 
 <div id="moveset-upload-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="moveset-upload-title" hidden>
  <div class="modal-panel wide">
