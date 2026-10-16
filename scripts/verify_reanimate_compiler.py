@@ -31,7 +31,7 @@ def published_source() -> str:
     ).decode("utf-8")
     if any(ord(ch) > 127 for ch in decoded):
         raise AssertionError("This hex byte wrapper must contain only ASCII source")
-    if 'local VERSION = "2.9.2"' not in decoded:
+    if 'local VERSION = "2.9.3"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
@@ -62,6 +62,13 @@ def published_source() -> str:
             raise AssertionError("Online Modules install feature missing: " + required)
 
 
+    for required in (
+        'UI Changer',
+        '"Original", "Obsidian", "Linoria"',
+        'three-mode UI changer with original fallback',
+    ):
+        if required not in decoded:
+            raise AssertionError("UI changer is missing: " + required)
     return decoded
 
 def long_literal(s: str) -> str:
