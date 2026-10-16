@@ -709,5 +709,6 @@ app.use((err,req,res,next)=>{
  fail(res,500,'Internal server error.');
 });
 const server=app.listen(PORT,()=>console.log('Mr H gallery listening on '+PORT+'; persistent storage: '+ROOT));
+mocap.mountWebSocket(server);
 const shutdown=()=>server.close(()=>{db.close();process.exit(0);});
 process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);
