@@ -28,7 +28,7 @@ table.insert(modules, function()
         Head = true, Arms = true, Legs = true, Torso = true,
         Mirror = false, RootMotion = false
     }
-    local http = nil
+    local httpService = nil
     local running = false
     local generation = 0
     local latest = nil
@@ -38,6 +38,7 @@ table.insert(modules, function()
     local lastError = ""
     local moveOrigin = nil
     local moveLast = 0
+    local connectionAttempt = 0
     local function status(value)
         local message = tostring(value)
         if statusLabel and statusLabel.Parent then statusLabel.Text = message end
@@ -85,7 +86,7 @@ table.insert(modules, function()
         return true
     end
     local function decodeResponse(value)
-        if not http then http=game:GetService("HttpService") end
+        if not httpService then httpService=game:GetService("HttpService") end
         local body
         if type(value)=="string" then body=value
         elseif type(value)=="table" then
@@ -94,32 +95,58 @@ table.insert(modules, function()
             body=value.Body or value.body
         end
         if type(body)~="string" or #body<5 or #body>40000 then return nil,"Empty response" end
-        local ok,result=pcall(function() return http:JSONDecode(body) end)
+        local ok,result=pcall(function() return httpService:JSONDecode(body) end)
         if ok and type(result)=="table" then return result end
         return nil,"JSON parse error"
     end
+    -- Executor request() and game:HttpGet() can hang without returning.
+    -- Put explicit deadlines on both methods so a broken transport reports
+    -- a useful error instead of displaying Connecting forever.
+    local function timedCall(label, seconds, callback)
+        local done, ok, result = false, false, nil
+        task.spawn(function()
+            ok, result = pcall(callback)
+            done = true
+        end)
+        local deadline = os.clock() + seconds
+        while not done and os.clock() < deadline do
+            task.wait(0.08)
+        end
+        if not done then return nil, label .. " timed out" end
+        if not ok then return nil, label .. ": " .. tostring(result):sub(1,90) end
+        return result
+    end
     local function fetch(sourceUrl)
+        -- Avoid local HttpService shadowing the executor's global http.request.
         local requester = request or http_request or (syn and syn.request)
             or (fluxus and fluxus.request) or (http and http.request)
-        local errors={}
-        if type(requester)=="function" then
-            local ok,res=pcall(function()
+        local errors = {}
+        if type(requester) == "function" then
+            local response, reason = timedCall("Executor HTTP", 5, function()
                 return requester({Url=sourceUrl,Method="GET",Timeout=5})
             end)
-            if ok then
-                local data,why=decodeResponse(res)
+            if response then
+                local data, why = decodeResponse(response)
                 if data then return data end
-                table.insert(errors,tostring(why))
-            else table.insert(errors,tostring(res):sub(1,85)) end
+                table.insert(errors, tostring(why))
+                if why == "HTTP 404" then
+                    return nil, "Pairing code not found. Restart capture for a new code."
+                end
+            else
+                table.insert(errors, tostring(reason))
+            end
         end
-        -- Local Python endpoints often cannot be fetched using game:HttpGet.
-        local ok,body=pcall(function() return game:HttpGet(sourceUrl,true) end)
-        if ok then
-            local data,why=decodeResponse(body)
+        local body, reason = timedCall("Roblox HttpGet", 5, function()
+            return game:HttpGet(sourceUrl, true)
+        end)
+        if body then
+            local data, why = decodeResponse(body)
             if data then return data end
-            table.insert(errors,tostring(why))
-        else table.insert(errors,tostring(body):sub(1,85)) end
-        return nil,table.concat(errors," / "):sub(1,125)
+            table.insert(errors, tostring(why))
+        else
+            table.insert(errors, tostring(reason))
+        end
+        return nil, table.concat(errors, " | "):sub(1,165)
     end
     local function endpoint()
         if cfg.Mode==2 then return localUrl(cfg.LocalUrl) end
@@ -215,6 +242,7 @@ table.insert(modules, function()
     m.Config=function(parent)
         Util_CreateText(parent,"Camera Motion v3: accurate R6 matrices",17,Enum.TextXAlignment.Center)
         Util_CreateText(parent,"Browser: "..WEBSITE.."/#camera-motion",11,Enum.TextXAlignment.Left)
+        Util_CreateText(parent,"Press Use Moveset at the TOP to equip, then connect. Reanimation must be active.",12,Enum.TextXAlignment.Left)
         local mode=Util_CreateDropdown(parent,"Capture Source",{"Website Pairing","Local Python v2"},cfg.Mode)
         mode.Changed:Connect(function(v)
             cfg.Mode=v
@@ -237,7 +265,26 @@ table.insert(modules, function()
             end
             latest=nil
             updatedAt=0
-            status("Connecting...")
+            connectionAttempt += 1
+            local attempt = connectionAttempt
+            status("Checking camera website... please wait up to 11 seconds")
+            -- Check the pairing URL immediately, even if Use Moveset hasn't been
+            -- pressed yet. Otherwise polling only starts inside m.Init.
+            task.spawn(function()
+                local ok, data, reason = pcall(readOnce)
+                if attempt ~= connectionAttempt then return end
+                if not ok then
+                    status("Connection failed: " .. tostring(data):sub(1,115))
+                elseif data then
+                    status(running and "Camera online: tracking ready"
+                        or "Camera online! Press Use Moveset above and start reanimation.")
+                elseif reason == "Waiting for body detection" then
+                    status(running and "Website reachable. Waiting for body detection."
+                        or "Pairing recognized; stand in frame, then press Use Moveset.")
+                else
+                    status("Connection failed: " .. tostring(reason):sub(1,130))
+                end
+            end)
         end)
         local test=Util_CreateButton(parent,"Test Connection",14)
         test.Activated:Connect(function()
@@ -267,6 +314,7 @@ table.insert(modules, function()
     end
     m.Init=function(figure)
         running=true
+        status("Camera Motion equipped. Polling starts now.")
         latest=nil
         updatedAt=0
         moveOrigin=nil
@@ -313,6 +361,7 @@ table.insert(modules, function()
     end
     m.Destroy=function()
         running=false
+        connectionAttempt += 1
         generation+=1
         latest=nil
         moveOrigin=nil
