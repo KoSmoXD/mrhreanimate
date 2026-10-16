@@ -36,6 +36,8 @@ jobs:
           node --check docs/app.js
           node --check docs/make.js
           node --check docs/preview.js
+          node --check backend/roblox-avatar.js
+          node --input-type=module --check < docs/preview-avatar.js
       - name: Run gallery integration tests
         run: npm test
         working-directory: backend
