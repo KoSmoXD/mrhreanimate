@@ -1,6 +1,6 @@
 'use strict';
 // Temporary in-memory bridge from the user's browser camera to their reanimated rig.
-// Video frames never leave the browser. Only six sets of joint Euler angles are sent.
+// Video frames never leave the browser. Only six joint rotation matrices are sent; legacy Euler triplets are supported.
 const {Router}=require('express');
 const rateLimit=require('express-rate-limit');
 const crypto=require('node:crypto');
@@ -30,8 +30,37 @@ function authorized(s,token){
  const a=Buffer.from(s.publisherKey,'hex'),b=Buffer.from(token,'hex');
  return crypto.timingSafeEqual(a,b);
 }
+function matrix(value){
+ if(!Array.isArray(value)||value.length!==9)return null;
+ if(!value.every(n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=1.005))return null;
+ // Rotation must stay roughly orthonormal even after network quantization.
+ for(let row=0;row<3;row++){
+  const v=value.slice(row*3,row*3+3);
+  if(Math.abs(v.reduce((acc,n)=>acc+n*n,0)-1)>.05)return null;
+ }
+ for(let row=0;row<3;row++)for(let other=row+1;other<3;other++){
+  const dot=value[row*3]*value[other*3]+value[row*3+1]*value[other*3+1]+value[row*3+2]*value[other*3+2];
+  if(Math.abs(dot)>.05)return null;
+ }
+ return value.map(n=>Math.round(n*10000)/10000);
+}
 function frame(data){
  if(!data||typeof data!=='object'||Array.isArray(data))return null;
+ if(data.v===2){
+  const result={v:2};
+  for(const name of ['neck','sh_l','sh_r','hip_l','hip_r','root']){
+   const m=matrix(data[name]);
+   if(!m)return null;
+   result[name]=m;
+  }
+  for(const scalar of ['span','strafe','adv','r_al','r_ar','r_ll','r_lr']){
+   if(data[scalar]===undefined)continue;
+   const n=data[scalar];
+   if(typeof n!=='number'||!Number.isFinite(n)||Math.abs(n)>5)return null;
+   result[scalar]=Math.round(n*10000)/10000;
+  }
+  return result;
+ }
  const result={};
  for(const part of PARTS){
   const angles=data[part];
@@ -58,7 +87,7 @@ router.post('/session/:code/frame',(req,res)=>{
  if(!s||!authorized(s,req.body?.publisherKey))
   return json(res,404,{error:'Session expired or publisher key invalid.'});
  const pose=frame(req.body.pose);
- if(!pose)return json(res,400,{error:'Expected six valid joint-angle triplets.'});
+ if(!pose)return json(res,400,{error:'Expected six valid joint matrices (protocol v2) or legacy angle triplets.'});
  const now=Date.now();
  if(now-s.lastPublish<90)return json(res,429,{error:'Capture rate exceeds 10 frames per second.'});
  s.lastPublish=now;
