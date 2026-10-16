@@ -4,7 +4,11 @@
 const {Router}=require('express');
 const rateLimit=require('express-rate-limit');
 const crypto=require('node:crypto');
+const {WebSocketServer,WebSocket}=require('ws');
 const router=Router();
+const channels=new Map();
+const sockets=new Set();
+
 const sessions=new Map();
 const ALPHABET='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const PARTS=['head','torso','leftArm','rightArm','leftLeg','rightLeg'];
@@ -94,6 +98,14 @@ router.post('/session/:code/frame',(req,res)=>{
  s.sequence++;
  s.pose=pose;
  s.updatedAt=now;
+ const listeners=channels.get(req.params.code);
+ if(listeners){
+  const payload=JSON.stringify({type:'pose',active:true,sequence:s.sequence,pose:s.pose});
+  for(const socket of listeners){
+   if(socket.readyState===WebSocket.OPEN&&socket.bufferedAmount<262144)
+    socket.send(payload);
+  }
+ }
  return json(res,200,{ok:true,sequence:s.sequence});
 });
 router.get('/session/:code/pose',(req,res)=>{
@@ -107,6 +119,60 @@ router.delete('/session/:code',(req,res)=>{
  const s=session(req.params.code);
  if(!s||!authorized(s,req.body?.publisherKey))return json(res,404,{error:'Session unavailable.'});
  sessions.delete(req.params.code);
+ for(const socket of channels.get(req.params.code)||[])socket.close(1000,'Capture ended');
  return json(res,200,{ok:true});
 });
+
+function mountWebSocket(server){
+ const wss=new WebSocketServer({noServer:true,maxPayload:2048,
+  perMessageDeflate:false,clientTracking:false});
+ server.on('upgrade',(req,socket,head)=>{
+  const path=req.url?.split('?')[0]||'';
+  const match=/^\/api\/mocap\/ws\/([A-HJ-NP-Z2-9]{10})$/.exec(path);
+  if(!match){socket.write('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n');socket.destroy();return;}
+  const code=match[1],existing=session(code);
+  if(!existing){
+   socket.write('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n');
+   socket.destroy();return;
+  }
+  if(sockets.size>=400||(channels.get(code)?.size||0)>=3){
+   socket.write('HTTP/1.1 429 Too Many Requests\r\nConnection: close\r\n\r\n');
+   socket.destroy();return;
+  }
+  wss.handleUpgrade(req,socket,head,ws=>{
+   sockets.add(ws);
+   let channel=channels.get(code);
+   if(!channel){channel=new Set();channels.set(code,channel);}
+   channel.add(ws);
+   const clear=()=>{
+    sockets.delete(ws);
+    channel.delete(ws);
+    if(!channel.size)channels.delete(code);
+   };
+   ws.on('close',clear);ws.on('error',()=>ws.terminate());
+   ws.on('message',()=>ws.close(1008,'Read-only connection'));
+   ws.send(JSON.stringify({type:'connected',active:Boolean(existing.pose&&Date.now()-existing.updatedAt<FRESHNESS),
+    sequence:existing.sequence,pose:existing.pose&&Date.now()-existing.updatedAt<FRESHNESS?existing.pose:null}));
+  });
+ });
+ const sweep=setInterval(()=>{
+  for(const [code,set] of channels){
+   if(!session(code)){
+    for(const ws of set)ws.close(1000,'Expired');
+   }else{
+    for(const ws of set)if(ws.readyState===WebSocket.OPEN){
+     ws.ping();
+    }
+   }
+  }
+ },30000);
+ sweep.unref?.();
+ server.on('close',()=>{
+  clearInterval(sweep);
+  for(const ws of sockets)ws.terminate();
+  wss.close();
+ });
+ return wss;
+}
+router.mountWebSocket=mountWebSocket;
 module.exports=router;
