@@ -62,6 +62,8 @@ def published_source() -> str:
             raise AssertionError("Online Modules install feature missing: " + required)
 
 
+    if 'local data = [====[' not in decoded:
+        raise AssertionError("Bundled UI changer is required; never block startup on a second HTTP fetch")
     for required in (
         'UI Changer',
         '"Original", "Obsidian", "Linoria"',
