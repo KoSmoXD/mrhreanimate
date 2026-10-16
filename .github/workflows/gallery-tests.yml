@@ -33,6 +33,8 @@ jobs:
       - name: Check syntax
         run: |
           node --check backend/server.js
+          node --check backend/mocap.js
+          node --check docs/mocap.js
           node --check docs/app.js
           node --check docs/make.js
           node --check docs/preview.js
