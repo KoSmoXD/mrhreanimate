@@ -31,7 +31,7 @@ def published_source() -> str:
     ).decode("utf-8")
     if any(ord(ch) > 127 for ch in decoded):
         raise AssertionError("This hex byte wrapper must contain only ASCII source")
-    if 'local VERSION = "2.9.9"' not in decoded:
+    if 'local VERSION = "2.10.0"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
