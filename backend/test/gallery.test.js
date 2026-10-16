@@ -240,6 +240,7 @@ test('Uhhhhhh Make Animation converts Roblox XML KeyframeSequence to install-rea
  assert.ok(bytes.includes(Buffer.from('UhhhhhhReanim/Content/Anims/SitTest.anim')),'includes converted track');
  assert.ok(bytes.includes(Buffer.from('UhhhhhhReanim/Modules/')),'includes generated dance module');
  assert.ok(bytes.length>180,'ZIP should contain the animation and module');
+ assert.ok(readZipText(bytes,'.lua').includes('elapsed = elapsed + math.max(0, tonumber(dt) or 0)'),'generated dance advances without MP3');
  assert.equal(readZipText(bytes,'.lua').split('\n').find(line=>line.includes('m.Description'))?.trim(),'m.Description = '+JSON.stringify(danceDescription),'dance module description mismatch');
  const bad=new FormData();
  bad.set('model',new Blob(['<roblox><Item class="Part"/></roblox>']),'NotAnimation.rbxmx');
