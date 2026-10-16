@@ -94,8 +94,8 @@ def published_source() -> str:
             raise AssertionError("Missing dance playback fallback patch: " + expected)
     assert "dance music time fallback when local MP3 cannot play" in decoded
     for marker in (
-        "Checking camera website... please wait up to 11 seconds",
-        "Press Use Moveset above",
+        "Connecting via WebSocket first, then HTTP fallback...",
+        "Press Use Moveset at the TOP to equip",
         "local function timedCall(label, seconds, callback)",
         "WebSocket",
         "openStream(own)",
