@@ -351,10 +351,14 @@ return function(UI, originalWindow, saved)
         end)
     end
     function BRIDGE:Start()
-        local choice = tonumber(saved.MrHUIStyle) or 1
-        if choice == 2 or choice == 3 then
-            task.delay(2, function() self:SetStyle(choice) end)
-        end
+        -- Never restore an alternate UI during engine startup. A previous
+        -- incomplete library init could hide the only working window.
+        -- Users can manually switch after Original finishes loading.
+        self.style = 1
+        saved.MrHUIStyle = 1
+        if self.selector then self.selector.Value = 1 end
+        originalWindow.Visible = true
+        print("[Mr H UI] Original loaded. Select Obsidian or Linoria from UI Changer.")
     end
     local env = _G
     if type(getgenv) == "function" then
