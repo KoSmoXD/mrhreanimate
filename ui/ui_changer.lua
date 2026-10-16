@@ -144,8 +144,8 @@ return function(UI, originalWindow, saved)
         return digits
     end
     local function attach(group, item, library)
-        if item.value and typeof(item.value) == "Instance"
-           and not item.value.Parent and item.kind ~= "button" then return end
+        -- Uhhhhhh stores BoolValue, IntValue and NumberValue without parents.
+        -- They are valid sources even when not parented in the DataModel.
         local label = item.label
         if label == "" then return end
         local idx = "mrh_" .. item.id
