@@ -31,7 +31,7 @@ def published_source() -> str:
     ).decode("utf-8")
     if any(ord(ch) > 127 for ch in decoded):
         raise AssertionError("This hex byte wrapper must contain only ASCII source")
-    if 'local VERSION = "2.9.6"' not in decoded:
+    if 'local VERSION = "2.9.7"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
@@ -77,6 +77,12 @@ def published_source() -> str:
     ):
         if required not in decoded:
             raise AssertionError("UI changer is missing: " + required)
+    for expected in (
+        'track dance clock even when local audio cannot start',
+        'dance music time fallback when local MP3 cannot play',
+    ):
+        if expected not in decoded:
+            raise AssertionError("Missing dance playback fallback patch: " + expected)
     return decoded
 
 def long_literal(s: str) -> str:
