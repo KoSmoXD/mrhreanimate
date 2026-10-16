@@ -101,6 +101,10 @@ test('public gallery, registration, authenticated upload, ZIP download and accou
  assert.ok(script.includes("'/owner/claim'"),'owner setup must route to special owner endpoint');
  const stylesheet=await fetch(base+'/styles.css?v=avatar-northkoreaplayer9-20261016');
  assert.ok(stylesheet.headers.get('cache-control')?.includes('no-store'),'UI CSS must not be cached');
+ const blockedModel=await fetch(base+'/api/roblox-preview/model');
+ assert.equal(blockedModel.status,503,'3D mesh must require a server-side Roblox API key');
+ const blockedAsset=await fetch(base+'/api/roblox-preview/asset/00000000000000000000000000000000');
+ assert.equal(blockedAsset.status,404,'only manifest-approved asset hashes may be proxied');
  const guest=await api('/animations');
  assert.equal(guest.status,200);assert.deepEqual(guest.body.items,[]);
  const uname='User'+crypto.randomBytes(4).toString('hex');
