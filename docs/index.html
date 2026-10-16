@@ -6,16 +6,17 @@
 <meta name="theme-color" content="#050505">
 <meta name="description" content="Browse, upload, and download community animation packs for Mr H Reanimate.">
 <title>Mr H Animations</title>
-<meta name="mrh-frontend-version" content="preview-3d-20261013">
+<meta name="mrh-frontend-version" content="avatar-northkoreaplayer9-20261016">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./styles.css?v=preview-3d-20261013">
-<link rel="stylesheet" href="./preview.css?v=preview-3d-20261013">
-<script src="./app.js?v=preview-3d-20261013" defer></script>
-<script src="./make.js?v=preview-3d-20261013" defer></script>
-<script src="./moveset.js?v=preview-3d-20261013" defer></script>
-<script src="./community.js?v=preview-3d-20261013" defer></script>
-<script src="./bulk.js?v=preview-3d-20261013" defer></script>
-<script src="./preview.js?v=preview-3d-20261013" defer></script>
+<link rel="stylesheet" href="./styles.css?v=avatar-northkoreaplayer9-20261016">
+<link rel="stylesheet" href="./preview.css?v=avatar-northkoreaplayer9-20261016">
+<script src="./app.js?v=avatar-northkoreaplayer9-20261016" defer></script>
+<script src="./make.js?v=avatar-northkoreaplayer9-20261016" defer></script>
+<script src="./moveset.js?v=avatar-northkoreaplayer9-20261016" defer></script>
+<script src="./community.js?v=avatar-northkoreaplayer9-20261016" defer></script>
+<script src="./bulk.js?v=avatar-northkoreaplayer9-20261016" defer></script>
+<script src="./preview.js?v=avatar-northkoreaplayer9-20261016" defer></script>
+<script type="module" src="./preview-avatar.js?v=avatar-northkoreaplayer9-20261016"></script>
 </head>
 <body>
 <header class="site-header">
@@ -229,7 +230,10 @@
       <p>Play actual Uhhhhhh <code>.anim</code> R6 keyframes in a movable 3D viewer. Preview community dances and movesets, or select tracks from your device. No downloaded Lua is executed.</p></div></header>
     <div class="preview-layout">
       <div class="preview-canvas-box">
-        <canvas id="preview-stage" role="img" aria-label="Interactive 3D R6 dummy animation viewer. Drag horizontally to orbit the camera."></canvas>
+        <div class="preview-avatar-viewport"><canvas id="preview-stage" role="img" aria-label="Interactive 3D R6 dummy animation viewer. Drag horizontally to orbit the camera."></canvas>
+          <canvas id="preview-avatar-canvas" aria-label="3D preview of the Roblox avatar northkoreaplayer9" hidden></canvas>
+          <div class="preview-avatar-badge"><img id="preview-roblox-photo" alt="Roblox avatar of northkoreaplayer9" loading="lazy" hidden><a id="preview-roblox-link" href="https://www.roblox.com/" target="_blank" rel="noopener noreferrer">@northkoreaplayer9</a></div>
+        </div>
         <div id="preview-track-meta" class="preview-track-meta">Select a local track or a community upload.</div>
         <div class="preview-controls">
           <div class="preview-control-line"><button type="button" id="preview-play" class="primary action">Play</button><button type="button" id="preview-restart" class="action">Restart</button>
@@ -252,6 +256,12 @@
         <div class="preview-source-card">
           <h2>Preview your own .anim</h2><p>Files stay inside your browser. Select multiple .anim tracks to switch between them.</p>
           <label for="preview-local">Animation files<input type="file" id="preview-local" accept=".anim" multiple></label>
+        </div>
+        <div class="preview-source-card">
+          <h2>Roblox Character</h2>
+          <p>Using the actual Roblox avatar for <strong>northkoreaplayer9</strong>. The 3D model is fetched securely when the server is authorized by Roblox.</p>
+          <div id="preview-roblox-status" role="status" aria-live="polite">Checking Roblox avatar…</div>
+          <button id="preview-roblox-load" type="button" class="action">Reload 3D Avatar</button>
         </div>
         <div class="preview-source-card">
           <h2>Animation tracks</h2><label for="preview-tracks">Choose track<select id="preview-tracks" disabled><option>No tracks loaded</option></select></label>
