@@ -2,6 +2,7 @@
 // Temporary in-memory bridge from the user's browser camera to their reanimated rig.
 // Video frames never leave the browser. Only six sets of joint Euler angles are sent.
 const {Router}=require('express');
+const rateLimit=require('express-rate-limit');
 const crypto=require('node:crypto');
 const router=Router();
 const sessions=new Map();
@@ -40,7 +41,9 @@ function frame(data){
  }
  return result;
 }
-router.post('/session',(req,res)=>{
+const createLimiter=rateLimit({windowMs:15*60*1000,limit:12,
+ standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many pairing sessions.'}});
+router.post('/session',createLimiter,(req,res)=>{
  clean();
  if(sessions.size>=MAX_SESSIONS)return json(res,503,{error:'All live capture slots are in use.'});
  let code;
