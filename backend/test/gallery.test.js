@@ -469,6 +469,25 @@ test('ephemeral camera capture pairs a browser with a Roblox rig without sharing
  assert.equal(state.status,200);
  assert.equal(state.body.active,true);
  assert.deepEqual(state.body.pose.leftArm,[0.1,0,-0.2]);
+
+ // Protocol v2 uses 6 torso-relative 3x3 matrices instead of Euler triplets.
+ await new Promise(resolve=>setTimeout(resolve,105));
+ const matrix=[1,0,0,0,1,0,0,0,1];
+ const second={v:2,neck:matrix,sh_l:matrix,sh_r:matrix,
+  hip_l:matrix,hip_r:matrix,root:matrix,strafe:0,adv:0,span:.48};
+ next=await api('/mocap/session/'+code+'/frame',{method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({publisherKey:fresh.body.publisherKey,pose:second})});
+ assert.equal(next.status,200,JSON.stringify(next.body));
+ state=await api('/mocap/session/'+code+'/pose');
+ assert.equal(state.body.pose.v,2);
+ assert.deepEqual(state.body.pose.sh_l,matrix);
+ assert.equal(state.body.pose.span,.48);
+ await new Promise(resolve=>setTimeout(resolve,105));
+ const invalid={...second,sh_l:[10,0,0,0,1,0,0,0,1]};
+ next=await api('/mocap/session/'+code+'/frame',{method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({publisherKey:fresh.body.publisherKey,pose:invalid})});
+ assert.equal(next.status,400,'invalid v2 joint matrix must be rejected');
+
  const ended=await api('/mocap/session/'+code,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({publisherKey:fresh.body.publisherKey})});
  assert.equal(ended.status,200);
  assert.equal((await api('/mocap/session/'+code+'/pose')).status,404);
