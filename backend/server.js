@@ -68,8 +68,8 @@ app.use(helmet({contentSecurityPolicy:{directives:{
  baseUri:["'none'"],formAction:["'self'"]
 }}}));
 app.use(express.json({limit:'16kb'}));
-app.use('/api/roblox-preview',robloxPreview);
 app.use('/api',rateLimit({windowMs:15*60*1000,limit:260,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many requests. Please retry later.'}}));
+app.use('/api/roblox-preview',robloxPreview);
 app.use('/api',(req,res,next)=>{
  if(['GET','HEAD','OPTIONS'].includes(req.method))return next();
  const origin=req.get('origin');
