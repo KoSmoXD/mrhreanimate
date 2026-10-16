@@ -31,7 +31,7 @@ def published_source() -> str:
     ).decode("utf-8")
     if any(ord(ch) > 127 for ch in decoded):
         raise AssertionError("This hex byte wrapper must contain only ASCII source")
-    if 'local VERSION = "2.10.0"' not in decoded:
+    if 'local VERSION = "2.10.1"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
@@ -93,6 +93,14 @@ def published_source() -> str:
         if expected not in decoded:
             raise AssertionError("Missing dance playback fallback patch: " + expected)
     assert "dance music time fallback when local MP3 cannot play" in decoded
+    for marker in (
+        "Checking camera website... please wait up to 11 seconds",
+        "Press Use Moveset above",
+        "local function timedCall(label, seconds, callback)",
+        "if running then poll() end",
+    ):
+        if marker not in decoded:
+            raise AssertionError("Missing Camera Motion connection fix: " + marker)
     camera_module = (REPO_ROOT / "modules/MrH_CameraMotion.lua").read_text(encoding="utf-8")
     if camera_module not in decoded:
         raise AssertionError("Camera Motion module must be bundled in the published loader")
