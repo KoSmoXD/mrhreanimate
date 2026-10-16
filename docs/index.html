@@ -308,6 +308,7 @@
           <li>Enter this code in the moveset settings and click <b>Connect Webcam</b>.</li>
           <li>Stand far enough back for your whole body to appear on camera.</li>
         </ol>
+        <p class="small-note"><b>Optional Python mode:</b> run the provided <code>r6_tracker.py</code> on a PC (<code>pip install mediapipe opencv-python numpy</code>), select <b>Local Python v2</b> in Camera Motion settings, and set its tracker URL to <code>http://127.0.0.1:8080/pose</code> if Roblox runs on the same PC, or your PC's private Wi-Fi address if Roblox runs on another device. For LAN use start Python with <code>--host 0.0.0.0</code>, allow access only from trusted devices, and keep port 8080 private.</p>
         <p class="small-note">Tracking uses R6 shoulder, hip, neck and torso rotation matrices with an upright calibration. It is not full-body physics or guaranteed server-side replication. No Python installation is needed in browser mode. Camera frames never leave this browser; only estimated joint angles pass through a temporary session. On mobile, use a second device for the camera so this page remains active.</p>
       </div>
     </div>
