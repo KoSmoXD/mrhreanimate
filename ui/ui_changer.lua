@@ -6,6 +6,7 @@ return function(UI, originalWindow, saved)
     local BRIDGE = {
         pages = {}, lookup = {}, lastId = 0, style = 1,
         library = nil, window = nil, rendering = false, rebuilding = false,
+        selectedPageIndex = 1,
         syncConnections = {},
         current = nil, lastNotice = "",
     }
@@ -109,18 +110,48 @@ return function(UI, originalWindow, saved)
         add(parent, "input", placeholder ~= "" and placeholder or "Text", {value = input})
         return input
     end
+    local cachedSources = {}
     local function fromRemote(style)
         local url = LIBRARIES[style]
         if not url then return nil, "Unknown style" end
-        local ok, data = pcall(function() return game:HttpGet(url) end)
+        local data = cachedSources[style]
+        local ok = true
+        if not data then
+            ok, data = pcall(function() return game:HttpGet(url) end)
+        end
         if not ok or type(data) ~= "string" or #data < 30000 then
             return nil, "Cannot download " .. names[style] .. " library."
         end
+        if style == 3 then
+            -- Pinned Linoria uses Drawing.new('Triangle') for a custom cursor.
+            -- Drawing is absent or incomplete on many mobile executors.
+            -- Suppress only that cosmetic task; retain the native pointer.
+            local start = '            task.spawn(function()\n                -- TODO: add cursor fade?'
+            local finish = '            end);\n        end;'
+            local a = data:find(start, 1, true)
+            local b = a and data:find(finish, a + #start, true)
+            if not a or not b then
+                return nil, "Linoria cursor patch signature changed; refusing unsafe code rewrite."
+            end
+            data = data:sub(1, a - 1)
+                .. '            -- Mr H: retain native mouse and touch input.\n'
+                .. data:sub(b + #'            end);\n')
+        end
+        cachedSources[style] = data
         local compiled, err = loadstring(data, "MrH_" .. names[style])
         if type(compiled) ~= "function" then return nil, "Library compile failed: " .. tostring(err) end
         local ran, library = pcall(compiled)
         if not ran or type(library) ~= "table" then
             return nil, "Library initialization failed: " .. tostring(library)
+        end
+        if style == 3 then
+            local env = _G
+            if type(getgenv) == "function" then
+                local safe, result = pcall(getgenv)
+                if safe and type(result) == "table" then env = result end
+            end
+            -- Linoria keeps option registries in getgenv(), not Library.Options.
+            library.MrHOptions, library.MrHToggles = env.Options, env.Toggles
         end
         return library
     end
@@ -219,7 +250,9 @@ return function(UI, originalWindow, saved)
             -- Sync updates from the native reanimation engine back to the new UI.
             local connection = item.value.Changed:Connect(function()
                 if BRIDGE.library ~= library or BRIDGE.rendering then return end
-                local target = (library.Options and library.Options[idx])
+                local target = (library.MrHOptions and library.MrHOptions[idx])
+                    or (library.MrHToggles and library.MrHToggles[idx])
+                    or (library.Options and library.Options[idx])
                     or (library.Toggles and library.Toggles[idx])
                 if target and type(target.SetValue) == "function" then
                     local n = item.value.Value
@@ -268,6 +301,7 @@ return function(UI, originalWindow, saved)
                 Text = "UI Style", Values = names, Default = names[style],
                 Multi = false,
                 Callback = function(value)
+                    if self.rendering then return end
                     for i, name in ipairs(names) do
                         if value == name and i ~= self.style then
                             task.defer(function() self:SetStyle(i) end)
@@ -278,12 +312,54 @@ return function(UI, originalWindow, saved)
             })
             group:AddButton("Restore Original", function() self:SetStyle(1) end)
             group:AddLabel("Right Control: show/hide this menu.")
-            local mainInfo = self.pages[1]
-            if mainInfo then
-                self:activatePage(mainInfo.page)
-            end
-            local usedNames = {}
+            local pageChoices = {}
+            local availablePages = {}
             for index, page in ipairs(self.pages) do
+                if #page.items > 0 then
+                    local name = page.title
+                    if table.find(pageChoices, name) then name ..= " #" .. index end
+                    table.insert(pageChoices, name)
+                    table.insert(availablePages, index)
+                end
+            end
+            if style == 3 and #pageChoices > 0 then
+                -- Linoria has a fixed-width horizontal tab bar: one tab per
+                -- upstream page caused tabs to overflow offscreen.
+                local chosen = table.find(availablePages, self.selectedPageIndex) or 1
+                local selection = group:AddDropdown("MrHPage", {
+                    Text = "Controls Page", Values = pageChoices,
+                    Default = pageChoices[chosen], Multi = false,
+                    Callback = function(value)
+                        if self.rendering then return end
+                        local number = table.find(pageChoices, value)
+                        if not number then return end
+                        local desired = availablePages[number]
+                        if desired ~= self.selectedPageIndex then
+                            task.defer(function() self:SelectPage(desired) end)
+                        end
+                    end,
+                })
+                local targetPage = self.pages[availablePages[chosen]]
+                self.selectedPageIndex = availablePages[chosen]
+                local tab = window:AddTab("Controls")
+                local left = tab:AddLeftGroupbox(targetPage.title)
+                local right = tab:AddRightGroupbox("More Controls")
+                for n, item in ipairs(targetPage.items) do
+                    attach(if n % 2 == 1 then left else right, item, lib)
+                end
+                local previous = tab.ShowTab
+                tab.ShowTab = function(selfTab, ...)
+                    self:activatePage(targetPage.page)
+                    return previous(selfTab, ...)
+                end
+                -- Main/active page is still active internally while the native
+                -- UI is hidden, which keeps page-scoped animation tools working.
+                self:activatePage(targetPage.page)
+            else
+                local mainInfo = self.pages[1]
+                if mainInfo then self:activatePage(mainInfo.page) end
+                local usedNames = {}
+                for index, page in ipairs(self.pages) do
                 if #page.items > 0 then
                     local tabTitle = page.title
                     if usedNames[tabTitle] then tabTitle = tabTitle .. " " .. index end
@@ -308,6 +384,7 @@ return function(UI, originalWindow, saved)
                     end
                 end
             end
+            end -- grouped Obsidian tabs / single-page Linoria viewer
             self.rendering = false
         end)
         if not ok then
@@ -316,6 +393,24 @@ return function(UI, originalWindow, saved)
             return false, tostring(result)
         end
         return true
+    end
+    function BRIDGE:SelectPage(index)
+        index = tonumber(index)
+        if self.style ~= 3 or self.rendering or not index or not self.pages[index] then return false end
+        if index == self.selectedPageIndex then return true end
+        self.selectedPageIndex = index
+        teardown(self)
+        local ok, err = render(self, 3)
+        if ok then
+            self.style = 3
+            originalWindow.Visible = false
+            return true
+        end
+        self.style, saved.MrHUIStyle = 1, 1
+        originalWindow.Visible = true
+        if self.selector then self.selector.Value = 1 end
+        warn("[Mr H UI] Linoria page load failed: " .. tostring(err))
+        return false
     end
     function BRIDGE:SetStyle(style)
         style = tonumber(style) or 1
