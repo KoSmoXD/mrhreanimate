@@ -112,7 +112,7 @@ table.insert(modules, function()
         end)
     end
     m.Config = function(parent)
-        Util_CreateText(parent, "Open "+web, 12, Enum.TextXAlignment.Left)
+        Util_CreateText(parent, "Open " .. web, 12, Enum.TextXAlignment.Left)
         Util_CreateText(parent, "On the website press Start Camera, then enter the displayed pairing code.", 12, Enum.TextXAlignment.Left)
         local entry = Util_CreateTextbox(parent, pairing, "10-character camera code", 14)
         label = Util_CreateText(parent, pairing == "" and "Not paired" or "Code configured", 12, Enum.TextXAlignment.Left)
