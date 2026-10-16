@@ -109,6 +109,7 @@ def generate(target_dir: pathlib.Path):
         + "\nlocal rewritten = rewrite(upstream)\n"
         + 'print(rewritten)\n'
     )
+    (target_dir / "published_decoded_loader.luau").write_text(decoded, encoding="utf-8")
     destination = target_dir / "rewrite_verify.luau"
     destination.write_text(test_script, encoding="utf-8")
     print(f"Prepared {destination} from pinned upstream source", file=sys.stderr)
