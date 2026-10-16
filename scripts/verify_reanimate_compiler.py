@@ -31,7 +31,7 @@ def published_source() -> str:
     ).decode("utf-8")
     if any(ord(ch) > 127 for ch in decoded):
         raise AssertionError("This hex byte wrapper must contain only ASCII source")
-    if 'local VERSION = "2.9.8"' not in decoded:
+    if 'local VERSION = "2.9.9"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
@@ -93,6 +93,11 @@ def published_source() -> str:
         if expected not in decoded:
             raise AssertionError("Missing dance playback fallback patch: " + expected)
     assert "dance music time fallback when local MP3 cannot play" in decoded
+    camera_module = (REPO_ROOT / "modules/MrH_CameraMotion.lua").read_text(encoding="utf-8")
+    if camera_module not in decoded:
+        raise AssertionError("Camera Motion module must be bundled in the published loader")
+    if "register bundled Camera Motion moveset" not in decoded:
+        raise AssertionError("Camera Motion registration patch missing")
     return decoded
 
 def long_literal(s: str) -> str:
