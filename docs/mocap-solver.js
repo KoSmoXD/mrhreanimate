@@ -54,7 +54,8 @@ function createSolver(){
  function reset(){previous={};visible={};calibration=null;origin=null;lastOutput=null;}
  function solve(world,normalized,now=Date.now()){
   if(!Array.isArray(world)||world.length<29||!Array.isArray(normalized))return null;
-  if(![11,12,15,16,23,24,27,28].every(i=>valid(normalized,i)))return null;
+  if(!world.every(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z)))return null;
+  if(![11,12,23,24].every(i=>valid(normalized,i)))return null;
   const p=i=>vec(world[i]);
   const leftShoulder=p(IDX.ls),rightShoulder=p(IDX.rs);
   const leftHip=p(IDX.lh),rightHip=p(IDX.rh);
