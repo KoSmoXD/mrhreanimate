@@ -19,6 +19,7 @@
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
     "multer": "^2.0.2",
-    "three": "^0.180.0"
+    "three": "^0.180.0",
+    "@mediapipe/pose": "0.5.1675469404"
   }
 }
