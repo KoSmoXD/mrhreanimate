@@ -123,6 +123,49 @@ return function(UI, originalWindow, saved)
             return nil, "Cannot download " .. names[style] .. " library."
         end
         if style == 3 then
+            -- Make the pinned desktop Linoria library usable on touchscreens.
+            local matched, held, sizePatched
+            data, matched = data:gsub("Input%.UserInputType == Enum%.UserInputType%.MouseButton1", "MrHIsPress(Input)")
+            data = data:gsub("Input%.UserInputType ~= Enum%.UserInputType%.MouseButton1", "not MrHIsPress(Input)")
+            data, held = data:gsub("InputService:IsMouseButtonPressed%(Enum%.UserInputType%.MouseButton1%)", "MrHPressHeld(Input)")
+            data = data:gsub("Mouse%.X", "MrHPointer().X")
+            data = data:gsub("Mouse%.Y", "MrHPointer().Y")
+            data, sizePatched = data:gsub(
+                "if typeof%(Config%.Size%) ~= 'UDim2' then Config%.Size = UDim2%.fromOffset%(550, 600%) end",
+                "if typeof(Config.Size) ~= 'UDim2' then local vp = workspace.CurrentCamera.ViewportSize; Config.Size = UDim2.fromOffset(math.min(550, math.max(260, vp.X - 24)), math.min(600, math.max(240, vp.Y - 54))) end")
+            if matched < 12 or held < 2 or sizePatched ~= 1 then
+                return nil, "Linoria touch compatibility patch no longer matches pinned source."
+            end
+            local helper = [===[
+local MrHActiveTouch = nil
+local function MrHIsPress(input)
+    return input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch
+end
+local function MrHPointer()
+    if MrHActiveTouch then return MrHActiveTouch.Position end
+    return InputService:GetMouseLocation()
+end
+local function MrHPressHeld(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        return input.UserInputState ~= Enum.UserInputState.End
+            and input.UserInputState ~= Enum.UserInputState.Cancel
+    end
+    return InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
+end
+InputService.TouchStarted:Connect(function(input)
+    MrHActiveTouch = input
+end)
+InputService.TouchEnded:Connect(function(input)
+    if MrHActiveTouch == input then MrHActiveTouch = nil end
+end)
+]===]
+            local marker = "local Library = {"
+            local index = data:find(marker, 1, true)
+            if not index then return nil, "Linoria touch helpers have no insertion point." end
+            data = data:sub(1, index - 1) .. helper .. "\n" .. data:sub(index)
+        end
+        if style == 3 then
             -- Pinned Linoria uses Drawing.new('Triangle') for a custom cursor.
             -- Drawing is absent or incomplete on many mobile executors.
             -- Suppress only that cosmetic task; retain the native pointer.
