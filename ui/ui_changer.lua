@@ -63,23 +63,11 @@ return function(UI, originalWindow, saved)
     local oldButton = UI.CreateButton
     UI.CreateButton = function(parent, label, size)
         local button, text = oldButton(parent, label, size)
-        -- A BindableEvent provides a genuine, scriptable click signal.
-        -- GuiButton:Activate() does not exist in Roblox's public API.
-        local activation = Instance.new("BindableEvent")
-        activation.Name = "MrHUIButton"
-        local connection = button.Activated:Connect(function(...)
-            activation:Fire(...)
-        end)
-        button.Destroying:Connect(function()
-            connection:Disconnect()
-            activation:Destroy()
-        end)
-        local proxy = setmetatable({Activated = activation.Event}, {
-            __index = function(_, key) return button[key] end,
-            __newindex = function(_, key, value) button[key] = value end,
-        })
-        add(parent, "button", label, {value = button, signal = activation, text = text})
-        return proxy, text
+        -- Never replace a Roblox GuiButton with a Lua proxy table. Upstream
+        -- stores, compares and modifies these Instances during initialization.
+        -- Returning a proxy was capable of breaking engine startup.
+        add(parent, "button", label, {value = button, text = text})
+        return button, text
     end
     local oldText = UI.CreateText
     UI.CreateText = function(parent, text, size, align)
@@ -154,13 +142,33 @@ return function(UI, originalWindow, saved)
             if item.kind == "label" then
                 if #label < 82 then return group:AddLabel(label) end
             elseif item.kind == "button" then
-                if not item.signal or not item.signal.Parent and not item.signal:IsDescendantOf(game) then
-                    -- BindableEvent intentionally has no parent. A captured event
-                    -- remains live until its original button is destroyed.
-                end
                 return group:AddButton(label, function()
-                    if item.value and item.value.Parent and item.value.Interactable ~= false then
-                        item.signal:Fire()
+                    local button = item.value
+                    if not button or not button.Parent then return end
+                    local invoked = false
+                    if type(getconnections) == "function" then
+                        local ok, listeners = pcall(getconnections, button.Activated)
+                        if ok and type(listeners) == "table" then
+                            for _, listener in ipairs(listeners) do
+                                local active = listener.Enabled ~= false
+                                if active then
+                                    local okFire = false
+                                    if type(listener.Fire) == "function" then
+                                        okFire = pcall(function() listener:Fire() end)
+                                    elseif type(listener.Function) == "function" then
+                                        okFire = pcall(listener.Function)
+                                    end
+                                    invoked = invoked or okFire
+                                end
+                            end
+                        end
+                    end
+                    if not invoked then
+                        -- Built-in UI events cannot be fired by plain Roblox APIs.
+                        -- Return to the native control instead of simulating an action.
+                        local page = pageFor(button)
+                        BRIDGE:SetStyle(1)
+                        if page then BRIDGE:activatePage(page.page) end
                     end
                 end)
             elseif item.kind == "toggle" then
