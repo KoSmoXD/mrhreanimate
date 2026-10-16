@@ -39,6 +39,7 @@ table.insert(modules, function()
     local moveOrigin = nil
     local moveLast = 0
     local connectionAttempt = 0
+    local socket = nil
     local function status(value)
         local message = tostring(value)
         if statusLabel and statusLabel.Parent then statusLabel.Text = message end
@@ -203,40 +204,97 @@ table.insert(modules, function()
         if offset.Magnitude>.6 then pcall(function() humanoid:MoveTo(moveOrigin+offset) end) end
         moveLast=os.clock()
     end
-    local function poll()
+    local poll
+    local function releaseSocket()
+        local previous=socket
+        socket=nil
+        if previous then
+            pcall(function() previous:Close() end)
+        end
+    end
+    local function openStream(own)
+        local interface = WebSocket or websocket or (syn and syn.websocket)
+        local connect = interface and (interface.connect or interface.Connect)
+        if type(connect)~="function" then
+            return false, "Executor has no WebSocket support"
+        end
+        local code=codeValue(cfg.Code)
+        if not code then return false, "Invalid pairing code" end
+        local url="wss://mrh-animation-web-production.up.railway.app/api/mocap/ws/"..code
+        local client,why=timedCall("WebSocket",6,function() return connect(url) end)
+        if not client then return false,tostring(why) end
+        if generation~=own then
+            pcall(function() client:Close() end)
+            return false,"Connection cancelled"
+        end
+        local ok=pcall(function()
+            client.OnMessage:Connect(function(message)
+                if generation~=own or socket~=client then return end
+                local result=decodeResponse(message)
+                if not result then return end
+                if result.active and validPose(result.pose) then
+                    latest=result.pose
+                    updatedAt=os.clock()
+                    status("Live camera connected via WebSocket (v"..tostring(latest.v or 1)..")")
+                elseif result.type=="connected" then
+                    status("WebSocket paired - waiting for camera movement")
+                end
+            end)
+            client.OnClose:Connect(function()
+                if generation~=own or socket~=client then return end
+                socket=nil
+                latest=nil
+                status("WebSocket disconnected. Reconnecting...")
+                if running then
+                    task.delay(1,function()
+                        if generation==own and running then poll() end
+                    end)
+                end
+            end)
+        end)
+        if not ok then
+            pcall(function() client:Close() end)
+            return false,"Executor WebSocket event API unsupported"
+        end
+        socket=client
+        status("WebSocket connected. Waiting for live camera frames...")
+        return true
+    end
+    poll = function()
         generation+=1
         local own=generation
+        releaseSocket()
         task.spawn(function()
-            while running and generation==own do
-                if endpoint() then
-                    local done=false
-                    local url=endpoint()
-                    task.spawn(function()
-                        local ok,data,err=pcall(readOnce)
-                        if running and generation==own and url==endpoint() then
-                            if ok and data and validPose(data) then
-                                latest=data
-                                updatedAt=os.clock()
-                                status("Tracking live body (v"..tostring(data.v or 1)..")")
-                            else
-                                latest=nil
-                                status(ok and tostring(err or "Waiting for camera") or "Pose request error")
-                            end
-                        end
-                        done=true
-                    end)
-                    local deadline=os.clock()+12
-                    while running and generation==own and not done and os.clock()<deadline do
-                        task.wait(.1)
-                    end
-                    if not done then
-                        latest=nil
-                        status("Request timed out. Re-select Camera Motion to reconnect.")
-                        break
+            if cfg.Mode==1 then
+                local ok,why=openStream(own)
+                if generation~=own then return end
+                if ok then return end
+                status("WebSocket unavailable: "..tostring(why):sub(1,85)..". Trying HTTP...")
+            end
+            if not endpoint() then
+                status("Enter pairing code and press Connect Camera")
+                return
+            end
+            repeat
+                local ok,source,reason=pcall(readOnce)
+                if generation~=own then return end
+                if ok and source and validPose(source) then
+                    latest=source
+                    updatedAt=os.clock()
+                    status("Live camera connected via HTTP (v"..tostring(source.v or 1)..")")
+                else
+                    latest=nil
+                    local errorMessage=ok and tostring(reason or "Waiting for camera")
+                        or "Pose request failed"
+                    if errorMessage:find("timed out",1,true) then
+                        status("All camera transports unavailable. Executor may block this domain: "..errorMessage:sub(1,90))
+                    else
+                        status("Camera: "..errorMessage:sub(1,155))
                     end
                 end
-                task.wait(.23)
-            end
+                if not running then break end
+                task.wait(.7)
+            until generation~=own
         end)
     end
     m.Config=function(parent)
@@ -266,33 +324,13 @@ table.insert(modules, function()
             latest=nil
             updatedAt=0
             connectionAttempt += 1
-            local attempt = connectionAttempt
-            if running then poll() end -- restart a timed-out worker with the new code
-            status("Checking camera website... please wait up to 11 seconds")
-            -- Check the pairing URL immediately, even if Use Moveset hasn't been
-            -- pressed yet. Otherwise polling only starts inside m.Init.
-            task.spawn(function()
-                local ok, data, reason = pcall(readOnce)
-                if attempt ~= connectionAttempt then return end
-                if not ok then
-                    status("Connection failed: " .. tostring(data):sub(1,115))
-                elseif data then
-                    status(running and "Camera online: tracking ready"
-                        or "Camera online! Press Use Moveset above and start reanimation.")
-                elseif reason == "Waiting for body detection" then
-                    status(running and "Website reachable. Waiting for body detection."
-                        or "Pairing recognized; stand in frame, then press Use Moveset.")
-                else
-                    status("Connection failed: " .. tostring(reason):sub(1,130))
-                end
-            end)
+            status("Connecting via WebSocket first, then HTTP fallback...")
+            poll()
         end)
         local test=Util_CreateButton(parent,"Test Connection",14)
         test.Activated:Connect(function()
-            task.spawn(function()
-                local ok,data,err=pcall(readOnce)
-                status(ok and (data and "Connection OK (v"..tostring(data.v or 1)..")" or tostring(err)) or "Request failed")
-            end)
+            status("Testing live camera transports...")
+            poll()
         end)
         Util_CreateSlider(parent,"Pose Smoothing",cfg.Smoothing,.05,1,.05)
             .Changed:Connect(function(v) cfg.Smoothing=v end)
@@ -364,6 +402,7 @@ table.insert(modules, function()
         running=false
         connectionAttempt += 1
         generation+=1
+        releaseSocket()
         latest=nil
         moveOrigin=nil
         for _,entry in pairs(joints) do
