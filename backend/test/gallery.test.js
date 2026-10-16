@@ -7,6 +7,7 @@ const os=require('node:os');
 const path=require('node:path');
 const zlib=require('node:zlib');
 const {spawn}=require('node:child_process');
+const WebSocket=require('ws');
 
 const port=23000+Math.floor(Math.random()*20000);
 const base='http://127.0.0.1:'+port;
@@ -491,4 +492,26 @@ test('ephemeral camera capture pairs a browser with a Roblox rig without sharing
  const ended=await api('/mocap/session/'+code,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({publisherKey:fresh.body.publisherKey})});
  assert.equal(ended.status,200);
  assert.equal((await api('/mocap/session/'+code+'/pose')).status,404);
+});
+
+
+test('camera WebSocket receives published pose',async()=>{
+ await waitForServer();
+ const session=await api('/mocap/session',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
+ assert.equal(session.status,201);
+ const {code,publisherKey}=session.body;
+ const ws=new WebSocket(base.replace('http','ws')+'/api/mocap/ws/'+code);
+ const received=[];
+ ws.on('message',buffer=>received.push(JSON.parse(buffer.toString())));
+ await new Promise((resolve,reject)=>{ws.on('open',resolve);ws.on('error',reject);});
+ const id=[1,0,0,0,1,0,0,0,1];
+ const pose={v:2,neck:id,sh_l:id,sh_r:id,hip_l:id,hip_r:id,root:id};
+ const result=await api('/mocap/session/'+code+'/frame',{method:'POST',
+  headers:{'content-type':'application/json'},body:JSON.stringify({publisherKey,pose})});
+ assert.equal(result.status,200);
+ for(let i=0;i<20&&received.length<2;i++)await new Promise(resolve=>setTimeout(resolve,50));
+ assert.equal(received[0]?.type,'connected');
+ assert.equal(received[1]?.type,'pose');
+ assert.equal(received[1]?.pose.v,2);
+ ws.close();
 });
