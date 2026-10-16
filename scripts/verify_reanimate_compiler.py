@@ -83,6 +83,7 @@ def published_source() -> str:
     ):
         if expected not in decoded:
             raise AssertionError("Missing dance playback fallback patch: " + expected)
+    assert "dance music time fallback when local MP3 cannot play" in decoded
     return decoded
 
 def long_literal(s: str) -> str:
