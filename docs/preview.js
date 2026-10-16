@@ -124,6 +124,7 @@ function draw(){
  }
  // Light grid beyond the stage visually anchors orbit changes.
  ctx.fillStyle='#9ba9bf';ctx.font='11px system-ui, sans-serif';ctx.fillText('R6 / 3D VIEW',18,25);
+ window.dispatchEvent(new CustomEvent('mrh-preview-frame',{detail:{angle:state.angle,tilt:state.tilt,pose:currentPose()}}));
 }
 function reset(newClip){
  state.clip=newClip;state.time=0;state.playing=!!newClip&&newClip.duration>0;
