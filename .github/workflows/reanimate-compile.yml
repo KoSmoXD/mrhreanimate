@@ -6,6 +6,7 @@ on:
     paths:
       - 'Mr_H_Reanimate.lua'
       - 'ui/ui_changer.lua'
+      - 'modules/MrH_CameraMotion.lua'
       - 'scripts/verify_reanimate_compiler.py'
       - '.github/workflows/reanimate-compile.yml'
   pull_request:
@@ -46,5 +47,6 @@ jobs:
           .ci/luau-build/luau-compile .ci/published_decoded_loader.luau > /dev/null
           .ci/luau-build/luau-compile .ci/patched_engine.luau > /dev/null
           .ci/luau-build/luau-compile ui/ui_changer.lua > /dev/null
+          .ci/luau-build/luau-compile modules/MrH_CameraMotion.lua > /dev/null
           echo "Three UI modes compiled (Original / Obsidian / Linoria)."
           echo "Patched upstream engine compiles within Luau register limits."
