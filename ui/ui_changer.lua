@@ -130,6 +130,9 @@ return function(UI, originalWindow, saved)
             data, held = data:gsub("InputService:IsMouseButtonPressed%(Enum%.UserInputType%.MouseButton1%)", "MrHPressHeld(Input)")
             data = data:gsub("Mouse%.X", "MrHPointer().X")
             data = data:gsub("Mouse%.Y", "MrHPointer().Y")
+            -- Linoria's invisible Modal TextButton blocks Roblox's mobile joystick.
+            -- Preserve game movement while the alternative UI is visible.
+            data = data:gsub("ModalElement%.Modal = Toggled", "ModalElement.Modal = false")
             data, sizePatched = data:gsub(
                 "if typeof%(Config%.Size%) ~= 'UDim2' then Config%.Size = UDim2%.fromOffset%(550, 600%) end",
                 "if typeof(Config.Size) ~= 'UDim2' then local vp = workspace.CurrentCamera.ViewportSize; Config.Size = UDim2.fromOffset(math.min(550, math.max(260, vp.X - 24)), math.min(600, math.max(240, vp.Y - 54))) end")
