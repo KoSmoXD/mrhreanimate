@@ -2,8 +2,8 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const browse=$('browse-panel'),maker=$('make-panel'),moveset=$('moveset-panel'),library=$('library-movesets-panel'),bulk=$('rbxm2anim-panel'),preview=$('preview-panel');
-const browseTab=$('tab-browse'),makeTab=$('tab-make'),movesetTab=$('tab-moveset'),libraryTab=$('tab-library-movesets'),bulkTab=$('tab-rbxm2anim'),previewTab=$('tab-preview');
+const browse=$('browse-panel'),maker=$('make-panel'),moveset=$('moveset-panel'),library=$('library-movesets-panel'),bulk=$('rbxm2anim-panel'),preview=$('preview-panel'),mocap=$('mocap-panel');
+const browseTab=$('tab-browse'),makeTab=$('tab-make'),movesetTab=$('tab-moveset'),libraryTab=$('tab-library-movesets'),bulkTab=$('tab-rbxm2anim'),previewTab=$('tab-preview'),mocapTab=$('tab-mocap');
 const form=$('make-form'),picker=$('maker-model'),music=$('maker-music');
 const drop=$('maker-drop'),error=$('maker-error'),button=$('maker-convert'),status=$('maker-status');
 let modelFile=null;
@@ -14,18 +14,19 @@ function tabFromHash(){
  if(location.hash==='#make-moveset')return 'moveset';
  if(location.hash==='#make-animation')return 'make';
  if(location.hash==='#3d-preview')return 'preview';
+ if(location.hash==='#camera-motion')return 'mocap';
  return 'browse';
 }
 function showTab(tab,updateUrl=true){
  for(const [name,section,button] of [
-  ['browse',browse,browseTab],['library',library,libraryTab],['make',maker,makeTab],['bulk',bulk,bulkTab],['moveset',moveset,movesetTab],['preview',preview,previewTab]
+  ['browse',browse,browseTab],['library',library,libraryTab],['make',maker,makeTab],['bulk',bulk,bulkTab],['moveset',moveset,movesetTab],['preview',preview,previewTab],['mocap',mocap,mocapTab]
  ]){
   const active=name===tab;
   section.hidden=!active;
   button.classList.toggle('active',active);
   button.setAttribute('aria-selected',String(active));
  }
- if(updateUrl)history.replaceState(null,'',tab==='library'?'#movesets':tab==='moveset'?'#make-moveset':tab==='bulk'?'#rbxm2anim':tab==='make'?'#make-animation':tab==='preview'?'#3d-preview':'#browse-animations');
+ if(updateUrl)history.replaceState(null,'',tab==='library'?'#movesets':tab==='moveset'?'#make-moveset':tab==='bulk'?'#rbxm2anim':tab==='make'?'#make-animation':tab==='preview'?'#3d-preview':tab==='mocap'?'#camera-motion':'#browse-animations');
  window.dispatchEvent(new CustomEvent('mrh-section-change',{detail:{tab}}));
 }
 browseTab.addEventListener('click',()=>showTab('browse'));
@@ -34,6 +35,7 @@ makeTab.addEventListener('click',()=>showTab('make'));
 bulkTab.addEventListener('click',()=>showTab('bulk'));
 movesetTab.addEventListener('click',()=>showTab('moveset'));
 previewTab.addEventListener('click',()=>showTab('preview'));
+mocapTab.addEventListener('click',()=>showTab('mocap'));
 window.addEventListener('hashchange',()=>showTab(tabFromHash(),false));
 showTab(tabFromHash(),false);
 
