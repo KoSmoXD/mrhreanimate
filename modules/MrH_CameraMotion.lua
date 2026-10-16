@@ -117,6 +117,12 @@ table.insert(modules, function()
         if not ok then return nil, label .. ": " .. tostring(result):sub(1,90) end
         return result
     end
+    local function executorLabel()
+        local getName = getexecutorname or identifyexecutor
+        if type(getName) ~= "function" then return "Executor" end
+        local ok,name = pcall(getName)
+        return (ok and type(name) == "string" and name:sub(1, 25)) or "Executor"
+    end
     local function fetch(sourceUrl)
         -- Avoid local HttpService shadowing the executor's global http.request.
         local requester = request or http_request or (syn and syn.request)
@@ -138,7 +144,7 @@ table.insert(modules, function()
             end
         end
         local body, reason = timedCall("Roblox HttpGet", 5, function()
-            return game:HttpGet(sourceUrl, true)
+            return game:HttpGet(sourceUrl, false) -- Real: true enables caching, invalid for live poses
         end)
         if body then
             local data, why = decodeResponse(body)
@@ -147,7 +153,7 @@ table.insert(modules, function()
         else
             table.insert(errors, tostring(reason))
         end
-        return nil, table.concat(errors, " | "):sub(1,165)
+        return nil, (executorLabel() .. " network: " .. table.concat(errors, " | ")):sub(1,190)
     end
     local function endpoint()
         if cfg.Mode==2 then return localUrl(cfg.LocalUrl) end
@@ -299,6 +305,7 @@ table.insert(modules, function()
     end
     m.Config=function(parent)
         Util_CreateText(parent,"Camera Motion v3: accurate R6 matrices",17,Enum.TextXAlignment.Center)
+        Util_CreateText(parent,"Transport: "..executorLabel().." (live HTTP cache disabled)",12,Enum.TextXAlignment.Left)
         Util_CreateText(parent,"Browser: "..WEBSITE.."/#camera-motion",11,Enum.TextXAlignment.Left)
         Util_CreateText(parent,"Press Use Moveset at the TOP to equip, then connect. Reanimation must be active.",12,Enum.TextXAlignment.Left)
         local mode=Util_CreateDropdown(parent,"Capture Source",{"Website Pairing","Local Python v2"},cfg.Mode)
