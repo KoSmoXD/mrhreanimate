@@ -12,6 +12,7 @@ const archiver=require('archiver');
 const {makeMoveset,ROLES}=require('./moveset-generator');
 const setupCommunity=require('./community');
 const robloxPreview=require('./roblox-avatar');
+const mocap=require('./mocap');
 const {execFile}=require('node:child_process');
 const {promisify}=require('node:util');
 const execFileAsync=promisify(execFile);
@@ -62,12 +63,14 @@ const publicUser=user=>({
 });
 const fail=(res,status,message)=>res.status(status).json({error:message});
 app.use(helmet({contentSecurityPolicy:{directives:{
- defaultSrc:["'self'"],scriptSrc:["'self'"],styleSrc:["'self'","'unsafe-inline'"],
+ defaultSrc:["'self'"],scriptSrc:["'self'","'wasm-unsafe-eval'"],workerSrc:["'self'","blob:"],styleSrc:["'self'","'unsafe-inline'"],
  connectSrc:["'self'"],imgSrc:["'self'","data:"],fontSrc:["'self'"],
  mediaSrc:["'self'","blob:"],objectSrc:["'none'"],frameAncestors:["'none'"],
  baseUri:["'none'"],formAction:["'self'"]
 }}}));
 app.use(express.json({limit:'16kb'}));
+// Stream only joint-angle JSON, never camera frames.
+app.use('/api/mocap',rateLimit({windowMs:60*1000,limit:1800,standardHeaders:'draft-7',legacyHeaders:false}),mocap);
 app.use('/api',rateLimit({windowMs:15*60*1000,limit:260,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many requests. Please retry later.'}}));
 app.use('/api/roblox-preview',robloxPreview);
 app.use('/api',(req,res,next)=>{
@@ -684,6 +687,7 @@ app.delete('/api/animations/:id',auth,async(req,res,next)=>{
  }catch(e){next(e);}
 });
 // Serve only the bundled 3D rendering engine, never a third-party script CDN.
+app.use('/vendor/mediapipe/pose',express.static(path.join(__dirname,'node_modules/@mediapipe/pose'),{index:false,dotfiles:'deny',maxAge:'7d'}));
 app.use('/vendor/three/build',express.static(path.join(__dirname,'node_modules/three/build'),{index:false,dotfiles:'deny',maxAge:'1d'}));
 // HTML, JS and CSS are UI/auth critical: never cache old scripts after a deploy.
 app.use(express.static(WEB,{
