@@ -69,10 +69,6 @@ app.use(helmet({contentSecurityPolicy:{directives:{
  baseUri:["'none'"],formAction:["'self'"]
 }}}));
 app.use(express.json({limit:'16kb'}));
-// Stream only joint-angle JSON, never camera frames.
-app.use('/api/mocap',rateLimit({windowMs:60*1000,limit:1800,standardHeaders:'draft-7',legacyHeaders:false}),mocap);
-app.use('/api',rateLimit({windowMs:15*60*1000,limit:260,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many requests. Please retry later.'}}));
-app.use('/api/roblox-preview',robloxPreview);
 app.use('/api',(req,res,next)=>{
  if(['GET','HEAD','OPTIONS'].includes(req.method))return next();
  const origin=req.get('origin');
@@ -81,6 +77,11 @@ app.use('/api',(req,res,next)=>{
  if(!origin&&req.get('sec-fetch-site')==='cross-site')return fail(res,403,'Cross-site request rejected.');
  next();
 });
+// Stream only joint-angle JSON, never camera frames.
+app.use('/api/mocap',rateLimit({windowMs:60*1000,limit:1800,standardHeaders:'draft-7',legacyHeaders:false}),mocap);
+app.use('/api',rateLimit({windowMs:15*60*1000,limit:260,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many requests. Please retry later.'}}));
+app.use('/api/roblox-preview',robloxPreview);
+
 function sessionToken(req){
  const raw=req.get('cookie')||'';
  const item=raw.split(';').map(x=>x.trim()).find(x=>x.startsWith(COOKIE+'='));
