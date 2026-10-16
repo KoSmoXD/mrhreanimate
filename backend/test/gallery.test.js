@@ -433,3 +433,43 @@ test('RBXM2ANIM tab converts multiple models and returns only anim tracks',async
  const bad=await api('/rbxm2anim/bulk',{method:'POST',body:badFile});
  assert.equal(bad.status,400,'bad Roblox model must fail conversion');
 });
+
+
+test('ephemeral camera capture pairs a browser with a Roblox rig without sharing video',async()=>{
+ await waitForServer();
+ const page=await fetch(base+'/#camera-motion');
+ const markup=await page.text();
+ assert.ok(markup.includes('id="tab-mocap"'));
+ assert.ok(markup.includes('id="mocap-video"'));
+ assert.ok(markup.includes('id="mocap-code"'));
+ const tracker=await fetch(base+'/mocap.js?v=cam-v1-20261016');
+ assert.equal(tracker.status,200);
+ const body=await tracker.text();
+ assert.match(body,/getUserMedia/);
+ assert.ok(!body.includes("toDataURL("),'camera video must not be uploaded');
+ const fresh=await api('/mocap/session',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
+ assert.equal(fresh.status,201,JSON.stringify(fresh.body));
+ assert.match(fresh.body.code,/^[A-HJ-NP-Z2-9]{10}$/);
+ assert.match(fresh.body.publisherKey,/^[a-f0-9]{64}$/);
+ const code=fresh.body.code;
+ let state=await api('/mocap/session/'+code+'/pose');
+ assert.equal(state.status,200);
+ assert.equal(state.body.active,false);
+ assert.equal(state.body.pose,null);
+ assert.equal(state.body.publisherKey,undefined,'private publisher key must not be exposed to pose readers');
+ const pose={};
+ for(const part of ['head','torso','leftArm','rightArm','leftLeg','rightLeg'])pose[part]=[0.1,0,-0.2];
+ let next=await api('/mocap/session/'+code+'/frame',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({publisherKey:'0'.repeat(64),pose})});
+ assert.equal(next.status,404,'wrong publisher key cannot modify session');
+ next=await api('/mocap/session/'+code+'/frame',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({publisherKey:fresh.body.publisherKey,pose:{...pose,leftLeg:[100,0,0]}})});
+ assert.equal(next.status,400,'out-of-bounds joint rotation must be rejected');
+ next=await api('/mocap/session/'+code+'/frame',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({publisherKey:fresh.body.publisherKey,pose})});
+ assert.equal(next.status,200,JSON.stringify(next.body));
+ state=await api('/mocap/session/'+code+'/pose');
+ assert.equal(state.status,200);
+ assert.equal(state.body.active,true);
+ assert.deepEqual(state.body.pose.leftArm,[0.1,0,-0.2]);
+ const ended=await api('/mocap/session/'+code,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({publisherKey:fresh.body.publisherKey})});
+ assert.equal(ended.status,200);
+ assert.equal((await api('/mocap/session/'+code+'/pose')).status,404);
+});
