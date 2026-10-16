@@ -31,7 +31,7 @@ def published_source() -> str:
     ).decode("utf-8")
     if any(ord(ch) > 127 for ch in decoded):
         raise AssertionError("This hex byte wrapper must contain only ASCII source")
-    if 'local VERSION = "2.9.7"' not in decoded:
+    if 'local VERSION = "2.9.8"' not in decoded:
         raise AssertionError("Unexpected public version")
     begin = decoded.index("    -- ONLINE MODULES: download uploaded packages")
     segment_start = decoded.rfind("    do\n", 0, begin)
@@ -60,6 +60,15 @@ def published_source() -> str:
     for required in ('Online Modules (Mr H Website)', 'onlineInstall(kind, item)'):
         if required not in decoded:
             raise AssertionError("Online Modules install feature missing: " + required)
+    for expected in (
+        'local function onlineAttempt(label, seconds, callback)',
+        'Executor HTTP',
+        'HttpGet',
+        'Website request failed:',
+        '(Refresh to retry)',
+    ):
+        if expected not in decoded:
+            raise AssertionError("Online Modules timeout or retry guard missing: " + expected)
 
 
     if 'local data = [====[' not in decoded:
