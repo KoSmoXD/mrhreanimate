@@ -225,7 +225,7 @@ table.insert(modules, function()
                         end
                         done=true
                     end)
-                    local deadline=os.clock()+7
+                    local deadline=os.clock()+12
                     while running and generation==own and not done and os.clock()<deadline do
                         task.wait(.1)
                     end
@@ -267,6 +267,7 @@ table.insert(modules, function()
             updatedAt=0
             connectionAttempt += 1
             local attempt = connectionAttempt
+            if running then poll() end -- restart a timed-out worker with the new code
             status("Checking camera website... please wait up to 11 seconds")
             -- Check the pairing URL immediately, even if Use Moveset hasn't been
             -- pressed yet. Otherwise polling only starts inside m.Init.
