@@ -63,8 +63,8 @@ const publicUser=user=>({
 });
 const fail=(res,status,message)=>res.status(status).json({error:message});
 app.use(helmet({contentSecurityPolicy:{directives:{
- defaultSrc:["'self'"],scriptSrc:["'self'","'wasm-unsafe-eval'"],workerSrc:["'self'","blob:"],styleSrc:["'self'","'unsafe-inline'"],
- connectSrc:["'self'"],imgSrc:["'self'","data:"],fontSrc:["'self'"],
+ upgradeInsecureRequests:PROD?[]:null,defaultSrc:["'self'"],scriptSrc:["'self'","'wasm-unsafe-eval'"],workerSrc:["'self'","blob:"],styleSrc:["'self'","'unsafe-inline'"],
+ connectSrc:["'self'","blob:"],imgSrc:["'self'","data:","blob:"],fontSrc:["'self'"],
  mediaSrc:["'self'","blob:"],objectSrc:["'none'"],frameAncestors:["'none'"],
  baseUri:["'none'"],formAction:["'self'"]
 }}}));
@@ -106,6 +106,7 @@ app.use('/api',(req,res,next)=>{
  next();
 });
 const auth=(req,res,next)=>req.user?next():fail(res,401,'Log in to continue.');
+require('./animation-ai')(app,{auth,rateLimit});
 const authLimit=rateLimit({windowMs:15*60*1000,limit:14,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many attempts. Try again later.'}});
 const registerLimit=rateLimit({windowMs:60*60*1000,limit:5,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Hourly signup limit reached.'}});
 const uploadLimit=rateLimit({windowMs:60*60*1000,limit:12,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Hourly upload limit reached.'}});
@@ -690,6 +691,11 @@ app.delete('/api/animations/:id',auth,async(req,res,next)=>{
 // Serve only the bundled 3D rendering engine, never a third-party script CDN.
 app.use('/vendor/mediapipe/pose',express.static(path.join(__dirname,'node_modules/@mediapipe/pose'),{index:false,dotfiles:'deny',maxAge:'7d'}));
 app.use('/vendor/three/build',express.static(path.join(__dirname,'node_modules/three/build'),{index:false,dotfiles:'deny',maxAge:'1d'}));
+// Serve the bundled loader graph with same-origin Three imports; no CDN or inline import map.
+app.get('/vendor/three/addons/*',async(req,res,next)=>{
+ const rel=req.params[0];if(!/^[a-zA-Z0-9_./-]+\.js$/.test(rel)||rel.split('/').includes('..'))return res.sendStatus(404);
+ try{const text=await fsp.readFile(path.join(__dirname,'node_modules/three/examples/jsm',rel),'utf8');res.type('application/javascript').send(text.replace(/from ['"]three['"]/g,"from '/vendor/three/build/three.module.js'"));}catch(e){res.sendStatus(404);}
+});
 // HTML, JS and CSS are UI/auth critical: never cache old scripts after a deploy.
 app.use(express.static(WEB,{
  index:'index.html',dotfiles:'deny',maxAge:0,

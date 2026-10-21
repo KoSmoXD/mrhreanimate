@@ -94,7 +94,7 @@ test('public gallery, registration, authenticated upload, ZIP download and accou
  assert.ok(markup.includes('app.js?v=avatar-northkoreaplayer9-20261016'),'auth script must be cache busted');
  assert.ok(markup.includes('id="tab-preview"')&&markup.includes('id="preview-panel"'),'the 3D Preview tab must be present');
  assert.ok(markup.includes('preview.js?v=avatar-northkoreaplayer9-20261016'),'preview renderer must be cache busted');
- assert.ok(markup.includes('preview-avatar.js?v=avatar-northkoreaplayer9-20261016'),'Roblox model renderer must be cache busted');
+ assert.ok(markup.includes('preview-rig.js?v=studio-20261021'),'R6 rig renderer must be cache busted');
  const asset=await fetch(base+'/app.js?v=avatar-northkoreaplayer9-20261016');
  const script=await asset.text();
  assert.equal(asset.status,200);

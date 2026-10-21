@@ -50,3 +50,5 @@
 .preview-avatar-badge a:hover{text-decoration:underline}
 #preview-roblox-status{font-size:12px;color:#acbcd7;line-height:1.55}
 .preview-avatar-viewport #preview-stage{display:block}
+
+#preview-avatar-canvas{pointer-events:auto;cursor:grab;touch-action:none}

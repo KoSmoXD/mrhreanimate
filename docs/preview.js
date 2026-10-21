@@ -53,9 +53,9 @@ function parseAnim(buffer){
   const time=f32();if(time<0||time>300)throw Error('Keyframe timestamp outside 0–300 seconds.');
   const poses={};let total=u32();if(total>100)throw Error('Too many poses in frame.');
   for(let j=0;j<total;j++){
-   const name=word(),weight=f32();word();word();
+   const name=word(),weight=f32();const style=word(),dir=word();
    const vals=Array.from({length:12},f32);
-   if(names.includes(name)&&weight>0)poses[name]={p:vals.slice(0,3),r:vals.slice(3)};
+   if(names.includes(name)&&weight>0)poses[name]={p:vals.slice(0,3),r:vals.slice(3),style,dir};
   }
   frames.push({time,poses});
  }
@@ -124,7 +124,7 @@ function draw(){
  }
  // Light grid beyond the stage visually anchors orbit changes.
  ctx.fillStyle='#9ba9bf';ctx.font='11px system-ui, sans-serif';ctx.fillText('R6 / 3D VIEW',18,25);
- window.dispatchEvent(new CustomEvent('mrh-preview-frame',{detail:{angle:state.angle,tilt:state.tilt,pose:currentPose()}}));
+ window.dispatchEvent(new CustomEvent('mrh-preview-frame',{detail:{angle:state.angle,tilt:state.tilt,pose:currentPose(),clip:state.clip,time:state.time}}));
 }
 function reset(newClip){
  state.clip=newClip;state.time=0;state.playing=!!newClip&&newClip.duration>0;

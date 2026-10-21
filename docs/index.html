@@ -18,7 +18,8 @@
 <script src="./community.js?v=avatar-northkoreaplayer9-20261016" defer></script>
 <script src="./bulk.js?v=avatar-northkoreaplayer9-20261016" defer></script>
 <script src="./preview.js?v=avatar-northkoreaplayer9-20261016" defer></script>
-<script type="module" src="./preview-avatar.js?v=avatar-northkoreaplayer9-20261016"></script>
+<script src="./motion-core.js" defer></script>
+<script type="module" src="./preview-rig.js?v=studio-20261021"></script>
 </head>
 <body>
 <header class="site-header">
@@ -40,6 +41,7 @@
     <button type="button" id="tab-rbxm2anim" class="site-tab" role="tab" aria-controls="rbxm2anim-panel" aria-selected="false">RBXM2ANIM</button>
     <button type="button" id="tab-moveset" class="site-tab" role="tab" aria-controls="moveset-panel" aria-selected="false">Moveset Maker</button>
     <button type="button" id="tab-preview" class="site-tab" role="tab" aria-controls="preview-panel" aria-selected="false">3D Preview</button>
+    <a class="site-tab" href="./studio.html">AI Animation Maker</a>
     <button type="button" id="tab-mocap" class="site-tab" role="tab" aria-controls="mocap-panel" aria-selected="false">Camera Motion</button>
   </nav>
   <section id="browse-panel" role="tabpanel" aria-labelledby="tab-browse">
@@ -246,7 +248,7 @@
             <div><label for="preview-speed">Speed <output id="preview-speed-value">1.00×</output></label><input type="range" id="preview-speed" min=".25" max="3" step=".25" value="1"></div>
             <div><label for="preview-angle">Camera rotation <span>0–360°</span></label><input type="range" id="preview-angle" min="0" max="360" step="1" value="25"></div>
           </div>
-          <div class="preview-source-tip">Drag left or right on the viewer to rotate the dummy. Use your mouse wheel to adjust camera elevation. Playback is a visual approximation of R6 keyframe poses.</div>
+          <div class="preview-source-tip">Drag left or right on the viewer to rotate the dummy. Use your mouse wheel to adjust camera elevation. The supplied R6 rig uses Motor6D joint transforms, quaternion interpolation, and source easing.</div>
         </div>
       </div>
       <aside class="preview-source">
@@ -261,16 +263,16 @@
           <label for="preview-local">Animation files<input type="file" id="preview-local" accept=".anim" multiple></label>
         </div>
         <div class="preview-source-card">
-          <h2>Roblox Character</h2>
-          <p>Using the actual Roblox avatar for <strong>northkoreaplayer9</strong>. The 3D model is fetched securely when the server is authorized by Roblox.</p>
-          <div id="preview-roblox-status" role="status" aria-live="polite">Checking Roblox avatar…</div>
-          <button id="preview-roblox-load" type="button" class="action">Reload 3D Avatar</button>
+          <h2>R6 Character</h2>
+          <p>Uses the R6 rig from your animation preview, with joint transforms and source easing.</p>
+          <div id="preview-roblox-status" role="status" aria-live="polite">Loading R6 rig…</div>
+          <button id="preview-roblox-load" type="button" class="action">Reload R6 Rig</button>
         </div>
         <div class="preview-source-card">
           <h2>Animation tracks</h2><label for="preview-tracks">Choose track<select id="preview-tracks" disabled><option>No tracks loaded</option></select></label>
           <input id="preview-source" type="hidden" value="community">
           <div id="preview-status" role="status" aria-live="polite">Choose a community animation or local .anim file.</div>
-          <p class="preview-source-tip">Only the binary animation is read. Community Lua modules are never downloaded or run by the preview.</p>
+          <p class="preview-source-tip">Open the AI Animation Maker to edit keyframes and curves. Only the binary animation is read. Community Lua modules are never downloaded or run by the preview.</p>
         </div>
       </aside>
     </div>
