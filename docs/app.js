@@ -150,18 +150,12 @@ async function getSession(){
  renderGallery();
 }
 function authMode(mode){
- state.mode=mode;
- $('auth-title').textContent=mode==='login'?'Log in':mode==='owner'?'Claim Mr_H owner':'Create account';
- $('auth-submit').textContent=mode==='login'?'Log in':mode==='owner'?'Claim verified owner':'Sign up';
- $('auth-password').autocomplete=mode==='login'?'current-password':'new-password';
- $('auth-notice').hidden=mode==='login'||mode==='owner';
- $('owner-setup-label').hidden=mode!=='owner';
- $('owner-notice').hidden=mode!=='owner';
- $('owner-setup-key').required=mode==='owner';
- $('auth-username').readOnly=mode==='owner';
- if(mode==='owner')$('auth-username').value='Mr_H';
- else if($('auth-username').value==='Mr_H')$('auth-username').value='';
- document.querySelectorAll('[data-auth-tab]').forEach(btn=>btn.classList.toggle('selected',btn.dataset.authTab===mode));
+ state.mode=mode==='register'?'register':'login';
+ $('auth-title').textContent=state.mode==='login'?'Log in':'Create account';
+ $('auth-submit').textContent=state.mode==='login'?'Log in':'Sign up';
+ $('auth-password').autocomplete=state.mode==='login'?'current-password':'new-password';
+ $('auth-notice').hidden=state.mode==='login';
+ document.querySelectorAll('[data-auth-tab]').forEach(btn=>btn.classList.toggle('selected',btn.dataset.authTab===state.mode));
  errorAt('auth-error','');
 }
 async function submitAuth(e){
@@ -169,13 +163,12 @@ async function submitAuth(e){
  const submit=$('auth-submit');submit.disabled=true;errorAt('auth-error','');
  try{
   const body={username:$('auth-username').value.trim(),password:$('auth-password').value};
-  if(state.mode==='owner')body.setupKey=$('owner-setup-key').value;
-  const endpoint=state.mode==='owner'?'/owner/claim':state.mode==='login'?'/login':'/register';
+  const endpoint=state.mode==='login'?'/login':'/register';
   const result=await request(endpoint,{
    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
   });
-  setUser(result.user);$('auth-password').value='';$('owner-setup-key').value='';closeModal('auth-modal');
-  toast(state.mode==='login'?'Logged in.':state.mode==='owner'?'Verified owner account claimed.':'Account created.');
+  setUser(result.user);$('auth-password').value='';closeModal('auth-modal');
+  toast(state.mode==='login'?'Logged in.':'Account created.');
   renderGallery();
  }catch(err){errorAt('auth-error',err.message);}
  finally{submit.disabled=false;}

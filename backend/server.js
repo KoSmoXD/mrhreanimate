@@ -33,6 +33,9 @@ const MAX={anim:8*1048576,mp3:35*1048576,lua:2*1048576,avatar:2*1048576};
 const OWNER_NAME='Mr_H';
 const ownerIsReserved=name=>typeof name==='string'&&name.toLowerCase()===OWNER_NAME.toLowerCase();
 const claimSecret=String(process.env.OWNER_SETUP_KEY||'');
+const ownerSetupEnabled=process.env.OWNER_SETUP_ENABLED==='true';
+// Equal-cost password verification for valid-looking unknown usernames. This is not an account credential.
+const dummyPasswordHash=bcrypt.hashSync(crypto.randomBytes(32).toString('hex'),12);
 for(const dir of [ROOT,TMP,UPLOADS,AVATARS])fs.mkdirSync(dir,{recursive:true});
 const db=new Database(path.join(ROOT,'gallery.sqlite'));
 db.pragma('journal_mode=WAL');
@@ -167,7 +170,7 @@ app.post('/api/register',registerLimit,async(req,res,next)=>{
   const username=String(req.body?.username||'').trim(),password=req.body?.password;
   if(!usernameValid(username))return fail(res,400,'Username must be 3-24 characters, letters/numbers/underscore.');
   if(!passwordValid(password))return fail(res,400,'Password must be 10-72 UTF-8 bytes.');
-  if(ownerIsReserved(username))return fail(res,403,'Mr_H is reserved for the server owner. Use Owner setup.');
+  if(ownerIsReserved(username))return fail(res,403,'This username is unavailable.');
   if(db.prepare('SELECT id FROM users WHERE username=?').get(username))return fail(res,409,'Username is already taken.');
   const hash=await bcrypt.hash(password,12),user={id:crypto.randomUUID(),username};
   try{db.prepare('INSERT INTO users(id,username,password_hash,created_at) VALUES(?,?,?,?)').run(user.id,username,hash,Date.now());}
@@ -177,13 +180,16 @@ app.post('/api/register',registerLimit,async(req,res,next)=>{
 });
 // One-time secure setup: the owner code only exists in the server environment,
 // and only this endpoint can grant admin permissions.
-app.post('/api/owner/claim',ownerLimit,async(req,res,next)=>{
+app.post('/api/owner/claim',(req,res,next)=>{
+ if(!ownerSetupEnabled||db.prepare("SELECT id FROM users WHERE role='owner' LIMIT 1").get())return fail(res,404,'Not found.');
+ next();
+},ownerLimit,async(req,res,next)=>{
  try{
   const key=req.body?.setupKey,password=req.body?.password;
   if(!ownerClaimKeyMatches(key))return fail(res,403,'Invalid owner setup key.');
   if(!passwordValid(password))return fail(res,400,'Owner password must be 10-72 UTF-8 bytes.');
   if(db.prepare("SELECT id FROM users WHERE role='owner' LIMIT 1").get())
-   return fail(res,409,'Owner account already claimed. Log in as Mr_H.');
+   return fail(res,404,'Not found.');
   const existing=db.prepare('SELECT id FROM users WHERE username=?').get(OWNER_NAME);
   const hash=await bcrypt.hash(password,12),ownerId=existing?.id||crypto.randomUUID();
   db.transaction(()=>{
@@ -194,14 +200,15 @@ app.post('/api/owner/claim',ownerLimit,async(req,res,next)=>{
   })();
   issueSession(res,ownerId);
   res.status(201).json({user:publicUser(db.prepare('SELECT * FROM users WHERE id=?').get(ownerId))});
- }catch(e){if(e.message==='OWNER_ALREADY_CLAIMED')return fail(res,409,'Owner account already claimed.');next(e);}
+ }catch(e){if(e.message==='OWNER_ALREADY_CLAIMED')return fail(res,404,'Not found.');next(e);}
 });
 app.post('/api/login',authLimit,async(req,res,next)=>{
  try{
   const username=String(req.body?.username||'').trim(),password=req.body?.password;
   if(!usernameValid(username)||typeof password!=='string'||Buffer.byteLength(password,'utf8')>256)return fail(res,401,'Invalid username or password.');
   const user=db.prepare('SELECT * FROM users WHERE username=?').get(username);
-  if(!user||!await bcrypt.compare(password,user.password_hash))return fail(res,401,'Invalid username or password.');
+  const passwordMatches=await bcrypt.compare(password,user?.password_hash||dummyPasswordHash);
+  if(!user||!passwordMatches)return fail(res,401,'Invalid username or password.');
   issueSession(res,user.id);res.json({user:publicUser(user)});
  }catch(e){next(e);}
 });
@@ -214,7 +221,7 @@ app.patch('/api/me',auth,authLimit,async(req,res,next)=>{
   const username=String(req.body?.username||'').trim();
   const current=req.body?.currentPassword,newPassword=req.body?.newPassword;
   if(!usernameValid(username))return fail(res,400,'Username must be 3-24 characters, letters/numbers/underscore.');
-  if(ownerIsReserved(username)&&req.user.role!=='owner')return fail(res,403,'The name Mr_H is reserved for the server owner.');
+  if(ownerIsReserved(username)&&req.user.role!=='owner')return fail(res,403,'This username is unavailable.');
   if(req.user.role==='owner'&&username!==OWNER_NAME)return fail(res,403,'The owner username cannot be changed.');
   if(typeof current!=='string')return fail(res,400,'Current password is required.');
   if(newPassword&&!passwordValid(newPassword))return fail(res,400,'New password must be 10-72 UTF-8 bytes.');

@@ -13,7 +13,7 @@ const port=23000+Math.floor(Math.random()*20000);
 const base='http://127.0.0.1:'+port;
 const dataDir=fs.mkdtempSync(path.join(os.tmpdir(),'mrh-animations-test-'));
 const app=spawn(process.execPath,[path.resolve(__dirname,'../server.js')],{
- env:{...process.env,PORT:String(port),NODE_ENV:'development',TRUST_PROXY:'false',DATA_DIR:dataDir,OWNER_SETUP_KEY:'owner-claim-test-key-1234567890-ABCDEFGHIJKLMNOP'},
+ env:{...process.env,PORT:String(port),NODE_ENV:'development',TRUST_PROXY:'false',DATA_DIR:dataDir,OWNER_SETUP_ENABLED:'true',OWNER_SETUP_KEY:'owner-claim-test-key-1234567890-ABCDEFGHIJKLMNOP'},
  stdio:['ignore','pipe','pipe']
 });
 let logs='';
@@ -87,7 +87,7 @@ function makeAnim(){
 }
 test('public gallery, registration, authenticated upload, ZIP download and account settings',async()=>{
  await waitForServer();
- // Prevent a stale signup script from being paired with the newer Owner setup tab.
+ // Authentication assets must stay current and expose no owner bootstrap form.
  const page=await fetch(base+'/');
  const markup=await page.text();
  assert.ok(page.headers.get('cache-control')?.includes('no-store'),'HTML must not be cached');
@@ -99,7 +99,9 @@ test('public gallery, registration, authenticated upload, ZIP download and accou
  const script=await asset.text();
  assert.equal(asset.status,200);
  assert.ok(asset.headers.get('cache-control')?.includes('no-store'),'auth JS must not be cached');
- assert.ok(script.includes("'/owner/claim'"),'owner setup must route to special owner endpoint');
+ assert.ok(!script.includes('/owner/claim')&&!script.includes('owner-setup-key')&&!script.includes('Mr_H'),'public authentication script must not disclose bootstrap flow or fixed owner login');
+ assert.ok(!markup.includes('data-auth-tab="owner"')&&!markup.includes('id="owner-setup-key"'),'public HTML must not expose owner setup controls');
+ assert.ok(!markup.includes('owner-claim-test-key'),'server setup secret must never appear in the page');
  const stylesheet=await fetch(base+'/styles.css?v=avatar-northkoreaplayer9-20261016');
  assert.ok(stylesheet.headers.get('cache-control')?.includes('no-store'),'UI CSS must not be cached');
  const blockedModel=await fetch(base+'/api/roblox-preview/model');
@@ -183,7 +185,9 @@ test('owner claim is reserved and one-time; avatar upload and owner moderation w
  assert.equal(r.body.user.username,'Mr_H');
  assert.equal(r.body.user.role,'owner');
  r=await api('/owner/claim',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({setupKey:'owner-claim-test-key-1234567890-ABCDEFGHIJKLMNOP',password:'AnotherPassword123'})});
- assert.equal(r.status,409,'owner can only be claimed once');
+ assert.equal(r.status,404,'bootstrap endpoint disappears permanently after an owner is claimed');
+ r=await api('/owner/claim',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({setupKey:'wrong',password:'AnotherPassword123'})});
+ assert.equal(r.status,404,'claimed state does not reveal setup key validity');
  r=await api('/me',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({username:'OtherAdmin',currentPassword:'OwnerPassword456'})});
  assert.equal(r.status,403,'verified owner username remains locked');
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==','base64');

@@ -143,11 +143,11 @@ Every user can change their profile picture under **Account settings**. Accepted
 The server owner is the reserved account **Mr_H**, which receives the **✅** verified mark after its username. This is a server-controlled role, not a username-only client badge. The owner can delete any published animation to moderate the gallery; regular users may only delete their own.
 
 For a secure first claim:
-1. Configure the Railway service variable \`OWNER_SETUP_KEY\` with a long private random value.
-2. Visit the website, choose **Sign up → Owner setup**.
-3. Enter the reserved username **Mr_H**, your chosen new password, and the private owner setup key.
-4. The claim can succeed **once**. After a successful claim, simply use **Log in** with Mr_H and your password.
-5. Keep the setup key private and delete the Railway \`OWNER_SETUP_KEY\` variable after the claim; it is not needed for future logins.
+The public website has no owner-setup form or setup-key field. Existing owners use the regular login form. No production credentials belong in this repository.
+
+For a fresh installation only, an operator may temporarily set `OWNER_SETUP_ENABLED=true` and a private random `OWNER_SETUP_KEY` (at least 32 characters) in the server environment, then submit the initial password and setup key directly to the server's bootstrap API over HTTPS. The endpoint returns a generic 404 by default and after an owner exists, regardless of whether a submitted key is correct. After provisioning, unset both variables. Do not put credentials in URLs, frontend files, shell arguments, screenshots, or commits. Re-enabling the flag cannot reset or reclaim an existing owner account.
+
+Passwords remain bcrypt hashes in the persistent database; permissions are checked server-side. Public verification badges and usernames are display data, not authentication secrets. Test-only passwords and setup keys in automated fixtures do not correspond to production accounts.
 
 Reserved owner role assignments must **never** be granted solely by matching a username. If a user created Mr_H before the reservation feature, claiming it with the verified deployment setup key resets that account's password and invalidates previous sessions.
 
