@@ -458,6 +458,33 @@ async function convertRobloxModel(inputPath,outputDir){
  }
  return sequences;
 }
+// Inline maker previews return animation data only and never run model scripts.
+const previewModelLimiter=rateLimit({windowMs:3600000,limit:30,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Preview conversion limit reached. Try again later.'}});
+const previewModelUpload=multer({storage:multer.memoryStorage(),limits:{fileSize:4*1048576,files:1,fields:0,parts:1},fileFilter(req,file,cb){
+ if(file.fieldname==='model'&&/\.(rbxm|rbxmx)$/i.test(file.originalname))return cb(null,true);
+ cb(new Error('Choose a .rbxm or .rbxmx animation model.'));
+}}).single('model');
+app.post('/api/preview-model',previewModelLimiter,(req,res)=>{
+ previewModelUpload(req,res,async error=>{
+  let directory;
+  try{
+   if(error)throw Error(error.code==='LIMIT_FILE_SIZE'?'Preview model must be under 4 MB.':error.message);
+   if(!req.file||req.file.size<32)throw Error('Choose a valid animation model.');
+   directory=await fsp.mkdtemp(path.join(TMP,'preview-'));
+   const input=path.join(directory,'input'+path.extname(req.file.originalname).toLowerCase()),output=path.join(directory,'tracks');
+   await fsp.writeFile(input,req.file.buffer,{flag:'wx'});
+   const sequences=await convertRobloxModel(input,output),tracks=[];let total=0;
+   for(const sequence of sequences){
+    const filename=path.join(output,sequence.filename),stat=await fsp.stat(filename);total+=stat.size;
+    if(total>8*1048576)throw Error('Preview tracks exceed 8 MB. Export fewer keyframes or sequences.');
+    tracks.push({name:sequence.filename,data:(await fsp.readFile(filename)).toString('base64')});
+   }
+   res.setHeader('Cache-Control','no-store');res.json({tracks});
+  }catch(e){if(!res.headersSent)fail(res,400,String(e.message||'Preview conversion failed.').slice(0,300));}
+  finally{if(directory)await fsp.rm(directory,{recursive:true,force:true}).catch(()=>{});}
+ });
+});
+
 const bulkLimiter=rateLimit({
  windowMs:3600000,limit:12,standardHeaders:'draft-7',legacyHeaders:false,
  message:{error:'Hourly bulk conversion limit reached.'}

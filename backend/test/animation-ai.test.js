@@ -28,3 +28,10 @@ test('AI endpoint requires auth and configuration, validates provider output, ke
  global.fetch=async()=>({ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:'{}'}]}]})});assert.equal((await request('/api/animation-ai/generate',body)).status,502);
  }finally{global.fetch=oldFetch;if(oldKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=oldKey;if(oldModel===undefined)delete process.env.ANIMATION_AI_MODEL;else process.env.ANIMATION_AI_MODEL=oldModel;await new Promise(r=>server.close(r));}
 });
+
+test('maker preview preserves sparse bone timing, longer clips, source easing and rejects corrupt input',()=>{
+ const clip=Motion.blank();clip.frames[0].poses=clip.frames[0].poses.filter(p=>p.part==='Torso');clip.frames[1].time=65;clip.frames[1].poses=clip.frames[1].poses.filter(p=>p.part==='Right Arm');
+ const data=Motion.encode(clip.frames,'Long sparse clip');const preview=Motion.parsePreview(data.buffer);assert.equal(preview.duration,65);assert.equal(preview.frames[0].poses.length,1);assert.equal(preview.frames[1].poses[0].part,'Right Arm');assert.equal(preview.frames[0].poses[0].style,'Linear');
+ const one=Motion.parsePreview(Motion.encode([clip.frames[0]],'Single pose').buffer);assert.equal(one.duration,0);assert.equal(one.frames.length,1);
+ assert.throws(()=>Motion.parsePreview(data.buffer.slice(0,12)),/Truncated/);const invalid=data.slice();new DataView(invalid.buffer).setFloat32(2+new TextEncoder().encode('Long sparse clip').length+4,NaN,true);assert.throws(()=>Motion.parsePreview(invalid.buffer),/number/);
+});

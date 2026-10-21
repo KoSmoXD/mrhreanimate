@@ -43,9 +43,11 @@ function invalid(message){error.textContent=message;error.hidden=!message;}
 function setModel(file){
  invalid('');
  if(!file)return;
+ modelFile=null;window.dispatchEvent(new CustomEvent('mrh-maker-model',{detail:{file:null}}));
  if(!/\.(rbxm|rbxmx)$/i.test(file.name)){invalid('Choose a Roblox .rbxm or .rbxmx KeyframeSequence.');return;}
  if(file.size<32||file.size>4*1048576){invalid('The model must be smaller than 4 MB.');return;}
  modelFile=file;
+ window.dispatchEvent(new CustomEvent('mrh-maker-model',{detail:{file}}));
  $('maker-file-name').textContent=file.name;
  drop.classList.add('has-file');
  if(!$('maker-name').value.trim())

@@ -32,7 +32,19 @@ function parse(buffer){
  if(at!==v.byteLength)throw Error('Unexpected trailing data.');frames.sort((a,b)=>a.time-b.time);
  return validate({title:(title||'Imported animation').slice(0,80),duration:frames.at(-1).time,frames});
 }
+// Playback accepts sparse source tracks and long clips without the editor's authoring limits.
+function parsePreview(buffer){
+ if(!(buffer instanceof ArrayBuffer)||buffer.byteLength<10||buffer.byteLength>8*1048576)throw Error('Select a valid .anim file under 8 MB.');
+ const v=new DataView(buffer),decoder=new TextDecoder('utf-8',{fatal:true});let at=0;
+ const take=n=>{if(at+n>v.byteLength)throw Error('Truncated .anim file.');const p=at;at+=n;return p;},u16=()=>v.getUint16(take(2),true),u32=()=>v.getUint32(take(4),true),num=()=>{const n=v.getFloat32(take(4),true);if(!Number.isFinite(n)||Math.abs(n)>1000000)throw Error('Invalid animation number.');return n;},word=()=>{const n=u16();if(n>512)throw Error('Invalid animation string.');return decoder.decode(new Uint8Array(buffer,take(n),n));};
+ const title=word(),count=u32(),frames=[];let duration=0,recognized=0;
+ if(count<1||count>1500)throw Error('Use an animation with 1–1500 keyframes.');
+ for(let i=0;i<count;i++){const time=num();if(time<0||time>300)throw Error('Preview supports animation times from 0–300 seconds.');duration=Math.max(duration,time);const n=u32(),poses=[];if(n>100)throw Error('Too many poses.');for(let j=0;j<n;j++){const part=word(),weight=num(),style=word(),dir=word(),m=Array.from({length:12},num);if(weight>0&&PARTS.includes(part)){poses.push({part,position:m.slice(0,3),rotation:euler(m.slice(3)),style,dir});recognized++;}}frames.push({time,poses});}
+ if(at!==v.byteLength)throw Error('Unexpected trailing animation data.');if(!recognized)throw Error('No R6 body joints found. Choose an R6 animation.');
+ frames.sort((a,b)=>a.time-b.time);const seen=new Map();for(const f of frames)f.poses=f.poses.filter(p=>{const key=p.part+'@'+f.time;if(seen.has(key))return false;seen.set(key,true);return true});
+ return{title:title||'Animation',duration,frames,keyframes:count};
+}
 function bakeTimes(clip,fps=30){const times=new Set(clip.frames.map(f=>Math.fround(f.time)));for(let i=0;i<Math.ceil(clip.duration*fps);i++)times.add(Math.fround(i/fps));times.add(Math.fround(clip.duration));return [...times].sort((a,b)=>a-b);}
 function encode(frames,title){const chunks=[],enc=new TextEncoder;const push=(n,size,method)=>{const a=new ArrayBuffer(size);new DataView(a)[method](0,n,true);chunks.push(new Uint8Array(a));};const word=s=>{const a=enc.encode(s);push(a.length,2,'setUint16');chunks.push(a);};word(title);push(frames.length,4,'setUint32');for(const f of frames){push(f.time,4,'setFloat32');push(f.poses.length,4,'setUint32');for(const p of f.poses){word(p.part);push(1,4,'setFloat32');word('Linear');word('InOut');for(const n of [...p.position,...(p.matrix||matrix(p.rotation))])push(n,4,'setFloat32');}}const out=new Uint8Array(chunks.reduce((s,a)=>s+a.length,0));let offset=0;for(const a of chunks){out.set(a,offset);offset+=a.length;}return out;}
-return{PARTS,clone,neutral,validate,bezier,blank,matrix,euler,parse,encode,bakeTimes};
+return{PARTS,clone,neutral,validate,bezier,blank,matrix,euler,parse,encode,bakeTimes,parsePreview};
 });

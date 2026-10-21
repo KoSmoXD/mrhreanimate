@@ -17,3 +17,11 @@ AI generation requires the site's existing session. Users log in through the mai
 ## Checks
 
 `npm test --prefix backend` includes format roundtrip, bounds, Bézier timing, endpoint authentication, unconfigured service behavior, mocked structured response, invalid response rejection, and the existing gallery/conversion tests.
+
+## Inline dance and moveset previews
+
+The existing Make Animation and Moveset Maker forms now each include the shared R6 viewer, playback/scrubbing controls, loop and speed controls, and optional selected music. Preview runs before ZIP generation and does not modify source files or generated ZIP contents.
+
+Dance models convert into previewable tracks automatically; models with multiple KeyframeSequences expose a track picker. Movesets preview each supplied movement slot; a raw movement model must contain exactly one sequence, matching the ZIP builder. `.anim` files are parsed locally. Raw `.rbxm`/`.rbxmx` models use `/api/preview-model`, which returns only converted animation data, limits input to 4 MB and total output tracks to 8 MB, applies the existing bounded converter and per-IP request limit, and removes temporary files after processing. Model Lua is never executed. Preview clips support sparse joint tracks, single-frame poses and lengths up to 300 seconds, without the animation editor's 30-second authoring limit.
+
+Selecting another track or leaving a maker pauses playback. Selected MP3s use local object URLs, are synchronized to the preview clock, and are revoked when replaced or when leaving the page. Full textured rendering requires WebGL; the browser checks used the software fallback because the test browser disables WebGL.

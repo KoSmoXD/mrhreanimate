@@ -247,6 +247,16 @@ test('Uhhhhhh Make Animation converts Roblox XML KeyframeSequence to install-rea
  assert.ok(bytes.length>180,'ZIP should contain the animation and module');
  assert.ok(readZipText(bytes,'.lua').includes('elapsed = elapsed + math.max(0, tonumber(dt) or 0)'),'generated dance advances without MP3');
  assert.equal(readZipText(bytes,'.lua').split('\n').find(line=>line.includes('m.Description'))?.trim(),'m.Description = '+JSON.stringify(danceDescription),'dance module description mismatch');
+ const previewForm=new FormData();previewForm.set('model',new Blob([xml],{type:'application/xml'}),'SitTest.rbxmx');
+ const preview=await api('/preview-model',{method:'POST',body:previewForm});
+ assert.equal(preview.status,200,JSON.stringify(preview.body));assert.equal(preview.body.tracks.length,1);
+ const trackBytes=Buffer.from(preview.body.tracks[0].data,'base64');
+ const clip=require('../../docs/motion-core').parsePreview(trackBytes.buffer.slice(trackBytes.byteOffset,trackBytes.byteOffset+trackBytes.byteLength));
+ assert.equal(clip.duration,1);assert.ok(clip.frames.some(f=>f.poses.some(p=>p.part==='Torso')));
+ assert.ok(preview.response.headers.get('cache-control').includes('no-store'));
+ const previewBad=new FormData();previewBad.set('model',new Blob(['<roblox><Item class="Part"/></roblox>']),'NotAnimation.rbxmx');
+ assert.equal((await api('/preview-model',{method:'POST',body:previewBad})).status,400);
+ assert.equal((await api('/preview-model',{method:'POST',body:new FormData()})).status,400);
  const bad=new FormData();
  bad.set('model',new Blob(['<roblox><Item class="Part"/></roblox>']),'NotAnimation.rbxmx');
  const rejected=await api('/make-animation',{method:'POST',body:bad});

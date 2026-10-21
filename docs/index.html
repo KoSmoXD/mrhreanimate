@@ -20,6 +20,8 @@
 <script src="./preview.js?v=avatar-northkoreaplayer9-20261016" defer></script>
 <script src="./motion-core.js" defer></script>
 <script type="module" src="./preview-rig.js?v=studio-20261021"></script>
+<link rel="stylesheet" href="./maker-preview.css?v=20261021">
+<script type="module" src="./maker-preview.js?v=20261021"></script>
 </head>
 <body>
 <header class="site-header">
@@ -96,6 +98,15 @@
       </section>
       <aside class="make-card make-guide">
         <div class="make-card-top"><span>02 / OUTPUT</span><span>READY FOR MR H</span></div>
+        <section class="maker-preview" id="dance-preview" aria-label="Dance preview">
+ <div class="maker-preview-heading"><h2>Dance preview</h2><span id="dance-preview-mode">R6</span></div>
+ <label for="dance-preview-track">Preview animation</label><select id="dance-preview-track" disabled><option value="">Choose an animation file first</option></select>
+ <div class="maker-preview-stage"><canvas id="dance-preview-canvas" aria-label="Dance preview. Drag to orbit, scroll to zoom."></canvas></div>
+ <div class="maker-preview-controls"><button type="button" class="primary action" id="dance-preview-play" disabled>Play</button><button type="button" class="action" id="dance-preview-restart" disabled>Restart</button><label class="maker-preview-loop"><input id="dance-preview-loop" type="checkbox" checked>Loop</label><select id="dance-preview-speed" aria-label="Dance preview playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></div>
+ <input id="dance-preview-scrub" type="range" min="0" max="1" step=".001" value="0" aria-label="Dance preview timeline" disabled><output id="dance-preview-time">0.00 / 0.00 s</output>
+ <audio id="dance-preview-audio" preload="metadata" aria-label="Dance preview selected music" controls hidden></audio>
+ <p class="maker-preview-status" id="dance-preview-status" role="status" aria-live="polite">Choose a file to preview it here before creating the ZIP.</p><p class="make-note">Drag to orbit · scroll to zoom. For preview, .anim files and music stay in your browser; raw Roblox models convert on the server.</p>
+</section>
         <div class="make-guide-inner">
           <h2>From Roblox Studio to Uhhhhhh.</h2>
           <div class="make-step"><span class="step-number">01</span><div><strong>Export your animation</strong><p>Save the KeyframeSequence as a <code>.rbxm</code> or <code>.rbxmx</code> file from Roblox Studio.</p></div></div>
@@ -213,6 +224,15 @@
       </section>
       <aside class="make-card make-guide">
         <div class="make-card-top"><span>02 / OUTPUT</span><span>MOVESET MODULE</span></div>
+        <section class="maker-preview" id="moveset-preview" aria-label="Moveset preview">
+ <div class="maker-preview-heading"><h2>Moveset preview</h2><span id="moveset-preview-mode">R6</span></div>
+ <label for="moveset-preview-track">Preview animation</label><select id="moveset-preview-track" disabled><option value="">Choose an animation file first</option></select>
+ <div class="maker-preview-stage"><canvas id="moveset-preview-canvas" aria-label="Moveset preview. Drag to orbit, scroll to zoom."></canvas></div>
+ <div class="maker-preview-controls"><button type="button" class="primary action" id="moveset-preview-play" disabled>Play</button><button type="button" class="action" id="moveset-preview-restart" disabled>Restart</button><label class="maker-preview-loop"><input id="moveset-preview-loop" type="checkbox" checked>Loop</label><select id="moveset-preview-speed" aria-label="Moveset preview playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></div>
+ <input id="moveset-preview-scrub" type="range" min="0" max="1" step=".001" value="0" aria-label="Moveset preview timeline" disabled><output id="moveset-preview-time">0.00 / 0.00 s</output>
+ <audio id="moveset-preview-audio" preload="metadata" aria-label="Moveset preview selected music" controls hidden></audio>
+ <p class="maker-preview-status" id="moveset-preview-status" role="status" aria-live="polite">Choose a file to preview it here before creating the ZIP.</p><p class="make-note">Drag to orbit · scroll to zoom. For preview, .anim files and music stay in your browser; raw Roblox models convert on the server.</p>
+</section>
         <div class="make-guide-inner">
           <h2>One moveset. Seven movement states.</h2>
           <div class="make-step"><span class="step-number">01</span><div><strong>Supply the movement tracks</strong><p>Use your converted Uhhhhhh <code>.anim</code> files for Idle and Walk. Add Run, Jump, Fall, Climb, and Sit if you have them.</p></div></div>
