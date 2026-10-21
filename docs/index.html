@@ -10,6 +10,8 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="./styles.css?v=avatar-northkoreaplayer9-20261016">
 <link rel="stylesheet" href="./preview.css?v=avatar-northkoreaplayer9-20261016">
+<link rel="stylesheet" href="./themes.css?v=20261021-1">
+<script src="./themes.js?v=20261021-1" defer></script>
 <script src="./app.js?v=avatar-northkoreaplayer9-20261016" defer></script>
 <link rel="stylesheet" href="./maker-visuals.css?v=20261021">
 <script src="./visual-settings.js?v=20261021" defer></script>
@@ -48,6 +50,7 @@
     <button type="button" id="tab-preview" class="site-tab" role="tab" aria-controls="preview-panel" aria-selected="false">3D Preview</button>
     <a class="site-tab" href="./studio.html">AI Animation Maker</a>
     <button type="button" id="tab-mocap" class="site-tab" role="tab" aria-controls="mocap-panel" aria-selected="false">Camera Motion</button>
+    <button type="button" id="tab-themes" class="site-tab" role="tab" aria-controls="themes-panel" aria-selected="false">Themes</button>
   </nav>
   <section id="browse-panel" role="tabpanel" aria-labelledby="tab-browse">
   <div class="gallery-head">
@@ -300,6 +303,65 @@
       </aside>
     </div>
   </section>
+
+<section id="themes-panel" role="tabpanel" aria-labelledby="tab-themes" hidden>
+ <header class="themes-top"><div class="themes-overline">MR H ANIMATIONS / APPEARANCE</div><h1>Custom themes</h1>
+ <p>Change the look of Mr H Animations. Preferences are saved on this device.</p></header>
+ <section class="themes-section" aria-labelledby="theme-presets-heading">
+  <div class="themes-section-heading"><h2 id="theme-presets-heading">Themes</h2><span class="theme-count">7 included</span></div>
+  <div id="theme-builtins" class="theme-grid"></div>
+ </section>
+ <section class="themes-section" aria-labelledby="theme-installed-heading">
+  <div class="themes-section-heading"><h2 id="theme-installed-heading">Installed themes</h2><span id="theme-installed-count" class="theme-count">0 installed</span></div>
+  <div id="theme-installed" class="theme-grid"></div>
+  <div class="themes-actions" style="margin-top:10px">
+   <button type="button" id="theme-remove" class="action" disabled>Remove selected</button>
+   <button type="button" id="theme-export" class="action" disabled>Export selected JSON ↓</button>
+  </div>
+ </section>
+ <section class="themes-section" aria-labelledby="theme-link-heading"><div class="themes-section-heading"><h2 id="theme-link-heading">Add from link or file</h2></div>
+  <form id="theme-url-form" class="themes-form">
+   <p class="themes-subtitle">Import a Mr H theme JSON or compatible Revenge color palette. HTTPS links must support CORS.</p>
+   <label for="theme-json-url">Theme JSON link</label>
+   <input type="url" id="theme-json-url" inputmode="url" placeholder="https://example.com/theme.json" required>
+   <div class="themes-actions"><button type="submit" id="theme-install-url" class="primary">Install link</button>
+    <button type="button" id="theme-paste" class="action">Paste</button>
+    <label class="theme-file-label">Import JSON file <input id="theme-json-file" type="file" accept=".json,application/json" aria-label="Import theme JSON file"></label>
+   </div>
+  </form>
+ </section>
+ <section class="themes-section" aria-labelledby="theme-create-heading"><div class="themes-section-heading">
+  <h2 id="theme-create-heading">Create a theme</h2><button type="button" id="theme-editor-use" class="action">Start from selected</button></div>
+  <form id="theme-builder" class="themes-form"><label for="theme-name">Theme name</label>
+   <input type="text" id="theme-name" maxlength="64" placeholder="My theme" required>
+   <div class="theme-colors"><label class="theme-swatch">Background<input type="color" id="theme-color-bg" value="#050505"></label>
+<label class="theme-swatch">Panels<input type="color" id="theme-color-panel" value="#0d0d0e"></label>
+<label class="theme-swatch">Fields<input type="color" id="theme-color-field" value="#151516"></label>
+<label class="theme-swatch">Borders<input type="color" id="theme-color-stroke" value="#39393c"></label>
+<label class="theme-swatch">Text<input type="color" id="theme-color-text" value="#f8f8f9"></label>
+<label class="theme-swatch">Secondary text<input type="color" id="theme-color-muted" value="#a2a2a8"></label>
+<label class="theme-swatch">Accent<input type="color" id="theme-color-accent" value="#f2f2f3"></label>
+<label class="theme-swatch">Accent text<input type="color" id="theme-color-accentText" value="#070707"></label></div>
+   <label for="theme-image">Background image URL (optional)</label>
+   <input type="url" id="theme-image" placeholder="https://example.com/wallpaper.png">
+   <div class="themes-actions"><button type="submit" class="primary">Save &amp; apply theme</button></div>
+   <small class="themes-notice">Only colors and HTTPS images are accepted. Theme files cannot execute scripts or CSS.</small>
+  </form>
+ </section>
+ <section class="themes-section" aria-labelledby="theme-display-heading"><div class="themes-section-heading"><h2 id="theme-display-heading">Display</h2></div>
+  <label class="theme-toggle" for="theme-wallpaper-toggle">
+   <span><strong>Show theme background image</strong><small>Display wallpaper behind the site when a theme includes one.</small></span>
+   <input type="checkbox" id="theme-wallpaper-toggle" checked>
+  </label>
+ </section>
+ <section class="themes-section" aria-labelledby="theme-manage-heading"><div class="themes-section-heading"><h2 id="theme-manage-heading">Manage</h2></div>
+  <div class="theme-danger"><div><strong>Clear installed themes</strong>
+   <p>Removes saved custom themes and restores the default colors.</p></div>
+   <button type="button" id="theme-clear" class="action">Clear installed</button></div>
+ </section>
+ <p id="theme-status" role="status" aria-live="polite"></p>
+</section>
+
 </main>
 
 
