@@ -1,5 +1,6 @@
 /* Inline previews share the supplied R6 rig with the standalone viewer. Model scripts are never executed. */
 import {makeViewer} from './r6-engine.js';
+import {mountVisualPreview} from './visual-preview.js';
 const M=window.MrhMotion,$=id=>document.getElementById(id),roles=['idle','walk','run','jump','fall','climb','sit'];
 const cache=new WeakMap();
 async function readTracks(file,signal){
@@ -22,6 +23,7 @@ async function readTracks(file,signal){
 function makeInline(prefix,tab,musicInput){
  const root=$(prefix+'-preview'),get=s=>$(prefix+'-preview-'+s),select=get('track'),audio=get('audio');
  const st={clip:null,time:0,playing:false,active:!$(tab==='make'?'make-panel':'moveset-panel').hidden,viewer:null,viewerPromise:null,token:0,controller:null,tracks:[],file:null,musicURL:null};
+ mountVisualPreview(get('canvas').parentElement,()=>st.viewer?.snapshot(),()=>({maker:prefix,state:prefix==='dance'?'dance':select.value,time:st.time,active:st.active}));
  function message(text,error=false){get('status').textContent=text;get('status').classList.toggle('error',error)}
  function controls(){get('play').disabled=!st.clip||st.clip.duration<=0;get('restart').disabled=!st.clip;get('scrub').disabled=!st.clip||st.clip.duration<=0;get('play').textContent=st.playing?'Pause':'Play'}
  function seek(t,syncMusic=true){st.time=Math.max(0,Math.min(st.clip?.duration||0,t));st.viewer?.seek(st.time);get('scrub').value=String(st.time);get('time').textContent=st.time.toFixed(2)+' / '+(st.clip?.duration||0).toFixed(2)+' s';if(syncMusic&&st.musicURL&&audio.readyState>0){try{audio.currentTime=Number.isFinite(audio.duration)?Math.min(st.time,audio.duration):st.time}catch{}}}

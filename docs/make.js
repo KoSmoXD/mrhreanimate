@@ -87,6 +87,7 @@ form.addEventListener('submit',async e=>{
   invalid('Music must be an .mp3 under 25 MB.');return;
  }
  const data=new FormData();
+  try{data.set('visuals',JSON.stringify(window.MrhMakerVisuals.get('dance')))}catch(e){invalid(e.message);return}
  data.set('model',modelFile,modelFile.name);
  if(audio)data.set('music',audio,audio.name);
  data.set('name',$('maker-name').value.trim().slice(0,80));

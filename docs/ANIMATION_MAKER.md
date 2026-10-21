@@ -25,3 +25,15 @@ The existing Make Animation and Moveset Maker forms now each include the shared 
 Dance models convert into previewable tracks automatically; models with multiple KeyframeSequences expose a track picker. Movesets preview each supplied movement slot; a raw movement model must contain exactly one sequence, matching the ZIP builder. `.anim` files are parsed locally. Raw `.rbxm`/`.rbxmx` models use `/api/preview-model`, which returns only converted animation data, limits input to 4 MB and total output tracks to 8 MB, applies the existing bounded converter and per-IP request limit, and removes temporary files after processing. Model Lua is never executed. Preview clips support sparse joint tracks, single-frame poses and lengths up to 300 seconds, without the animation editor's 30-second authoring limit.
 
 Selecting another track or leaving a maker pauses playback. Selected MP3s use local object URLs, are synchronized to the preview clock, and are revoked when replaced or when leaving the page. Full textured rendering requires WebGL; the browser checks used the software fallback because the test browser disables WebGL.
+
+## Dance and moveset cosmetics
+
+Both makers include **Effects & accessories**. Add up to 12 sparkles, fire, smoke, light or trail rules on an R6 body part or a named accessory. Up to 8 accessory rules can follow a body part, orbit, spin, bob, hide, or keep the normal behavior. Names match exactly, including case, and apply to all worn accessories with that name. Wear accessories before starting the module; these controls do not import accessories.
+
+Each rule supports a movement state and a start/end window in seconds within the animation. Empty end means through the clip end. Looping clips repeat the window. State-specific accessory rules override an all-state rule while active; one behavior per name/state is allowed. Offsets use studs in the selected body part's local axes; rotations use degrees, speed uses revolutions/sec, distance uses studs. Normal behavior temporarily overrides an all-state behavior without moving the accessory.
+
+The generated module creates local cosmetics and restores its own weld/transparency changes and hat overrides on stop. Moveset cosmetics suspend during dances. Settings are validated in the browser and server, embedded as JSON in the Lua module, and never executed as user-supplied Lua. No added assets or account details enter the ZIP.
+
+Browser effects are approximate and accessories are labeled stand-ins, since the preview does not load the user's actual accessories. Verify the downloaded module in Roblox; browser and mocked Luau tests cannot confirm executor behavior or replication.
+
+Validation: `npm test --prefix backend`. For the optional runtime lifecycle and generated-module syntax checks, install the official Luau CLI and run `LUAU_BIN=/path/to/luau LUAU_COMPILE_BIN=/path/to/luau-compile npm test --prefix backend`.

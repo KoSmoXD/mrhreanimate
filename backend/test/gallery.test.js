@@ -47,6 +47,12 @@ async function api(uri,options={}){
  return {status:r.status,body:json,response:r};
 }
 
+function compileGeneratedLua(source){
+ if(!process.env.LUAU_COMPILE_BIN)return;
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mrh-module-compile-'));
+ try{const file=path.join(dir,'generated.lua');fs.writeFileSync(file,source);const compiled=require('node:child_process').spawnSync(process.env.LUAU_COMPILE_BIN,[file],{encoding:'utf8'});assert.equal(compiled.status,0,compiled.stderr);}finally{fs.rmSync(dir,{recursive:true,force:true})}
+}
+
 function readZipText(zip,ending){
  // ZIP central directory contains real sizes and offsets, even when streaming
  // local headers use data descriptors and file data is compressed.
@@ -237,6 +243,7 @@ test('Uhhhhhh Make Animation converts Roblox XML KeyframeSequence to install-rea
  fields.set('loop','true');
  const danceDescription='Wave "Hello"!\nSmooth 🔥';
  fields.set('description',danceDescription);
+ fields.set('visuals',JSON.stringify({version:1,effects:[{type:'fire',target:'Right Arm',state:'dance'}],accessories:[{name:'Dance Hat',behavior:'orbit'}]}));
  const result=await api('/make-animation',{method:'POST',body:fields});
  assert.equal(result.status,200,JSON.stringify(result.body));
  assert.match(result.response.headers.get('content-type'),/application\/zip/);
@@ -247,6 +254,11 @@ test('Uhhhhhh Make Animation converts Roblox XML KeyframeSequence to install-rea
  assert.ok(bytes.length>180,'ZIP should contain the animation and module');
  assert.ok(readZipText(bytes,'.lua').includes('elapsed = elapsed + math.max(0, tonumber(dt) or 0)'),'generated dance advances without MP3');
  assert.equal(readZipText(bytes,'.lua').split('\n').find(line=>line.includes('m.Description'))?.trim(),'m.Description = '+JSON.stringify(danceDescription),'dance module description mismatch');
+ assert.match(readZipText(bytes,'.lua'),/visuals.Step\(figure, "dance", time, animator.track.Time, animator.looped\)/);
+ assert.ok(readZipText(bytes,'.lua').includes('Dance Hat'));
+ compileGeneratedLua(readZipText(bytes,'.lua'));
+ const invalidVisuals=new FormData();invalidVisuals.set('model',new Blob([xml]),'Test.rbxmx');invalidVisuals.set('visuals','{');
+ assert.equal((await api('/make-animation',{method:'POST',body:invalidVisuals})).status,400);
  const previewForm=new FormData();previewForm.set('model',new Blob([xml],{type:'application/xml'}),'SitTest.rbxmx');
  const preview=await api('/preview-model',{method:'POST',body:previewForm});
  assert.equal(preview.status,200,JSON.stringify(preview.body));assert.equal(preview.body.tracks.length,1);
@@ -278,6 +290,7 @@ test('Moveset Maker endpoint packages two valid tracks',async()=>{
  payload.set('runSpeed','16');
  const movesetDescription='Retro "R6" moveset\nCreated by Mr_H';
  payload.set('description',movesetDescription);
+ payload.set('visuals',JSON.stringify({version:1,effects:[{type:'trail',state:'walk'}],accessories:[{name:'Walk Hat',behavior:'spin',state:'walk'}]}));
  payload.set('idle',new Blob([track]),'idle.anim');
  payload.set('walk',new Blob([track]),'walk.anim');
  const answer=await api('/make-moveset',{method:'POST',body:payload});
@@ -287,6 +300,11 @@ test('Moveset Maker endpoint packages two valid tracks',async()=>{
  for(const entry of ['MRH_Walk_Test_idle.anim','MRH_Walk_Test_walk.anim','MRH_Walk_Test_Moveset.lua'])
   assert.ok(zip.includes(Buffer.from(entry)),'missing '+entry);
  assert.equal(readZipText(zip,'.lua').split('\n').find(line=>line.includes('m.Description'))?.trim(),'m.Description = '+JSON.stringify(movesetDescription),'moveset description mismatch');
+ assert.ok(readZipText(zip,'.lua').includes('Walk Hat'));
+ compileGeneratedLua(readZipText(zip,'.lua'));
+ assert.match(readZipText(zip,'.lua'),/visuals.Destroy\(\)/);
+ payload.set('visuals',JSON.stringify({version:1,effects:[{scale:100}],accessories:[]}));
+ assert.equal((await api('/make-moveset',{method:'POST',body:payload})).status,400);
  const invalid=new FormData();
  invalid.set('name','Fail Case');invalid.set('fade','0.2');invalid.set('runSpeed','16');
  invalid.set('idle',new Blob([track]),'idle.anim');
