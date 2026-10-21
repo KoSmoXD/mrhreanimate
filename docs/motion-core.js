@@ -32,6 +32,7 @@ function parse(buffer){
  if(at!==v.byteLength)throw Error('Unexpected trailing data.');frames.sort((a,b)=>a.time-b.time);
  return validate({title:(title||'Imported animation').slice(0,80),duration:frames.at(-1).time,frames});
 }
+function bakeTimes(clip,fps=30){const times=new Set(clip.frames.map(f=>Math.fround(f.time)));for(let i=0;i<Math.ceil(clip.duration*fps);i++)times.add(Math.fround(i/fps));times.add(Math.fround(clip.duration));return [...times].sort((a,b)=>a-b);}
 function encode(frames,title){const chunks=[],enc=new TextEncoder;const push=(n,size,method)=>{const a=new ArrayBuffer(size);new DataView(a)[method](0,n,true);chunks.push(new Uint8Array(a));};const word=s=>{const a=enc.encode(s);push(a.length,2,'setUint16');chunks.push(a);};word(title);push(frames.length,4,'setUint32');for(const f of frames){push(f.time,4,'setFloat32');push(f.poses.length,4,'setUint32');for(const p of f.poses){word(p.part);push(1,4,'setFloat32');word('Linear');word('InOut');for(const n of [...p.position,...(p.matrix||matrix(p.rotation))])push(n,4,'setFloat32');}}const out=new Uint8Array(chunks.reduce((s,a)=>s+a.length,0));let offset=0;for(const a of chunks){out.set(a,offset);offset+=a.length;}return out;}
-return{PARTS,clone,neutral,validate,bezier,blank,matrix,euler,parse,encode};
+return{PARTS,clone,neutral,validate,bezier,blank,matrix,euler,parse,encode,bakeTimes};
 });

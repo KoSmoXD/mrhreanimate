@@ -7,6 +7,8 @@ test('animation documents validate joint coverage and bounds; Bezier timing and 
  clip.frames[1].poses[2].rotation=[25,-45,80];clip.frames[1].poses[2].position=[1,2,3];
  const bytes=Motion.encode(clip.frames,clip.title),decoded=Motion.parse(bytes.buffer);
  assert.equal(decoded.duration,2);decoded.frames[1].poses[2].rotation.forEach((v,i)=>assert.ok(Math.abs(v-clip.frames[1].poses[2].rotation[i])<1e-4));
+ const floatClip=Motion.clone(clip);floatClip.frames.splice(1,0,{time:Math.fround(.6),poses:Motion.PARTS.map(Motion.neutral)});const times=Motion.bakeTimes(floatClip);assert.equal(times.filter(t=>Math.abs(t-.6)<.00001).length,1,'baked times must stay unique after float32 encoding');
+ const baked=times.map(time=>({time,poses:Motion.PARTS.map(Motion.neutral)}));assert.equal(Motion.parse(Motion.encode(baked,'roundtrip').buffer).frames.length,baked.length);
  const bad=Motion.clone(clip);bad.frames[0].poses[1].part='Torso';assert.throws(()=>Motion.validate(bad),/six R6/);
  assert.throws(()=>Motion.parse(bytes.buffer.slice(0,25)),/Truncated/);
  const nan=Motion.clone(clip);nan.frames[0].poses[0].position[0]=NaN;assert.throws(()=>Motion.validate(nan),/position/);
