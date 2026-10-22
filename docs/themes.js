@@ -4,8 +4,10 @@
 'use strict';
 const KEY='mrh-animations-themes-v1';
 const BASE={bg:'#050505',panel:'#0d0d0e',field:'#151516',stroke:'#39393c',text:'#f8f8f9',muted:'#a2a2a8',accent:'#f2f2f3',accentText:'#070707'};
+const WARM={bg:'#faf9f6',panel:'#fffefa',field:'#f3f0eb',stroke:'#e4e0d9',text:'#302d29',muted:'#756f68',accent:'#c87451',accentText:'#fffefa'};
 const PRESETS=[
- {id:'default',name:"Discord's colors",description:'Default',colors:{...BASE}},
+ {id:'default',name:'Mr H Warm Studio',description:'Claude-inspired light workspace',colors:{...WARM}},
+ {id:'midnight',name:'Midnight Classic',description:'Original dark Mr H look',colors:{...BASE}},
  {id:'cinder',name:'Cinder & Flame',description:'Ember orange',colors:{bg:'#101719',panel:'#1d2829',field:'#253235',stroke:'#4b5654',text:'#ffd7bd',muted:'#b79a88',accent:'#ff855e',accentText:'#20110b'},wallpaper:'linear-gradient(135deg,#172c31,#51251d)'},
  {id:'terminal',name:'Dos.Terminal',description:'Monochrome terminal',colors:{bg:'#050805',panel:'#070e08',field:'#0a160b',stroke:'#1e6728',text:'#2ef742',muted:'#18a62f',accent:'#19d832',accentText:'#001905'}},
  {id:'ratio',name:'Ratio v1.1.3',description:'Graphite & yellow',colors:{bg:'#1a1b1d',panel:'#242529',field:'#303238',stroke:'#57585c',text:'#e7e7e7',muted:'#aeafb2',accent:'#dadf27',accentText:'#1a1b1d'}},
@@ -72,7 +74,8 @@ function apply(){
  for(const [k,css] of Object.entries(vars))root.style.setProperty(css,theme.colors[k]);
  root.style.setProperty('--theme-card',theme.colors.field);
  root.style.setProperty('--theme-header',theme.colors.bg);
- root.style.setProperty('color-scheme','dark');
+ root.classList.toggle('mrh-claude',theme.id==='default');
+ root.style.setProperty('color-scheme',theme.id==='default'?'light':'dark');
  const wallpaper=state.wallpaper?theme.wallpaper:'';
  if(wallpaper){
   const image=wallpaper.startsWith('linear-gradient(')?wallpaper:'url("'+wallpaper+'")';
