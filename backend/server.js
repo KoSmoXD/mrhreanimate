@@ -302,9 +302,9 @@ const convertUploads=multer({
  limits:{files:2,fields:4,parts:6,fileSize:25*1048576},
  fileFilter(req,file,cb){
   const ext=path.extname(file.originalname).toLowerCase();
-  if(file.fieldname==='model'&&['.rbxm','.rbxmx'].includes(ext))return cb(null,true);
+  if(file.fieldname==='model'&&['.anim','.rbxm','.rbxmx'].includes(ext))return cb(null,true);
   if(file.fieldname==='music'&&ext==='.mp3')return cb(null,true);
-  cb(new Error('Upload a Roblox .rbxm/.rbxmx and optional .mp3 only.'));
+  cb(new Error('Upload an .anim, .rbxm/.rbxmx and optional .mp3 only.'));
  }
 }).fields([{name:'model',maxCount:1},{name:'music',maxCount:1}]);
 function luaLiteral(s){return JSON.stringify(String(s).replace(/[\x00-\x1f]/g,' ').slice(0,150));}
@@ -380,8 +380,9 @@ app.post('/api/make-animation',convertLimiter,(req,res)=>{
  convertUploads(req,res,async err=>{
   if(err)return fail(res,400,err.code==='LIMIT_FILE_SIZE'?'Uploaded file is too large.':err.message||'Invalid model upload.');
   const model=req.files?.model?.[0],music=req.files?.music?.[0];
-  if(!model?.buffer)return fail(res,400,'Choose a .rbxm or .rbxmx model.');
-  if(model.size<32||model.size>4*1048576)return fail(res,400,'Model must be under 4 MB.');
+  if(!model?.buffer)return fail(res,400,'Choose an .anim, .rbxm or .rbxmx file.');
+  const isAnim=path.extname(model.originalname).toLowerCase()==='.anim';
+  if(model.size<(isAnim?8:32)||model.size>(isAnim?8:4)*1048576)return fail(res,400,isAnim?'Animation must be under 8 MB.':'Model must be under 4 MB.');
   if(music&&(music.size<128||music.size>25*1048576))return fail(res,400,'MP3 must be under 25 MB.');
   if(music){
    const head=music.buffer;
@@ -397,18 +398,21 @@ app.post('/api/make-animation',convertLimiter,(req,res)=>{
   try{
    folder=await fsp.mkdtemp(path.join(TMP,'make-'));
    const output=path.join(folder,'output');
-   const input=path.join(folder,path.extname(model.originalname).toLowerCase()==='.rbxmx'?'input.rbxmx':'input.rbxm');
    await fsp.mkdir(output);
-   await fsp.writeFile(input,model.buffer,{flag:'wx'});
-   try{
-    await execFileAsync('python3',[path.join(__dirname,'tools','convert_model.py'),input,output],{
-      timeout:14000,maxBuffer:32768,windowsHide:true
-    });
-   }catch(error){
-    throw Error(String(error.stderr||error.message||'Model conversion error').trim().slice(0,230));
+   let sequences;
+   if(isAnim){
+    const info=validateAnim(model.buffer);
+    if(info.duration<0.05)throw Error('Dance needs at least 0.05 seconds of animation.');
+    const name=title||path.basename(model.originalname,path.extname(model.originalname));
+    const filename=safeName(name).replace(/[^A-Za-z0-9_ -]/g,'_').slice(0,60)+'.anim';
+    await fsp.writeFile(path.join(output,filename),model.buffer,{flag:'wx'});
+    sequences=[{name,filename,duration:info.duration}];
+   }else{
+    const input=path.join(folder,path.extname(model.originalname).toLowerCase()==='.rbxmx'?'input.rbxmx':'input.rbxm');
+    await fsp.writeFile(input,model.buffer,{flag:'wx'});
+    sequences=await convertRobloxModel(input,output);
    }
-   const sequences=JSON.parse(await fsp.readFile(path.join(output,'_results.json'),'utf8'));
-   if(!Array.isArray(sequences)||!sequences.length||sequences.length>20)throw Error('No valid KeyframeSequences converted.');
+   if(!Array.isArray(sequences)||!sequences.length||sequences.length>20)throw Error('No valid animations found.');
    const soundName=music?safeName(music.originalname):null;
    const archive=archiver('zip',{zlib:{level:0}});
    archive.on('error',error=>{if(res.headersSent)res.destroy(error);else res.destroy(error);});

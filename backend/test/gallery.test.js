@@ -99,8 +99,8 @@ test('public gallery, registration, authenticated upload, ZIP download and accou
  assert.ok(page.headers.get('cache-control')?.includes('no-store'),'HTML must not be cached');
  assert.ok(markup.includes('app.js?v=avatar-northkoreaplayer9-20261016'),'auth script must be cache busted');
  assert.ok(markup.includes('id="tab-preview"')&&markup.includes('id="preview-panel"'),'the 3D Preview tab must be present');
- assert.ok(markup.includes('preview.js?v=avatar-northkoreaplayer9-20261016'),'preview renderer must be cache busted');
- assert.ok(markup.includes('preview-rig.js?v=studio-20261021'),'R6 rig renderer must be cache busted');
+ assert.ok(markup.includes('supplied-preview.js?v=82d94c24-20261103'),'preview renderer must be cache busted');
+ assert.ok(!markup.includes('src="./preview-rig.js'),'standalone supplied renderer must remain visible');
  const asset=await fetch(base+'/app.js?v=avatar-northkoreaplayer9-20261016');
  const script=await asset.text();
  assert.equal(asset.status,200);
@@ -276,6 +276,7 @@ test('Uhhhhhh Make Animation converts Roblox XML KeyframeSequence to install-rea
 });
 
 test('Moveset Maker endpoint packages two valid tracks',async()=>{
+ await waitForServer();
  const original=makeAnim();
  const n=original.readUInt16LE(0);
  const p=2+n+4;
@@ -546,4 +547,22 @@ test('camera WebSocket receives published pose',async()=>{
  assert.equal(received[1]?.type,'pose');
  assert.equal(received[1]?.pose.v,2);
  ws.close();
+});
+
+
+test('Dance Maker accepts native .anim without music or model conversion',async()=>{
+ await waitForServer();
+ const original=makeAnim(),offset=2+original.readUInt16LE(0)+4;
+ const header=Buffer.from(original.subarray(0,offset));header.writeUInt32LE(2,offset-4);
+ const last=Buffer.from(original.subarray(offset));last.writeFloatLE(1,0);
+ const track=Buffer.concat([header,original.subarray(offset),last]);
+ const fields=new FormData();fields.set('model',new Blob([track]),'My_Dance.anim');fields.set('loop','true');
+ const result=await api('/make-animation',{method:'POST',body:fields});
+ assert.equal(result.status,200,JSON.stringify(result.body));
+ const zip=Buffer.from(await result.response.arrayBuffer());
+ assert.ok(zip.includes(Buffer.from('UhhhhhhReanim/Content/Anims/My_Dance.anim')));
+ const lua=readZipText(zip,'.lua');
+ assert.match(lua,/My_Dance/);assert.match(lua,/animator.looped = true/);assert.match(lua,/elapsed = elapsed/);
+ const bad=new FormData();bad.set('model',new Blob([Buffer.alloc(40)]),'bad.anim');
+ assert.equal((await api('/make-animation',{method:'POST',body:bad})).status,400);
 });

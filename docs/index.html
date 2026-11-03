@@ -16,16 +16,16 @@
 <link rel="stylesheet" href="./maker-visuals.css?v=20261021">
 <script src="./visual-settings.js?v=20261021" defer></script>
 <script src="./maker-visuals.js?v=20261021" defer></script>
-<script src="./make.js?v=avatar-northkoreaplayer9-20261016" defer></script>
+<script src="./make.js?v=anim-makers-20261103" defer></script>
 <script src="./mocap-solver.js?v=cam-v2-20261016" defer></script>
 <script src="./mocap.js?v=cam-v2-20261016" defer></script>
-<script src="./moveset.js?v=avatar-northkoreaplayer9-20261016" defer></script>
+<script src="./moveset.js?v=anim-makers-20261103" defer></script>
 <script src="./community.js?v=avatar-northkoreaplayer9-20261016" defer></script>
 <script src="./bulk.js?v=avatar-northkoreaplayer9-20261016" defer></script>
-<script src="./preview.js?v=supplied-r6-20261103" defer></script>
+<script src="./supplied-preview.js?v=82d94c24-20261103" defer></script>
 <script src="./motion-core.js" defer></script>
 <link rel="stylesheet" href="./maker-preview.css?v=20261021">
-<link rel="stylesheet" href="./claude-ui.css?v=20261022-1">
+<link rel="stylesheet" href="./claude-ui.css?v=makers-nav-20261103">
 <script type="module" src="./maker-preview.js?v=20261021"></script>
 </head>
 <body>
@@ -44,7 +44,7 @@
   <nav class="site-tabs" role="tablist" aria-label="Animation website sections">
     <button type="button" id="tab-browse" class="site-tab active" role="tab" aria-controls="browse-panel" aria-selected="true">Dances</button>
     <button type="button" id="tab-library-movesets" class="site-tab" role="tab" aria-controls="library-movesets-panel" aria-selected="false">Movesets</button>
-    <button type="button" id="tab-make" class="site-tab" role="tab" aria-controls="make-panel" aria-selected="false">Make Animation</button>
+    <button type="button" id="tab-make" class="site-tab" role="tab" aria-controls="make-panel" aria-selected="false">Dance Maker</button>
     <button type="button" id="tab-rbxm2anim" class="site-tab" role="tab" aria-controls="rbxm2anim-panel" aria-selected="false">RBXM2ANIM</button>
     <button type="button" id="tab-moveset" class="site-tab" role="tab" aria-controls="moveset-panel" aria-selected="false">Moveset Maker</button>
     <button type="button" id="tab-preview" class="site-tab" role="tab" aria-controls="preview-panel" aria-selected="false">3D Preview</button>
@@ -71,24 +71,24 @@
   </section>
   <section id="make-panel" class="make-panel" role="tabpanel" aria-labelledby="tab-make" hidden>
     <div class="make-heading">
-      <div><div class="make-overline">UHHHHHH REANIMATE / RBXM2ANIM</div><h1>Make Animation</h1>
-        <p>Convert a Roblox KeyframeSequence to Mr H's Uhhhhhh animation format, with a matching Lua dance module.</p></div>
+      <div><div class="make-overline">UHHHHHH REANIMATE / RBXM2ANIM</div><h1>Dance Maker</h1>
+        <p>Drop your .anim file to create a ready-to-use dance ZIP. Add a name or music if you want. Roblox models are also supported.</p></div>
       <a class="action david-link" href="https://sites.google.com/view/rbxm2animbydavid/uhhhhhhhh-reanimate" target="_blank" rel="noopener noreferrer">David's original page ↗</a>
     </div>
     <div class="make-grid">
       <section class="make-card">
         <div class="make-card-top"><span>01 / CONVERT</span><span>UHHHHHH ONLY</span></div>
         <form id="make-form" class="make-form">
-          <label class="make-field"><span>Roblox KeyframeSequence model <em>Required</em></span>
-            <span class="maker-drop" id="maker-drop" tabindex="0" role="button" aria-label="Choose or drop a Roblox animation model">
+          <label class="make-field"><span>Animation file <em>Required</em></span>
+            <span class="maker-drop" id="maker-drop" tabindex="0" role="button" aria-label="Choose or drop a dance animation">
               <span class="maker-drop-icon">↑</span>
-              <strong id="maker-file-name">Drop an .rbxm or .rbxmx file here</strong>
-              <small>Or click to browse · 4 MB maximum</small>
+              <strong id="maker-file-name">Drop an .anim file here</strong>
+              <small>Or click to browse · .anim up to 8 MB · Roblox models up to 4 MB</small>
             </span>
-            <input type="file" id="maker-model" accept=".rbxm,.rbxmx" hidden>
+            <input type="file" id="maker-model" accept=".anim,.rbxm,.rbxmx" hidden>
           </label>
           <label class="make-field" for="maker-name"><span>Animation name <em>Optional</em></span>
-            <input id="maker-name" type="text" maxlength="80" placeholder="Defaults to the KeyframeSequence name"></label>
+            <input id="maker-name" type="text" maxlength="80" placeholder="Defaults to your animation filename"></label>
           <label class="make-field" for="maker-description"><span>Dance description <em>Optional</em></span>
             <textarea id="maker-description" maxlength="500" rows="3" placeholder="Describe your dance, its style, or credits..."></textarea>
             <small class="make-note">Appears in the generated Lua dance module · up to 500 characters</small></label>
@@ -98,8 +98,8 @@
           </label>
           <label class="make-check"><input type="checkbox" id="maker-loop" checked><span>Loop animation continuously</span></label>
           <div id="maker-error" class="form-error" role="alert" hidden></div>
-          <button type="submit" id="maker-convert" class="primary make-convert">Convert &amp; Download ZIP <span>↓</span></button>
-          <div id="maker-status" class="make-status" aria-live="polite">Ready for a KeyframeSequence model.</div>
+          <button type="submit" id="maker-convert" class="primary make-convert">Create Dance ZIP <span>↓</span></button>
+          <div id="maker-status" class="make-status" aria-live="polite">Drop an .anim file to get started.</div>
         </form>
       </section>
       <aside class="make-card make-guide">
@@ -115,8 +115,8 @@
 </section>
         <div class="make-guide-inner">
           <h2>From Roblox Studio to Uhhhhhh.</h2>
-          <div class="make-step"><span class="step-number">01</span><div><strong>Export your animation</strong><p>Save the KeyframeSequence as a <code>.rbxm</code> or <code>.rbxmx</code> file from Roblox Studio.</p></div></div>
-          <div class="make-step"><span class="step-number">02</span><div><strong>Convert here</strong><p>Upload the model. Add music if needed, then generate the Uhhhhhh <code>.anim</code> file and a matching <code>.lua</code> dance module.</p></div></div>
+          <div class="make-step"><span class="step-number">01</span><div><strong>Export your animation</strong><p>Choose your existing <code>.anim</code> file, or export a KeyframeSequence model from Roblox Studio.</p></div></div>
+          <div class="make-step"><span class="step-number">02</span><div><strong>Convert here</strong><p>Upload your animation. Add music if needed, then download the Uhhhhhh <code>.anim</code> file and a matching <code>.lua</code> dance module.</p></div></div>
           <div class="make-step"><span class="step-number">03</span><div><strong>Install the ZIP</strong><p>The ZIP contains the correct Uhhhhhh folder layout. Extract it into your executor's workspace.</p></div></div>
           <div class="make-output">
             <div class="output-label">OUTPUT FOLDERS</div>
@@ -193,11 +193,14 @@
       <section class="make-card">
         <div class="make-card-top"><span>01 / BUILD MOVESET</span><span>UHHHHHH ONLY</span></div>
         <form id="moveset-form" class="make-form">
-          <label class="make-field" for="moveset-name"><span>Moveset name <em>Required</em></span>
-            <input id="moveset-name" type="text" minlength="2" maxlength="64" placeholder="e.g. Mr H Classic" required></label>
+          <label class="make-field" for="moveset-name"><span>Moveset name <em>Optional</em></span>
+            <input id="moveset-name" type="text" minlength="2" maxlength="64" placeholder="Defaults to your animation filename"></label>
           <label class="make-field" for="moveset-description"><span>Moveset description <em>Optional</em></span>
             <textarea id="moveset-description" maxlength="500" rows="3" placeholder="Describe your moveset, movement style, or credits..."></textarea>
             <small class="make-note">Appears in the generated Lua moveset module · up to 500 characters</small></label>
+          <label class="make-field" for="moveset-files"><span>Drop movement .anim files <em>Choose all at once</em></span>
+            <input id="moveset-files" type="file" accept=".anim" multiple>
+            <small class="make-note">Filenames such as idle.anim, walk.anim, run.anim, jump.anim, fall.anim, climb.anim and sit.anim fill matching slots. Other names fill empty slots in that order. Review assignments below.</small></label>
           <div class="moveset-tracks">
             <div class="moveset-track-heading">MOVEMENT ANIMATIONS <span>.rbxm · .rbxmx · .anim</span></div>
             <p class="make-note">Raw Roblox KeyframeSequence models convert automatically. Each slot must contain exactly one animation. Idle and Walk are required.</p>

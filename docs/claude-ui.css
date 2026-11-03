@@ -389,3 +389,9 @@ html.mrh-claude {
   .mrh-claude .make-grid,.mrh-claude .preview-layout {grid-template-columns:1fr}
   .mrh-claude .studio-app header {padding:0 14px;gap:8px;font-size:11px}
 }
+
+/* Keep maker and preview tabs visible on narrow screens. */
+@media(max-width:960px){
+ .mrh-claude body:not(.studio-app) .site-tabs{flex-wrap:wrap;overflow:visible;white-space:normal;width:100%;height:auto;}
+ .mrh-claude body:not(.studio-app) .site-tab{width:auto;flex:1 1 120px;justify-content:center;text-align:center;}
+}

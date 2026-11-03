@@ -12,7 +12,7 @@ function tabFromHash(){
  if(location.hash==='#movesets')return 'library';
  if(location.hash==='#rbxm2anim')return 'bulk';
  if(location.hash==='#make-moveset')return 'moveset';
- if(location.hash==='#make-animation')return 'make';
+ if(location.hash==='#make-animation'||location.hash==='#dance-maker')return 'make';
  if(location.hash==='#3d-preview')return 'preview';
  if(location.hash==='#camera-motion')return 'mocap';
  if(location.hash==='#themes')return 'themes';
@@ -46,15 +46,16 @@ function setModel(file){
  invalid('');
  if(!file)return;
  modelFile=null;window.dispatchEvent(new CustomEvent('mrh-maker-model',{detail:{file:null}}));
- if(!/\.(rbxm|rbxmx)$/i.test(file.name)){invalid('Choose a Roblox .rbxm or .rbxmx KeyframeSequence.');return;}
- if(file.size<32||file.size>4*1048576){invalid('The model must be smaller than 4 MB.');return;}
+ if(!/\.(anim|rbxm|rbxmx)$/i.test(file.name)){invalid('Choose an .anim track or Roblox .rbxm/.rbxmx model.');return;}
+ const raw=!/\.anim$/i.test(file.name);
+ if(file.size<(raw?32:8)||file.size>(raw?4:8)*1048576){invalid('Choose .anim under 8 MB or a model under 4 MB.');return;}
  modelFile=file;
  window.dispatchEvent(new CustomEvent('mrh-maker-model',{detail:{file}}));
  $('maker-file-name').textContent=file.name;
  drop.classList.add('has-file');
  if(!$('maker-name').value.trim())
-  $('maker-name').value=file.name.replace(/\.(rbxm|rbxmx)$/i,'').replace(/[_-]/g,' ').slice(0,80);
- status.textContent='Model selected. Convert when ready.';
+  $('maker-name').value=file.name.replace(/\.(anim|rbxm|rbxmx)$/i,'').replace(/[_-]/g,' ').slice(0,80);
+ status.textContent='Animation selected. Create your dance when ready.';
 }
 picker.addEventListener('change',()=>setModel(picker.files?.[0]));
 drop.addEventListener('click',()=>picker.click());
@@ -83,7 +84,7 @@ async function downloadArchive(response,fallback){
 }
 form.addEventListener('submit',async e=>{
  e.preventDefault();invalid('');
- if(!modelFile){invalid('Choose a Roblox KeyframeSequence .rbxm or .rbxmx file.');return;}
+ if(!modelFile){invalid('Choose an .anim track or Roblox model.');return;}
  const audio=music.files?.[0];
  if(audio&&(!/\.mp3$/i.test(audio.name)||audio.size>25*1048576)){
   invalid('Music must be an .mp3 under 25 MB.');return;
@@ -95,8 +96,8 @@ form.addEventListener('submit',async e=>{
  data.set('name',$('maker-name').value.trim().slice(0,80));
  data.set('description',$('maker-description').value.trim());
  data.set('loop',String($('maker-loop').checked));
- button.disabled=true;button.textContent='Converting animation...';
- status.textContent='Reading Roblox model and building Uhhhhhh ZIP...';
+ button.disabled=true;button.textContent='Creating dance...';
+ status.textContent='Building your dance ZIP...';
  try{
   const response=await fetch('/api/make-animation',{method:'POST',body:data,credentials:'same-origin'});
   if(!response.ok){
@@ -107,9 +108,9 @@ form.addEventListener('submit',async e=>{
   status.textContent='Done. Extract the downloaded ZIP into your UhhhhhhReanim workspace.';
  }catch(err){
   invalid(err.message||'Unable to convert model.');
-  status.textContent='Conversion failed. Check that your model contains a KeyframeSequence.';
+  status.textContent='Could not create dance. Check your animation file.';
  }finally{
-  button.disabled=false;button.innerHTML='Convert &amp; Download ZIP <span>↓</span>';
+  button.disabled=false;button.innerHTML='Create Dance ZIP <span>↓</span>';
  }
 });
 })();

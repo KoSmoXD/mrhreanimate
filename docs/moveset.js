@@ -32,6 +32,24 @@
    countReady();
   });
  }
+ // Batch import keeps explicit slot assignments visible and editable.
+ $('moveset-files').addEventListener('change',()=>{
+  const files=[...($('moveset-files').files||[])];
+  if(files.length>ROLES.length){showError('Select up to seven movement tracks.');return;}
+  if(files.some(f=>!/\.anim$/i.test(f.name)||f.size<8||f.size>8*1048576)){showError('Choose .anim tracks under 8 MB.');return;}
+  const assigned=new Map(),pending=[];
+  for(const file of files){
+   const tokens=file.name.replace(/\.anim$/i,'').toLowerCase().split(/[^a-z]+/);
+   const role=ROLES.find(r=>tokens.includes(r));
+   if(role){if(assigned.has(role)){showError('Multiple files match '+role+'. Rename files or use individual slots.');return;}assigned.set(role,file);}
+   else pending.push(file);
+  }
+  for(const file of pending){const role=ROLES.find(r=>!assigned.has(r)&&!$('moveset-'+r).files?.length);if(!role){showError('No empty slot for '+file.name+'. Use individual slots to replace tracks.');return;}assigned.set(role,file);}
+  for(const [role,file] of assigned){const transfer=new DataTransfer();transfer.items.add(file);$('moveset-'+role).files=transfer.files;$('moveset-'+role).dispatchEvent(new Event('change'));}
+  if(!$('moveset-name').value.trim())$('moveset-name').value=files[0]?.name.replace(/\.anim$/i,'').replace(/[_-]/g,' ').slice(0,64)||'My Moveset';
+  if($('moveset-name').value.trim().length<2)$('moveset-name').value='My Moveset';
+  status.textContent='Tracks assigned. Review Idle and Walk below, then create your moveset.';
+ });
  for(const [inputId,outputId,formatter] of [
   ['moveset-fade','moveset-fade-value',n=>Number(n).toFixed(2)+'s'],
   ['moveset-run-speed','moveset-run-speed-value',n=>n+' studs/s']
@@ -57,7 +75,7 @@
  }
  form.addEventListener('submit',async event=>{
   event.preventDefault();showError('');
-  const name=$('moveset-name').value.trim();
+  const name=$('moveset-name').value.trim()||'My Moveset';
   if(name.length<2||name.length>64){showError('Enter a moveset name (2–64 characters).');return;}
   const data=new FormData();
   try{data.set('visuals',JSON.stringify(window.MrhMakerVisuals.get('moveset')))}catch(e){showError(e.message);return}
