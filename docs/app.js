@@ -4,6 +4,8 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
+$('roblox-login-button').onclick=()=>location.assign('/api/auth/roblox/start');
+fetch('/api/auth/roblox/status').then(r=>r.json()).then(d=>{$('roblox-login-button').disabled=!d.configured;$('roblox-auth-note').hidden=d.configured;$('roblox-auth-note').textContent='Roblox sign-in is not configured yet.'}).catch(()=>{});
 const state={me:null,items:[],offset:0,limit:32,total:0,search:'',busy:false,mode:'login',timer:null};
 const dateFormat=new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit'});
 let toastTimeout=null;

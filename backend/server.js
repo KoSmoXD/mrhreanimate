@@ -110,7 +110,9 @@ app.use('/api',(req,res,next)=>{
  next();
 });
 const auth=(req,res,next)=>req.user?next():fail(res,401,'Log in to continue.');
-require('./animation-ai')(app,{auth,rateLimit});
+require('./roblox-login')(app,{db,issueSession,bcrypt,rateLimit});
+const pro=require('./pro-access')(app,{db,auth,rateLimit});
+require('./animation-ai')(app,{auth,rateLimit,...pro});
 const authLimit=rateLimit({windowMs:15*60*1000,limit:14,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many attempts. Try again later.'}});
 const registerLimit=rateLimit({windowMs:60*60*1000,limit:5,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Hourly signup limit reached.'}});
 const uploadLimit=rateLimit({windowMs:60*60*1000,limit:12,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Hourly upload limit reached.'}});

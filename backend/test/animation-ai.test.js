@@ -19,7 +19,7 @@ test('AI endpoint requires auth and configuration, validates provider output, ke
  const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const url='http://127.0.0.1:'+server.address().port;
  const request=(path,body,auth=true)=>oldFetch(url+path,body?{method:'POST',headers:{'Content-Type':'application/json',...(auth?{Authorization:'test'}:{})},body:JSON.stringify(body)}:undefined);
  try{delete process.env.OPENAI_API_KEY;delete process.env.ANIMATION_AI_MODEL;
- assert.deepEqual(await(await request('/api/animation-ai/status')).json(),{enabled:false});
+ assert.equal((await(await request('/api/animation-ai/status')).json()).enabled,false);
  const body={prompt:'wave hello',duration:2};assert.equal((await request('/api/animation-ai/generate',body,false)).status,401);assert.equal((await request('/api/animation-ai/generate',body)).status,503);
  process.env.OPENAI_API_KEY='test-secret';process.env.ANIMATION_AI_MODEL='test-model';
  global.fetch=async(u,opts)=>{assert.equal(u,'https://api.openai.com/v1/responses');assert.equal(opts.headers.Authorization,'Bearer test-secret');const req=JSON.parse(opts.body);assert.equal(req.text.format.type,'json_schema');return{ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(Motion.blank())}]}]})}};

@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="./preview.css?v=avatar-northkoreaplayer9-20261016">
 <link rel="stylesheet" href="./themes.css?v=20261022-1">
 <script src="./themes.js?v=20261022-1" defer></script>
-<script src="./app.js?v=avatar-northkoreaplayer9-20261016" defer></script>
+<script src="./app.js?v=roblox-login-20261103" defer></script>
 <link rel="stylesheet" href="./maker-visuals.css?v=20261021">
 <script src="./visual-settings.js?v=20261021" defer></script>
 <script src="./maker-visuals.js?v=20261021" defer></script>
@@ -439,6 +439,7 @@
   <div class="modal-panel">
     <div class="modal-header"><h2 id="auth-title">Log in</h2><button class="close" data-close="auth-modal" type="button" aria-label="Close">×</button></div>
     <div class="auth-tabs"><button type="button" data-auth-tab="login" class="selected">Log in</button><button type="button" data-auth-tab="register">Sign up</button></div>
+    <button id="roblox-login-button" type="button" class="primary action" disabled>Sign in with Roblox</button><p id="roblox-auth-note" hidden></p>
     <form id="auth-form" class="form">
       <label>Username<input id="auth-username" name="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" autocomplete="username" required placeholder="Your username"></label>
       <label>Password<input id="auth-password" name="password" type="password" minlength="10" maxlength="128" autocomplete="current-password" required placeholder="Your password"></label>
