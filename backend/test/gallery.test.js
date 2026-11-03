@@ -99,7 +99,7 @@ test('public gallery, registration, authenticated upload, ZIP download and accou
  assert.ok(page.headers.get('cache-control')?.includes('no-store'),'HTML must not be cached');
  assert.ok(markup.includes('app.js?v=avatar-northkoreaplayer9-20261016'),'auth script must be cache busted');
  assert.ok(markup.includes('id="tab-preview"')&&markup.includes('id="preview-panel"'),'the 3D Preview tab must be present');
- assert.ok(markup.includes('supplied-preview.js?v=82d94c24-20261103'),'preview renderer must be cache busted');
+ assert.ok(markup.includes('supplied-preview.js?v=html-mesh-20261103'),'preview renderer must be cache busted');
  assert.ok(!markup.includes('src="./preview-rig.js'),'standalone supplied renderer must remain visible');
  const asset=await fetch(base+'/app.js?v=avatar-northkoreaplayer9-20261016');
  const script=await asset.text();

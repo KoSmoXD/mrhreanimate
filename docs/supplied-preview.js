@@ -1,16 +1,18 @@
-/* Mr H Animations / 3D Preview — self-contained R6 pose renderer.
-   Reads only validated binary .anim tracks. Never evaluates Lua or third-party JS. */
-(()=>{
+/* 3D Preview controls using the GLB rig and renderer from anim preview.html. */
+import {makeViewer} from './r6-engine.js?v=html-rig-20261103';
+(async()=>{
 'use strict';
 const byId=id=>document.getElementById(id);
 const $=id=>byId(id)||document.createElement('div');
 const canvas=byId('preview-stage'); if(!canvas)return;
-const ctx=canvas.getContext('2d'); if(!ctx){$('preview-status').textContent='Canvas is not supported by this browser.';return;}
+let viewer;
+try{viewer=await makeViewer(canvas,{interactive:false,allowSoftware:false});}
+catch(error){$('preview-status').textContent='Rig could not load: '+error.message;return;}
+canvas.style.background='#000';
+
 
 const NAMES=['Torso','Head','Left Arm','Right Arm','Left Leg','Right Leg'];
 const NAME_SET=new Set(NAMES);
-const SIZES={Torso:[2,2,1],Head:[2,1,1],'Left Arm':[1,2,1],'Right Arm':[1,2,1],'Left Leg':[1,2,1],'Right Leg':[1,2,1]};
-const COLORS={Torso:[44,111,181],Head:[241,205,153],'Left Arm':[241,205,153],'Right Arm':[241,205,153],'Left Leg':[51,58,76],'Right Leg':[51,58,76]};
 const MAX_BYTES=8000000;
 
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -59,16 +61,6 @@ function ease(style,dir,t){
  return phase===1?a/2:phase===2?(1+a)/2:a;
 }
 
-const FRAME={r:[-1,0,0,0,0,1,0,1,0],l:[0,0,-1,0,1,0,1,0,0],h:[0,0,1,0,1,0,-1,0,0]};
-const JOINTS=[
- ['Torso',[0,0,0],[0,0,0],'r'],
- ['Head',[0,1,0],[0,-.5,0],'r'],
- ['Left Arm',[-1,.5,0],[.5,.5,0],'l'],
- ['Right Arm',[1,.5,0],[-.5,.5,0],'h'],
- ['Left Leg',[-1,-1,0],[-.5,1,0],'l'],
- ['Right Leg',[1,-1,0],[.5,1,0],'h']
-].map(([name,c0,c1,f])=>{const R=FRAME[f];return {name,c0:{p:c0,r:R},c1inv:{p:scale(mv(tp(R),c1),-1),r:tp(R)}};});
-
 function parseAnim(buffer){
  if(!(buffer instanceof ArrayBuffer)||buffer.byteLength<10||buffer.byteLength>MAX_BYTES)throw Error('Select a valid .anim file under 8 MB.');
  const v=new DataView(buffer),decoder=new TextDecoder('utf-8');let at=0;
@@ -96,47 +88,10 @@ function parseAnim(buffer){
   tracks[name]=out;
  }
  const clip={title,count,duration,tracks};
- clip.fit=fitClip(clip);
+
  return clip;
 }
-function sampleTrack(track,t){
- if(!track||!track.length)return IDENT;
- let lo=0,hi=track.length-1,idx=-1;
- while(lo<=hi){const mid=(lo+hi)>>1;if(track[mid].t<=t){idx=mid;lo=mid+1;}else hi=mid-1;}
- const a=track[idx]||track[0],b=track[idx+1];
- if(!b||!a||idx<0)return {p:a.p,r:rFrom(a.q)};
- const e=ease(a.style,a.dir,clamp((t-a.t)/Math.max(1e-6,b.t-a.t),0,1));
- return {p:a.p.map((x,i)=>x+(b.p[i]-x)*e),r:rFrom(slerp(a.q,b.q,e))};
-}
-function rigAt(clip,t){
- const local={},parts={};
- for(const j of JOINTS)local[j.name]=clip?sampleTrack(clip.tracks[j.name],t):IDENT;
- let torso;
- for(const j of JOINTS){
-  const base=j.name==='Torso'?IDENT:torso;
-  const m=multiply(multiply(multiply(base,j.c0),local[j.name]),j.c1inv);
-  if(j.name==='Torso')torso=m;
-  parts[j.name]=m;
- }
- return {parts,local};
-}
-const vertices=(w,h,d)=>{const a=[];for(const x of [-w/2,w/2])for(const y of [-h/2,h/2])for(const z of [-d/2,d/2])a.push([x,y,z]);return a;};
-const BOXES=Object.fromEntries(NAMES.map(n=>[n,vertices(...SIZES[n])]));
-const DEFAULT_FIT={c:[0,-.5,0],r:3.6,floorY:-3.02};
-function fitClip(clip){
- const n=clamp(Math.ceil(clip.duration*30),2,240),pts=[];
- for(let i=0;i<=n;i++){
-  const rig=rigAt(clip,clip.duration*i/n);
-  for(const name of NAMES)for(const c of BOXES[name])pts.push(transform(rig.parts[name],c));
- }
- const min=[1/0,1/0,1/0],max=[-1/0,-1/0,-1/0];
- for(const p of pts)for(let k=0;k<3;k++){min[k]=Math.min(min[k],p[k]);max[k]=Math.max(max[k],p[k]);}
- const c=min.map((m,k)=>(m+max[k])/2);let r2=0;
- for(const p of pts){const d=sub(p,c);r2=Math.max(r2,dot(d,d));}
- return {c,r:Math.max(1.5,Math.sqrt(r2)),floorY:min[1]-.02};
-}
-
-const state={clip:null,time:0,speed:1,playing:false,loop:true,angle:205,tilt:15,zoom:1,kind:'animations',loadId:0,listId:0,active:false};
+const state={clip:null,time:0,speed:1,playing:false,loop:true,angle:180,tilt:4.58,zoom:1,kind:'animations',loadId:0,listId:0,active:false};
 const status=(message,error=false)=>{const el=$('preview-status');el.textContent=message;el.classList.toggle('preview-error',error);};
 const format=t=>Math.max(0,t).toFixed(2)+'s';
 const setPlayLabel=()=>{$('preview-play').textContent=state.playing?'Pause':'Play';};
@@ -150,58 +105,10 @@ canvas.style.width='100%';canvas.style.maxWidth='100%';canvas.style.display='blo
 canvas.style.touchAction='none';canvas.style.maxHeight='75vh';
 if(!canvas.style.aspectRatio)canvas.style.aspectRatio='4 / 3';
 
-const FACES=[[0,4,6,2],[1,3,7,5],[0,1,5,4],[2,6,7,3],[0,2,3,1],[4,5,7,6]];
-const LIGHT=norm([-.5,.9,1]);
+let renderedClip;
 function draw(){
- const bounds=canvas.getBoundingClientRect();
- const w=Math.round(bounds.width),h=Math.round(bounds.height);
- if(w<2||h<2)return;
- const dpr=Math.min(window.devicePixelRatio||1,2);
- if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}
- ctx.setTransform(dpr,0,0,dpr,0,0);
- ctx.clearRect(0,0,w,h);
- const gradient=ctx.createLinearGradient(0,0,0,h);gradient.addColorStop(0,'#111724');gradient.addColorStop(1,'#07090e');
- ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);
-
- const fit=state.clip?state.clip.fit:DEFAULT_FIT;
- const a=state.angle*Math.PI/180,e=state.tilt*Math.PI/180;
- const focal=Math.min(w,h)*1.35,half=Math.min(w,h)*.46,R=fit.r*1.08;
- const D=Math.sqrt(R*R+(focal*R/half)**2)*state.zoom;
- const eye=add(fit.c,[D*Math.sin(a)*Math.cos(e),D*Math.sin(e),D*Math.cos(a)*Math.cos(e)]);
- const forward=norm(sub(fit.c,eye)),right=norm(cross(forward,[0,1,0])),up=norm(cross(right,forward));
- const project=v=>{const d=sub(v,eye),z=Math.max(.05,dot(d,forward));return {x:w/2+dot(d,right)*focal/z,y:h/2-dot(d,up)*focal/z,z};};
-
- const G=Math.max(6,Math.ceil(fit.r*2/2)*2),gx=Math.round(fit.c[0]/2)*2,gz=Math.round(fit.c[2]/2)*2,gy=fit.floorY;
- const corner=(x,z)=>project([x,gy,z]);
- const quad=[corner(gx-G,gz-G),corner(gx+G,gz-G),corner(gx+G,gz+G),corner(gx-G,gz+G)];
- ctx.beginPath();quad.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();
- ctx.fillStyle='rgba(43,52,70,.45)';ctx.fill();
- ctx.strokeStyle='rgba(140,160,195,.16)';ctx.lineWidth=1;ctx.beginPath();
- for(let k=-G;k<=G;k+=2){
-  const p1=corner(gx+k,gz-G),p2=corner(gx+k,gz+G),p3=corner(gx-G,gz+k),p4=corner(gx+G,gz+k);
-  ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.moveTo(p3.x,p3.y);ctx.lineTo(p4.x,p4.y);
- }
- ctx.stroke();
-
- const rig=rigAt(state.clip,state.time),polys=[];
- for(const name of NAMES){
-  const vs=BOXES[name].map(v=>transform(rig.parts[name],v)),color=COLORS[name];
-  for(const ids of FACES){
-   const p=ids.map(i=>vs[i]),n=norm(cross(sub(p[2],p[0]),sub(p[1],p[0])));
-   if(dot(n,sub(eye,p[0]))<=0)continue;
-   const depth=p.reduce((s,v)=>s+dot(sub(v,eye),forward),0)/4;
-   const lit=clamp(.48+Math.max(0,dot(n,LIGHT))*.52,.4,1);
-   polys.push({p:p.map(project),depth,color:color.map(c=>Math.round(c*lit))});
-  }
- }
- polys.sort((x,y)=>y.depth-x.depth);
- for(const f of polys){
-  ctx.beginPath();f.p.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();
-  ctx.fillStyle='rgb('+f.color.join(',')+')';ctx.fill();
-  ctx.strokeStyle='rgba(0,0,0,.24)';ctx.lineWidth=1;ctx.stroke();
- }
- ctx.fillStyle='#9ba9bf';ctx.font='11px system-ui, sans-serif';ctx.fillText('R6 / 3D VIEW',18,25);
- window.dispatchEvent(new CustomEvent('mrh-preview-frame',{detail:{angle:state.angle,tilt:state.tilt,pose:rig.local}}));
+ if(renderedClip!==state.clip){viewer.setTracks(state.clip);renderedClip=state.clip;}
+ viewer.active(state.active);viewer.seek(state.time);viewer.camera(state.angle,state.tilt,state.zoom);
 }
 
 function reset(newClip){
@@ -328,7 +235,7 @@ window.addEventListener('keydown',e=>{
 
 window.addEventListener('mrh-section-change',e=>{
  state.active=e.detail?.tab==='preview';
- if(state.active)draw();else{state.playing=false;setPlayLabel();}
+ if(state.active)draw();else{state.playing=false;viewer.active(false);setPlayLabel();}
 });
 if(typeof ResizeObserver==='function')new ResizeObserver(()=>{if(state.active)draw();}).observe(canvas);
 window.addEventListener('resize',()=>{if(state.active)draw();});
