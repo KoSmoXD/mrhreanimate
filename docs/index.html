@@ -22,9 +22,8 @@
 <script src="./moveset.js?v=avatar-northkoreaplayer9-20261016" defer></script>
 <script src="./community.js?v=avatar-northkoreaplayer9-20261016" defer></script>
 <script src="./bulk.js?v=avatar-northkoreaplayer9-20261016" defer></script>
-<script src="./preview.js?v=avatar-northkoreaplayer9-20261016" defer></script>
+<script src="./preview.js?v=supplied-r6-20261103" defer></script>
 <script src="./motion-core.js" defer></script>
-<script type="module" src="./preview-rig.js?v=studio-20261021"></script>
 <link rel="stylesheet" href="./maker-preview.css?v=20261021">
 <link rel="stylesheet" href="./claude-ui.css?v=20261022-1">
 <script type="module" src="./maker-preview.js?v=20261021"></script>
@@ -262,9 +261,8 @@
       <p>Play actual Uhhhhhh <code>.anim</code> R6 keyframes in a movable 3D viewer. Preview community dances and movesets, or select tracks from your device. No downloaded Lua is executed.</p></div></header>
     <div class="preview-layout">
       <div class="preview-canvas-box">
-        <div class="preview-avatar-viewport"><canvas id="preview-stage" role="img" aria-label="Interactive 3D R6 dummy animation viewer. Drag horizontally to orbit the camera."></canvas>
-          <canvas id="preview-avatar-canvas" aria-label="3D preview of the Roblox avatar northkoreaplayer9" hidden></canvas>
-          <div class="preview-avatar-badge"><img id="preview-roblox-photo" alt="Roblox avatar of northkoreaplayer9" loading="lazy" hidden><a id="preview-roblox-link" href="https://www.roblox.com/" target="_blank" rel="noopener noreferrer">@northkoreaplayer9</a></div>
+        <div class="preview-avatar-viewport"><canvas id="preview-stage" role="img" aria-label="Interactive 3D R6 dummy animation viewer. Drag to orbit the camera; Ctrl + scroll to zoom."></canvas>
+
         </div>
         <div id="preview-track-meta" class="preview-track-meta">Select a local track or a community upload.</div>
         <div class="preview-controls">
@@ -275,7 +273,7 @@
             <div><label for="preview-speed">Speed <output id="preview-speed-value">1.00×</output></label><input type="range" id="preview-speed" min=".25" max="3" step=".25" value="1"></div>
             <div><label for="preview-angle">Camera rotation <span>0–360°</span></label><input type="range" id="preview-angle" min="0" max="360" step="1" value="25"></div>
           </div>
-          <div class="preview-source-tip">Drag left or right on the viewer to rotate the dummy. Use your mouse wheel to adjust camera elevation. The supplied R6 rig uses Motor6D joint transforms, quaternion interpolation, and source easing.</div>
+          <div class="preview-source-tip">Drag on the viewer to rotate the camera and adjust elevation. Hold Ctrl and scroll to zoom. The R6 preview uses joint transforms, quaternion interpolation, and source easing.</div>
         </div>
       </div>
       <aside class="preview-source">
@@ -292,8 +290,7 @@
         <div class="preview-source-card">
           <h2>R6 Character</h2>
           <p>Uses the R6 rig from your animation preview, with joint transforms and source easing.</p>
-          <div id="preview-roblox-status" role="status" aria-live="polite">Loading R6 rig…</div>
-          <button id="preview-roblox-load" type="button" class="action">Reload R6 Rig</button>
+          <p>R6 viewer ready. Load a local track or community upload to begin.</p>
         </div>
         <div class="preview-source-card">
           <h2>Animation tracks</h2><label for="preview-tracks">Choose track<select id="preview-tracks" disabled><option>No tracks loaded</option></select></label>
