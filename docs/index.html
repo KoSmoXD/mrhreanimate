@@ -27,6 +27,8 @@
 <link rel="stylesheet" href="./maker-preview.css?v=20261021">
 <link rel="stylesheet" href="./claude-ui.css?v=makers-nav-20261103">
 <script type="module" src="./maker-preview.js?v=20261021"></script>
+<link rel="stylesheet" href="./plans.css">
+<script src="./plans.js" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -38,6 +40,7 @@
     <button id="register-trigger" class="primary action">Sign up</button>
     <button id="account-trigger" class="action" hidden>Account settings</button>
     <button id="logout-trigger" class="action" hidden>Log out</button>
+    <button type="button" id="tab-plan" class="site-tab" role="tab" aria-controls="plan-panel" aria-selected="false">Plan</button>
   </nav>
 </header>
 <main class="main">
@@ -48,10 +51,18 @@
     <button type="button" id="tab-rbxm2anim" class="site-tab" role="tab" aria-controls="rbxm2anim-panel" aria-selected="false">RBXM2ANIM</button>
     <button type="button" id="tab-moveset" class="site-tab" role="tab" aria-controls="moveset-panel" aria-selected="false">Moveset Maker</button>
     <button type="button" id="tab-preview" class="site-tab" role="tab" aria-controls="preview-panel" aria-selected="false">3D Preview</button>
-    <a class="site-tab" href="./studio.html">AI Animation Maker</a>
+    <a class="site-tab" href="./studio.html" data-plus-only hidden>AI Animation Maker <span aria-label="Plus">+</span></a>
     <button type="button" id="tab-mocap" class="site-tab" role="tab" aria-controls="mocap-panel" aria-selected="false">Camera Motion</button>
     <button type="button" id="tab-themes" class="site-tab" role="tab" aria-controls="themes-panel" aria-selected="false">Themes</button>
   </nav>
+  <section id="plan-panel" role="tabpanel" aria-labelledby="tab-plan" hidden>
+    <div class="plan-heading"><p class="plan-eyebrow">YOUR WORKSPACE, YOUR WAY</p><h1>Choose your plan</h1><p>Start creating for free. Unlock AI animation tools with +.</p></div>
+    <div class="plan-grid">
+      <article class="plan-card"><h2>Free</h2><p class="plan-price">0 <span>/ forever</span></p><p>Everything you need to start moving.</p><button type="button" id="plan-free" class="plan-choice" disabled>Current plan</button><ul><li>Community dances and movesets</li><li>Dance Maker and Moveset Maker</li><li>RBXM2ANIM conversion</li><li>3D previews and Camera Motion</li><li>Animation exports</li></ul></article>
+      <article class="plan-card plan-plus"><div class="plan-card-top"><h2>Mr H +</h2><span class="plan-badge">MORE POSSIBILITIES</span></div><p class="plan-price">+ <span>/ access key</span></p><p>Bring your ideas to life with AI.</p><button type="button" id="plan-activate-focus" class="plan-choice plan-primary">Activate with a key</button><ul><li>Everything in Free</li><li>AI Animation Maker</li><li>OpenAI, Claude and Gemini provider support</li><li>Editable AI-generated R6 keyframes</li></ul><p class="plan-fine">Your own provider API key is required when Site AI is unavailable. Provider usage is billed separately.</p></article>
+    </div>
+    <section class="plan-activation" aria-labelledby="plan-activation-title"><div><h2 id="plan-activation-title">Activate your + access</h2><p>Use a key issued by Mr H. Your access period begins when you redeem it.</p><p id="plan-status" role="status" aria-live="polite">Checking your plan…</p></div><form id="plan-redeem-form"><label for="plan-key">Access key</label><div class="plan-key-row"><input id="plan-key" type="text" autocomplete="off" spellcheck="false" maxlength="24" placeholder="PLUS-XXXXX-XXXXX-XXXXX" required><button id="plan-redeem" class="plan-choice plan-primary" type="submit">Activate +</button></div><p id="plan-result" role="status" aria-live="polite"></p><button id="plan-login" type="button" hidden>Log in to activate</button></form></section>
+  </section>
   <section id="browse-panel" role="tabpanel" aria-labelledby="tab-browse">
   <div class="gallery-head">
     <div><h1>Animations</h1><p>Community uploads. Choose a pack to download.</p></div>

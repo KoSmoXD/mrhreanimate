@@ -566,3 +566,23 @@ test('Dance Maker accepts native .anim without music or model conversion',async(
  const bad=new FormData();bad.set('model',new Blob([Buffer.alloc(40)]),'bad.anim');
  assert.equal((await api('/make-animation',{method:'POST',body:bad})).status,400);
 });
+
+test('Plan activation unlocks the paid studio; direct links require current + access',async()=>{
+ await waitForServer();
+ const studio=(session='')=>fetch(base+'/studio.html',{redirect:'manual',headers:session?{cookie:session}:{}});
+ assert.equal((await studio()).status,302);
+ assert.equal((await studio()).headers.get('location'),'/#plan');
+ const registration=await fetch(base+'/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'PlanAccessTest',password:'plan-test-password-12345'})});
+ assert.equal(registration.status,201);
+ const session=registration.headers.get('set-cookie').split(';')[0];
+ assert.equal((await studio(session)).status,302);
+ const Database=require('better-sqlite3'),db=new Database(path.join(dataDir,'gallery.sqlite'));
+ try{
+  const {createKey}=require('../scripts/create-plus-key'),key=createKey(db,{hours:360});
+  const redeemed=await fetch(base+'/api/pro/redeem',{method:'POST',headers:{cookie:session,'Content-Type':'application/json'},body:JSON.stringify({key})});
+  assert.equal(redeemed.status,200);assert((await redeemed.json()).hasAccess);
+  assert.equal((await studio(session)).status,200);
+  db.prepare('UPDATE pro_access SET expires_at=0 WHERE user_id=(SELECT id FROM users WHERE username=?)').run('PlanAccessTest');
+  assert.equal((await studio(session)).status,302);
+ }finally{db.close()}
+});

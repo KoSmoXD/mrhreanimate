@@ -99,7 +99,7 @@ function issueSession(res,userId){
  res.cookie(COOKIE,token,{httpOnly:true,secure:PROD,sameSite:'strict',path:'/',maxAge:SESSION_MS});
 }
 function expireCookie(res){res.clearCookie(COOKIE,{httpOnly:true,secure:PROD,sameSite:'strict',path:'/'});}
-app.use('/api',(req,res,next)=>{
+app.use(['/api','/studio.html'],(req,res,next)=>{
  req.user=null;req.sessionHash=null;
  const token=sessionToken(req);
  if(token){
@@ -743,6 +743,8 @@ app.get('/vendor/three/addons/*',async(req,res,next)=>{
  const rel=req.params[0];if(!/^[a-zA-Z0-9_./-]+\.js$/.test(rel)||rel.split('/').includes('..'))return res.sendStatus(404);
  try{const text=await fsp.readFile(path.join(__dirname,'node_modules/three/examples/jsm',rel),'utf8');res.type('application/javascript').send(text.replace(/from ['"]three['"]/g,"from '/vendor/three/build/three.module.js'"));}catch(e){res.sendStatus(404);}
 });
+// Paid studio pages require active access, including direct links.
+app.get('/studio.html',(req,res,next)=>{res.set('Cache-Control','no-store');if(!pro.proStatus(req).hasAccess)return res.redirect('/#plan');next();});
 // HTML, JS and CSS are UI/auth critical: never cache old scripts after a deploy.
 app.use(express.static(WEB,{
  index:'index.html',dotfiles:'deny',maxAge:0,
