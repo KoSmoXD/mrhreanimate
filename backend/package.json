@@ -9,18 +9,20 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "build:web": "node scripts/build-web.js"
   },
   "dependencies": {
+    "@mediapipe/pose": "0.5.1675469404",
     "archiver": "^7.0.1",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^12.2.0",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
+    "javascript-obfuscator": "4.1.1",
     "multer": "^2.0.2",
     "three": "^0.180.0",
-    "@mediapipe/pose": "0.5.1675469404",
     "ws": "^8.18.3"
   }
 }

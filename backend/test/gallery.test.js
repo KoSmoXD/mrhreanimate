@@ -93,6 +93,7 @@ function makeAnim(){
 }
 test('public gallery, registration, authenticated upload, ZIP download and account settings',async()=>{
  await waitForServer();
+ for(const file of ['/README.md','/ANIMATION_MAKER.md','/app.js.map','/gallery.sqlite','/.env'])assert.equal((await fetch(base+file)).status,404,'private/development file must not be served: '+file);
  // Authentication assets must stay current and expose no owner bootstrap form.
  const page=await fetch(base+'/');
  const markup=await page.text();

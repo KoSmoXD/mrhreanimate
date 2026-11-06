@@ -27,7 +27,7 @@ app.set('trust proxy',process.env.TRUST_PROXY==='false'?false:1);
 const PORT=Number(process.env.PORT||3000);
 const ROOT=path.resolve(process.env.DATA_DIR||path.join(__dirname,'data'));
 const TMP=path.join(ROOT,'tmp'),UPLOADS=path.join(ROOT,'uploads'),AVATARS=path.join(ROOT,'avatars');
-const WEB=path.resolve(__dirname,'../docs');
+const WEB=path.resolve(process.env.PUBLIC_BUILD_DIR||path.join(__dirname,'../docs'));
 const PROD=process.env.NODE_ENV==='production';
 const COOKIE='mrh_sid',SESSION_MS=14*24*60*60*1000;
 const MAX={anim:8*1048576,mp3:35*1048576,lua:2*1048576,avatar:2*1048576};
@@ -745,6 +745,8 @@ app.get('/vendor/three/addons/*',async(req,res,next)=>{
 });
 // Paid studio pages require active access, including direct links.
 app.get('/studio.html',(req,res,next)=>{res.set('Cache-Control','no-store');if(!pro.proStatus(req).hasAccess)return res.redirect('/#plan');next();});
+// Never publish development notes, maps, databases or configuration via static hosting.
+app.use((req,res,next)=>{if(/\.(?:map|md|sqlite|db|env|bak|log)$/i.test(req.path))return fail(res,404,'Not found.');next();});
 // HTML, JS and CSS are UI/auth critical: never cache old scripts after a deploy.
 app.use(express.static(WEB,{
  index:'index.html',dotfiles:'deny',maxAge:0,

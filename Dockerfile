@@ -7,7 +7,8 @@ RUN npm install --omit=dev
 WORKDIR /app
 COPY backend/ ./backend/
 COPY docs/ ./docs/
-ENV NODE_ENV=production PORT=3000 DATA_DIR=/data
+RUN npm --prefix backend run build:web
+ENV NODE_ENV=production PORT=3000 DATA_DIR=/data PUBLIC_BUILD_DIR=/app/public
 RUN mkdir -p /data && chown -R node:node /data /app
 USER node
 EXPOSE 3000

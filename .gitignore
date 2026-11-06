@@ -7,3 +7,6 @@ backend/data/
 .env
 .env.*
 !.env.example
+
+/public/
+__pycache__/
