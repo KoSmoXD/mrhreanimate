@@ -3,6 +3,7 @@ const M=window.MrhMotion,$=id=>document.getElementById(id),store='mrh-animation-
 let clip=M.blank(),selected=0,time=0,playing=false,viewer=null,history=[],future=[],busy=false;
 const status=(s,error=false)=>{$('status').textContent=s;$('status').classList.toggle('error',error)};
 try{const saved=localStorage.getItem(store);if(saved)clip=M.validate(JSON.parse(saved));}catch{status('Could not restore the saved project.',true)}
+try{if(new URLSearchParams(location.search).get('import')==='video'){const saved=sessionStorage.getItem('mrh-video-import-v1');if(saved){const imported=M.validate(JSON.parse(saved));history.push(JSON.stringify(clip));clip=imported;sessionStorage.removeItem('mrh-video-import-v1');}}}catch{status('Could not import captured motion. Import the saved JSON project instead.',true)}
 function persist(){try{localStorage.setItem(store,JSON.stringify(clip))}catch{status('Device storage unavailable. Use Save project to keep your work.',true)}}
 function checkpoint(){history.push(JSON.stringify(clip));if(history.length>60)history.shift();future=[];buttons()}
 function buttons(){$('undo').disabled=!history.length;$('redo').disabled=!future.length;$('delete').disabled=selected===0||selected===clip.frames.length-1}

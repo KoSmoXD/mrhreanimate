@@ -72,6 +72,7 @@ app.use(helmet({contentSecurityPolicy:{directives:{
  mediaSrc:["'self'","blob:"],objectSrc:["'none'"],frameAncestors:["'none'"],
  baseUri:["'none'"],formAction:["'self'"]
 }}}));
+app.use('/api/video-animation/export',express.json({limit:'2mb'}));
 app.use(express.json({limit:'16kb'}));
 app.use('/api',(req,res,next)=>{
  if(['GET','HEAD','OPTIONS'].includes(req.method))return next();
@@ -99,7 +100,7 @@ function issueSession(res,userId){
  res.cookie(COOKIE,token,{httpOnly:true,secure:PROD,sameSite:'strict',path:'/',maxAge:SESSION_MS});
 }
 function expireCookie(res){res.clearCookie(COOKIE,{httpOnly:true,secure:PROD,sameSite:'strict',path:'/'});}
-app.use(['/api','/studio.html'],(req,res,next)=>{
+app.use(['/api','/studio.html','/video.html'],(req,res,next)=>{
  req.user=null;req.sessionHash=null;
  const token=sessionToken(req);
  if(token){
@@ -113,6 +114,7 @@ const auth=(req,res,next)=>req.user?next():fail(res,401,'Log in to continue.');
 require('./roblox-login')(app,{db,issueSession,bcrypt,rateLimit});
 const pro=require('./pro-access')(app,{db,auth,rateLimit});
 require('./animation-ai')(app,{auth,rateLimit,...pro});
+require('./video-animation')(app,{auth,rateLimit,...pro});
 const authLimit=rateLimit({windowMs:15*60*1000,limit:14,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many attempts. Try again later.'}});
 const registerLimit=rateLimit({windowMs:60*60*1000,limit:5,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Hourly signup limit reached.'}});
 const uploadLimit=rateLimit({windowMs:60*60*1000,limit:12,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Hourly upload limit reached.'}});
@@ -744,7 +746,7 @@ app.get('/vendor/three/addons/*',async(req,res,next)=>{
  try{const text=await fsp.readFile(path.join(__dirname,'node_modules/three/examples/jsm',rel),'utf8');res.type('application/javascript').send(text.replace(/from ['"]three['"]/g,"from '/vendor/three/build/three.module.js'"));}catch(e){res.sendStatus(404);}
 });
 // Paid studio pages require active access, including direct links.
-app.get('/studio.html',(req,res,next)=>{res.set('Cache-Control','no-store');if(!pro.proStatus(req).hasAccess)return res.redirect('/#plan');next();});
+app.get(['/studio.html','/video.html'],(req,res,next)=>{res.set('Cache-Control','no-store');if(!pro.proStatus(req).hasAccess)return res.redirect('/#plan');next();});
 // Never publish development notes, maps, databases or configuration via static hosting.
 app.use((req,res,next)=>{if(/\.(?:map|md|sqlite|db|env|bak|log)$/i.test(req.path))return fail(res,404,'Not found.');next();});
 // HTML, JS and CSS are UI/auth critical: never cache old scripts after a deploy.

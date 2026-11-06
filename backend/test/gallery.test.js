@@ -572,6 +572,8 @@ test('Plan activation unlocks the paid studio; direct links require current + ac
  await waitForServer();
  const studio=(session='')=>fetch(base+'/studio.html',{redirect:'manual',headers:session?{cookie:session}:{}});
  assert.equal((await studio()).status,302);
+ assert.equal((await fetch(base+'/video.html',{redirect:'manual'})).status,302);
+ assert.equal((await fetch(base+'/api/video-animation/access')).status,401);
  assert.equal((await studio()).headers.get('location'),'/#plan');
  const registration=await fetch(base+'/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'PlanAccessTest',password:'plan-test-password-12345'})});
  assert.equal(registration.status,201);
@@ -583,6 +585,8 @@ test('Plan activation unlocks the paid studio; direct links require current + ac
   const redeemed=await fetch(base+'/api/pro/redeem',{method:'POST',headers:{cookie:session,'Content-Type':'application/json'},body:JSON.stringify({key})});
   assert.equal(redeemed.status,200);assert((await redeemed.json()).hasAccess);
   assert.equal((await studio(session)).status,200);
+  assert.equal((await fetch(base+'/video.html',{redirect:'manual',headers:{cookie:session}})).status,200);
+  assert.equal((await fetch(base+'/api/video-animation/access',{headers:{cookie:session}})).status,200);
   db.prepare('UPDATE pro_access SET expires_at=0 WHERE user_id=(SELECT id FROM users WHERE username=?)').run('PlanAccessTest');
   assert.equal((await studio(session)).status,302);
  }finally{db.close()}

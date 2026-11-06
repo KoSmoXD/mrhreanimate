@@ -26,7 +26,7 @@ $('plan-redeem-form').onsubmit=async event=>{
  try{
   const response=await fetch('/api/pro/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:$('plan-key').value.trim()})});
   const result=await response.json();if(!response.ok)throw Error(result.error||'Activation failed.');
-  ++requestId;render(result);$('plan-key').value='';$('plan-result').textContent='+ activated. Your AI Animation Maker tab is now unlocked.';
+  ++requestId;render(result);$('plan-key').value='';$('plan-result').textContent='+ activated. Your + tabs are now unlocked.';
  }catch(error){$('plan-result').textContent=error.message;}
  finally{$('plan-redeem').disabled=!current?.loggedIn;}
 };
