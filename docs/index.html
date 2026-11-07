@@ -29,6 +29,8 @@
 <script type="module" src="./maker-preview.js?v=20261021"></script>
 <link rel="stylesheet" href="./plans.css">
 <script src="./plans.js" defer></script>
+<link rel="stylesheet" href="./keygen.css">
+<script src="./keygen.js" defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -54,6 +56,7 @@
     <a class="site-tab" href="./video.html" data-plus-only hidden>Video → Animation <span aria-label="Plus">+</span></a>
     <a class="site-tab" href="./studio.html" data-plus-only hidden>AI Animation Maker <span aria-label="Plus">+</span></a>
     <button type="button" id="tab-mocap" class="site-tab" role="tab" aria-controls="mocap-panel" aria-selected="false">Camera Motion</button>
+    <button type="button" id="tab-keygen" class="site-tab" role="tab" aria-controls="keygen-panel" aria-selected="false" hidden>Key Generator</button>
     <button type="button" id="tab-themes" class="site-tab" role="tab" aria-controls="themes-panel" aria-selected="false">Themes</button>
   </nav>
   <section id="plan-panel" role="tabpanel" aria-labelledby="tab-plan" hidden>
@@ -63,6 +66,23 @@
       <article class="plan-card plan-plus"><div class="plan-card-top"><h2>Mr H +</h2><span class="plan-badge">MORE POSSIBILITIES</span></div><p class="plan-price">+ <span>/ access key</span></p><p>Bring your ideas to life with AI.</p><button type="button" id="plan-activate-focus" class="plan-choice plan-primary">Activate with a key</button><ul><li>Everything in Free</li><li>AI Animation Maker</li><li>Video → Animation · up to 30 seconds</li><li>OpenAI, Claude and Gemini provider support</li><li>Editable AI-generated R6 keyframes</li></ul><p class="plan-fine">Your own provider API key is required when Site AI is unavailable. Provider usage is billed separately.</p></article>
     </div>
     <section class="plan-activation" aria-labelledby="plan-activation-title"><div><h2 id="plan-activation-title">Activate your + access</h2><p>Use a key issued by Mr H. Your access period begins when you redeem it.</p><p id="plan-status" role="status" aria-live="polite">Checking your plan…</p></div><form id="plan-redeem-form"><label for="plan-key">Access key</label><div class="plan-key-row"><input id="plan-key" type="text" autocomplete="off" spellcheck="false" maxlength="24" placeholder="PLUS-XXXXX-XXXXX-XXXXX" required><button id="plan-redeem" class="plan-choice plan-primary" type="submit">Activate +</button></div><p id="plan-result" role="status" aria-live="polite"></p><button id="plan-login" type="button" hidden>Log in to activate</button></form></section>
+  </section>
+  <section id="keygen-panel" role="tabpanel" aria-labelledby="tab-keygen" hidden>
+    <div class="keygen-shell">
+      <p class="keygen-eyebrow">MR H · OWNER CONSOLE</p>
+      <h1>PLUS Key Generator</h1>
+      <p class="keygen-lead">Issue one-time activation keys for Mr H +. Only the verified Mr_H account can generate them. New keys appear only once, so copy them before leaving this page.</p>
+      <form id="keygen-form">
+        <div class="keygen-grid">
+          <label class="keygen-field" for="keygen-count">Number of keys (1–10)<input type="number" id="keygen-count" min="1" max="10" step="1" value="1" required></label>
+          <label class="keygen-field" for="keygen-days">Duration in days (1–3650)<input type="number" id="keygen-days" min="1" max="3650" step="1" value="30" required></label>
+        </div>
+        <label class="keygen-lifetime"><input type="checkbox" id="keygen-lifetime">Lifetime PLUS access (no expiration)</label>
+        <div class="keygen-actions"><button type="submit" class="keygen-primary" id="keygen-submit">Generate PLUS keys</button><button type="button" class="keygen-secondary" id="keygen-copy" hidden>Copy all keys</button></div>
+      </form>
+      <p id="keygen-notice" role="status" aria-live="polite"></p>
+      <div id="keygen-output" aria-live="polite"></div>
+    </div>
   </section>
   <section id="browse-panel" role="tabpanel" aria-labelledby="tab-browse">
   <div class="gallery-head">
@@ -485,7 +505,7 @@
     <div class="modal-header"><h2 id="account-title">Account settings</h2><button class="close" data-close="account-modal" type="button" aria-label="Close">×</button></div>
     <div class="profile">
       <div class="profile-avatar" id="profile-avatar">?</div>
-      <div><strong id="profile-name">Username</strong><span class="owner-badge" id="profile-badge" title="Verified server owner" hidden>✅</span><p id="profile-role">Member account</p></div>
+      <div><strong id="profile-name">Username</strong><span class="owner-badge" id="profile-badge" title="Verified server owner" hidden>✅</span><span class="plus-name-badge" id="profile-plus" title="Mr H + subscriber" hidden>PLUS</span><p id="profile-role">Member account</p></div>
     </div>
     <form id="avatar-form" class="form avatar-form">
       <label>Profile picture (PNG, JPG or WebP · max 2 MB)<input type="file" id="avatar-input" name="avatar" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" required></label>
