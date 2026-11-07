@@ -35,3 +35,17 @@ test('account controls remain single row on desktop and can wrap without clippin
  assert.match(correction,/height:auto/,'small screens expand header rather than clip buttons');
  assert.match(correction,/min-height:76px/,'mobile header keeps usable minimum height');
 });
+
+test('Dance Maker and Moveset Maker no longer inject effects or accessories',()=>{
+ const read=file=>fs.readFileSync(path.join(__dirname,'../../docs',file),'utf8');
+ const html=read('index.html'),dance=read('make.js'),moveset=read('moveset.js'),preview=read('maker-preview.js');
+ assert.doesNotMatch(html,/src="\.\/maker-visuals\.js|href="\.\/maker-visuals\.css/,'remove the buggy editor assets');
+ assert.doesNotMatch(html,/Visual effects are approximate|Named accessories use labeled stand-ins/,'remove obsolete preview guidance');
+ assert.doesNotMatch(dance,/MrhMakerVisuals|appendFiles\('dance'/,'dance export must not attach visual rule files');
+ assert.doesNotMatch(moveset,/MrhMakerVisuals|appendFiles\('moveset'/,'moveset export must not attach visual rule files');
+ assert.doesNotMatch(preview,/mountVisualPreview|visual-preview\.js/,'animation previews must not mount the buggy visual overlay');
+ assert.match(html,/id="maker-convert"/);
+ assert.match(html,/id="moveset-create"/);
+ assert.match(html,/id="dance-preview-canvas"/);
+ assert.match(html,/id="moveset-preview-canvas"/);
+});
