@@ -3,3 +3,88 @@
 .plan-heading{text-align:center;margin:12px auto 36px}.plan-heading h1{font-family:inherit;font-size:clamp(30px,4vw,44px);font-weight:600;letter-spacing:-1.5px;margin:10px 0}.plan-heading p{color:var(--theme-muted,#777)}.plan-eyebrow{font-size:11px;letter-spacing:2px}
 .plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.plan-card{border:1px solid var(--theme-border,#dededb);border-radius:20px;background:var(--theme-panel,#fff);padding:30px;min-width:0}.plan-card h2{font-family:inherit;font-size:25px;margin:0;font-weight:600}.plan-card>p{line-height:1.6}.plan-card .plan-price{font-size:36px;font-weight:600;margin:20px 0 8px}.plan-price span{font-size:14px;font-weight:400;color:var(--theme-muted,#777)}.plan-plus{border-color:#109778;box-shadow:0 0 0 1px #109778}.plan-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.plan-badge{font-size:9px;letter-spacing:.7px;border-radius:20px;background:#e6f5ef;color:#087453;padding:6px 10px}.plan-choice{border:1px solid var(--theme-border,#ddd);border-radius:30px;padding:12px 20px;font:inherit;font-weight:600;cursor:pointer;background:transparent;color:inherit}.plan-card>.plan-choice{width:100%;margin:12px 0}.plan-choice:disabled{cursor:default;opacity:.6}.plan-primary{background:#101010!important;color:#fff!important;border-color:#101010!important}.plan-card ul{list-style:none;padding:0;margin:22px 0}.plan-card li{position:relative;padding-left:25px;margin:15px 0;font-size:14px;line-height:1.5}.plan-card li:before{content:'✓';position:absolute;left:0;color:#109778}.plan-fine{font-size:12px;color:var(--theme-muted,#777)}.plan-activation{margin-top:26px;border:1px solid var(--theme-border,#dededb);border-radius:20px;padding:26px;display:grid;grid-template-columns:1fr 1fr;gap:24px;background:var(--theme-panel,#fff)}.plan-activation h2{font-family:inherit;font-size:20px;margin:0 0 10px}.plan-activation p{font-size:13px;line-height:1.6;color:var(--theme-muted,#777)}.plan-activation label{display:block;font-size:12px;margin-bottom:8px}.plan-key-row{display:flex;gap:8px;flex-wrap:wrap}.plan-key-row input{flex:1;min-width:180px;width:100%;border:1px solid var(--theme-border,#ddd);background:var(--theme-field,#fafafa);color:inherit;border-radius:12px;padding:12px;font:inherit;font-size:13px}.plan-activation input:focus-visible,.plan-choice:focus-visible{outline:2px solid #109778;outline-offset:3px}#plan-status{font-weight:600}#plan-result{min-height:20px;overflow-wrap:anywhere}
 @media(max-width:700px){#plan-panel{padding:16px 0 40px}.plan-grid,.plan-activation{grid-template-columns:1fr}.plan-card{padding:24px}.plan-activation{padding:22px}.plan-heading{margin-bottom:24px}}
+
+
+/* Plan readability + responsive navigation repairs (2026-11-07).
+   Explicit text/background pairs prevent white-on-white and dark-on-dark
+   controls when visitors switch between default and custom themes. */
+#plan-panel{width:100%;min-width:0;overflow-wrap:anywhere}
+#plan-panel .plan-heading p{color:var(--muted,#a2a2a8)}
+#plan-panel .plan-card,
+#plan-panel .plan-activation{
+  min-width:0;
+  background:var(--panel,#171718);
+  color:var(--white,#f8f8f9);
+  border-color:var(--stroke,#464649);
+}
+#plan-panel .plan-price span,
+#plan-panel .plan-fine,
+#plan-panel .plan-activation p{color:var(--muted,#a2a2a8)}
+#plan-panel .plan-choice,
+#plan-panel #plan-login{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;max-width:100%;gap:8px;
+  padding:11px 17px;border-radius:12px;
+  background:var(--field,#222225);border:1px solid var(--stroke,#57575c);
+  color:var(--white,#f8f8f9);font-weight:700;font-size:13px;
+  line-height:1.35;text-align:center;white-space:normal;cursor:pointer;
+}
+#plan-panel .plan-choice:hover:not(:disabled),
+#plan-panel #plan-login:hover{
+  filter:brightness(1.12);border-color:var(--theme-accent,#ddd);
+}
+#plan-panel .plan-choice:disabled{opacity:1;cursor:default}
+#plan-panel #plan-free:disabled{opacity:.75}
+#plan-panel .plan-choice.plan-primary{
+  background:var(--theme-accent,#f3f3f3)!important;
+  color:var(--theme-accent-ink,#080808)!important;
+  border-color:var(--theme-accent,#f3f3f3)!important;
+}
+#plan-panel .plan-key-row{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px}
+#plan-panel .plan-key-row input{
+  flex:1 1 210px;width:auto;min-width:0;max-width:100%;
+  border-color:var(--stroke,#57575c);
+  background:var(--field,#222225);
+  color:var(--white,#f8f8f9);font-size:13px;min-height:44px;
+}
+#plan-panel .plan-key-row input::placeholder{color:var(--muted,#a2a2a8);opacity:1}
+#plan-panel .plan-activation{grid-template-columns:repeat(2,minmax(0,1fr))}
+#plan-panel .plan-activation form{min-width:0}
+#plan-panel .plan-card{display:flex;flex-direction:column}
+#plan-panel .plan-card ul{flex:1}
+#plan-panel .plan-plus{border-color:var(--theme-accent,#f3f3f3)}
+/* Default warm theme gets its own clearly contrasting surfaces and action color. */
+.mrh-claude #plan-panel .plan-card,
+.mrh-claude #plan-panel .plan-activation{
+  background:var(--paper,#fffefa);color:var(--ink,#302d29);
+  border-color:var(--line,#e4e0d9);
+}
+.mrh-claude #plan-panel .plan-plus{border-color:var(--copper,#c87451);box-shadow:0 0 0 1px var(--copper,#c87451)}
+.mrh-claude #plan-panel .plan-heading p,
+.mrh-claude #plan-panel .plan-price span,
+.mrh-claude #plan-panel .plan-fine,
+.mrh-claude #plan-panel .plan-activation p{color:var(--subtle,#756f68)}
+.mrh-claude #plan-panel .plan-choice,
+.mrh-claude #plan-panel #plan-login{
+  background:var(--wash,#f7f4ef);
+  color:var(--ink,#302d29);border-color:#d7cec4;
+}
+.mrh-claude #plan-panel .plan-choice.plan-primary{
+  background:var(--copper,#c87451)!important;
+  color:#fffefa!important;border-color:var(--copper,#c87451)!important;
+}
+.mrh-claude #plan-panel .plan-key-row input{
+  background:#fffefa;color:var(--ink,#302d29);border-color:#cfc6b9;
+}
+.mrh-claude #plan-panel .plan-key-row input::placeholder{color:#81786f}
+#plan-panel .plan-key-row button{flex:0 1 auto}
+@media(max-width:700px){
+ #plan-panel .plan-grid,#plan-panel .plan-activation{grid-template-columns:minmax(0,1fr)}
+ #plan-panel .plan-card{padding:22px}
+ #plan-panel .plan-activation{padding:20px;gap:18px}
+}
+@media(max-width:420px){
+ #plan-panel .plan-key-row input,
+ #plan-panel .plan-key-row button{flex:1 1 100%;width:100%}
+ #plan-panel .plan-card h2{font-size:22px}
+}
