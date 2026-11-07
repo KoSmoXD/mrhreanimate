@@ -1,7 +1,26 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-let current=null,requestId=0,expiryTimer;
+let current=null,requestId=0,expiryTimer,keygenScriptState='idle';
+function loadOwnerConsole(){
+ if(keygenScriptState!=='idle')return;
+ keygenScriptState='loading';
+ const script=document.createElement('script');
+ script.src='./keygen.js';
+ script.async=true;
+ script.onload=()=>{
+  keygenScriptState='ready';
+  // The script attaches its event listeners after loading; re-send current status.
+  window.dispatchEvent(new CustomEvent('mrh-keygen-permission',{detail:{allowed:!!current?.isKeyGenerator}}));
+ };
+ script.onerror=()=>{
+  keygenScriptState='idle';
+  $('tab-keygen').hidden=true;
+  $('plan-result').textContent='Owner console could not be loaded. Refresh and try again.';
+  script.remove();
+ };
+ document.head.append(script);
+}
 function render(plan){
  const previous=current;
  current=plan;clearTimeout(expiryTimer);
@@ -10,6 +29,7 @@ function render(plan){
  const keygenAllowed=!!plan?.isKeyGenerator;
  $('tab-keygen').hidden=!keygenAllowed;
  window.dispatchEvent(new CustomEvent('mrh-keygen-permission',{detail:{allowed:keygenAllowed}}));
+ if(keygenAllowed)loadOwnerConsole();
  if(plan?.loggedIn&&previous?.loggedIn&&!!previous.hasAccess!==active)
   window.dispatchEvent(new CustomEvent('mrh-plus-change',{detail:{hasPlus:active}}));
  $('plan-free').textContent=active?'Included with +':'Current plan';
