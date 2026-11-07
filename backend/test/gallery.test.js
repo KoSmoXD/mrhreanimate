@@ -574,11 +574,26 @@ test('Plan activation unlocks the paid studio; direct links require current + ac
  assert.equal((await studio()).status,302);
  assert.equal((await fetch(base+'/video.html',{redirect:'manual'})).status,302);
  assert.equal((await fetch(base+'/api/video-animation/access')).status,401);
+ const guardedScripts=['/studio.js','/video-animation.js','/video-motion-core.js'];
+ for(const script of guardedScripts){
+  assert.equal((await fetch(base+script)).status,401,'guests must not download PLUS code: '+script);
+ }
+ assert.equal((await fetch(base+'/keygen.js')).status,401,'guests must not download owner console code');
  assert.equal((await studio()).headers.get('location'),'/#plan');
  const registration=await fetch(base+'/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'PlanAccessTest',password:'plan-test-password-12345'})});
  assert.equal(registration.status,201);
  const session=registration.headers.get('set-cookie').split(';')[0];
  assert.equal((await studio(session)).status,302);
+ for(const script of guardedScripts){
+  assert.equal((await fetch(base+script,{headers:{cookie:session}})).status,403,'free users must not download PLUS code: '+script);
+ }
+ const forged={cookie:session,'x-role':'owner','x-has-plus':'true','x-is-key-generator':'true'};
+ assert.equal((await fetch(base+'/keygen.js',{headers:forged})).status,403,'HTML/header changes must not expose owner code');
+ const forgedKey=await fetch(base+'/api/pro/keys',{
+  method:'POST',headers:{...forged,'Content-Type':'application/json'},
+  body:JSON.stringify({count:1,days:1,lifetime:false,role:'owner',hasAccess:true,isKeyGenerator:true})
+ });
+ assert.equal(forgedKey.status,403,'client flags cannot grant key creation');
  const Database=require('better-sqlite3'),db=new Database(path.join(dataDir,'gallery.sqlite'));
  try{
   const {createKey}=require('../scripts/create-plus-key'),key=createKey(db,{hours:360});
@@ -587,7 +602,21 @@ test('Plan activation unlocks the paid studio; direct links require current + ac
   assert.equal((await studio(session)).status,200);
   assert.equal((await fetch(base+'/video.html',{redirect:'manual',headers:{cookie:session}})).status,200);
   assert.equal((await fetch(base+'/api/video-animation/access',{headers:{cookie:session}})).status,200);
+  for(const script of guardedScripts){
+   const r=await fetch(base+script,{headers:{cookie:session}});
+   assert.equal(r.status,200,'active PLUS must have access to scripts: '+script);
+   assert.match(r.headers.get('cache-control')||'',/no-store/);
+  }
+  assert.equal((await fetch(base+'/keygen.js',{headers:{cookie:session}})).status,403,'paid does not mean owner');
   db.prepare('UPDATE pro_access SET expires_at=0 WHERE user_id=(SELECT id FROM users WHERE username=?)').run('PlanAccessTest');
   assert.equal((await studio(session)).status,302);
+  for(const script of guardedScripts){
+   assert.equal((await fetch(base+script,{headers:{cookie:session}})).status,403,'expired PLUS must lose script access: '+script);
+  }
+  const ownerLogin=await fetch(base+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'Mr_H',password:'OwnerPassword456'})});
+  assert.equal(ownerLogin.status,200,'owner account must already exist for owner-only code check');
+  const ownerCookie=ownerLogin.headers.get('set-cookie').split(';')[0];
+  assert.equal((await fetch(base+'/keygen.js',{headers:{cookie:ownerCookie}})).status,200,'owner can load key generator script');
+  for(const script of guardedScripts)assert.equal((await fetch(base+script,{headers:{cookie:ownerCookie}})).status,200);
  }finally{db.close()}
 });
