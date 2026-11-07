@@ -16,19 +16,21 @@ function tabFromHash(){
  if(location.hash==='#3d-preview')return 'preview';
  if(location.hash==='#camera-motion')return 'mocap';
  if(location.hash==='#plan')return 'plan';
+ if(location.hash==='#key-generator')return 'keygen';
  if(location.hash==='#themes')return 'themes';
  return 'browse';
 }
 function showTab(tab,updateUrl=true){
+ if(tab==='keygen'&&$('tab-keygen').hidden)tab='plan';
  for(const [name,section,button] of [
-  ['browse',browse,browseTab],['library',library,libraryTab],['make',maker,makeTab],['bulk',bulk,bulkTab],['moveset',moveset,movesetTab],['preview',preview,previewTab],['mocap',mocap,mocapTab],['themes',themes,themesTab],['plan',plan,planTab]
+  ['browse',browse,browseTab],['library',library,libraryTab],['make',maker,makeTab],['bulk',bulk,bulkTab],['moveset',moveset,movesetTab],['preview',preview,previewTab],['mocap',mocap,mocapTab],['themes',themes,themesTab],['plan',plan,planTab],['keygen',$('keygen-panel'),$('tab-keygen')]
  ]){
   const active=name===tab;
   section.hidden=!active;
   button.classList.toggle('active',active);
   button.setAttribute('aria-selected',String(active));
  }
- if(updateUrl)history.replaceState(null,'',tab==='library'?'#movesets':tab==='moveset'?'#make-moveset':tab==='bulk'?'#rbxm2anim':tab==='make'?'#make-animation':tab==='preview'?'#3d-preview':tab==='mocap'?'#camera-motion':tab==='plan'?'#plan':tab==='themes'?'#themes':'#browse-animations');
+ if(updateUrl)history.replaceState(null,'',tab==='library'?'#movesets':tab==='moveset'?'#make-moveset':tab==='bulk'?'#rbxm2anim':tab==='make'?'#make-animation':tab==='preview'?'#3d-preview':tab==='mocap'?'#camera-motion':tab==='plan'?'#plan':tab==='keygen'?'#key-generator':tab==='themes'?'#themes':'#browse-animations');
  window.dispatchEvent(new CustomEvent('mrh-section-change',{detail:{tab}}));
 }
 browseTab.addEventListener('click',()=>showTab('browse'));
@@ -39,6 +41,12 @@ movesetTab.addEventListener('click',()=>showTab('moveset'));
 previewTab.addEventListener('click',()=>showTab('preview'));
 mocapTab.addEventListener('click',()=>showTab('mocap'));
 planTab.addEventListener('click',()=>showTab('plan'));
+$('tab-keygen').addEventListener('click',()=>showTab('keygen'));
+window.addEventListener('mrh-keygen-permission',e=>{
+ const allowed=!!e.detail?.allowed;
+ if(!allowed&&tabFromHash()==='keygen')showTab('plan');
+ else if(allowed&&location.hash==='#key-generator')showTab('keygen',false);
+});
 themesTab.addEventListener('click',()=>showTab('themes'));
 window.addEventListener('hashchange',()=>showTab(tabFromHash(),false));
 showTab(tabFromHash(),false);
