@@ -78,7 +78,7 @@
   const name=$('moveset-name').value.trim()||'My Moveset';
   if(name.length<2||name.length>64){showError('Enter a moveset name (2–64 characters).');return;}
   const data=new FormData();
-  try{data.set('visuals',JSON.stringify(window.MrhMakerVisuals.get('moveset')))}catch(e){showError(e.message);return}
+  try{data.set('visuals',JSON.stringify(window.MrhMakerVisuals.get('moveset')));window.MrhMakerVisuals.appendFiles('moveset',data)}catch(e){showError(e.message);return}
   data.set('name',name);
   data.set('description',$('moveset-description').value.trim());
   data.set('fade',$('moveset-fade').value);
