@@ -23,7 +23,7 @@ function mount(maker,formId,submitId){
    const out={};for(const n of row.node.querySelectorAll('[data-key]'))out[n.dataset.key]=n.type==='number'?(n.value===''?null:Number(n.value)):n.value;
    const file=row.upload.files?.[0],index=++counts[row.kind],filename=file?.name||'';
    if(row.kind==='effects'){
-    if(!file||!/.png$/i.test(filename)||file.type&&file.type!=='image/png'||file.size<24||file.size>2*1048576)throw Error('Choose a PNG image under 2 MB for every effect.');
+    if(!file||!/\.png$/i.test(filename)||file.type&&file.type!=='image/png'||file.size<24||file.size>2*1048576)throw Error('Choose a PNG image under 2 MB for every effect.');
     out.type='png';out.image='MRH_Effect_'+pretty(index)+'.png';out.color='#ffffff';
    }else{
     if(!file||!/\.(rbxm|rbxmx)$/i.test(filename)||file.size<32||file.size>4*1048576)throw Error('Choose a .rbxm / .rbxmx model under 4 MB for every accessory.');
@@ -56,7 +56,7 @@ function mount(maker,formId,submitId){
   let modelName;
   if(kind==='effects'){
    const preview=el('img');preview.alt='Effect PNG preview';preview.hidden=true;preview.style.cssText='width:72px;height:72px;object-fit:contain;border-radius:8px;';
-   grid.append(preview);
+   grid.append(preview);row.preview=preview;
    upload.addEventListener('change',()=>{
     if(row.previewUrl)URL.revokeObjectURL(row.previewUrl);row.previewUrl=null;preview.hidden=true;
     const file=upload.files?.[0];if(file&&/\.png$/i.test(file.name)){row.previewUrl=URL.createObjectURL(file);preview.src=row.previewUrl;preview.hidden=false}
@@ -86,8 +86,8 @@ function mount(maker,formId,submitId){
   const button=el('button',label,'action');button.type='button';button.onclick=()=>add(kind);actions.append(button);
  }
  root.addEventListener('input',changed);root.addEventListener('change',changed);
- editors[maker]={get:read,appendFiles:data=>{read();for(const row of rows)data.append(row.kind,row.upload.files[0],row.upload.files[0].name)}};
+ editors[maker]={get:read,appendFiles:data=>{read();for(const row of rows)data.append(row.kind,row.upload.files[0],row.upload.files[0].name)},previewImage:name=>{const i=Number(name?.match(/^MRH_Effect_(\d{2})\.png$/)?.[1]);return rows.filter(r=>r.kind==='effects')[i-1]?.preview||null}};
 }
 mount('dance','make-form','maker-convert');mount('moveset','moveset-form','moveset-create');
-window.MrhMakerVisuals={get:maker=>editors[maker].get(),appendFiles:(maker,data)=>editors[maker].appendFiles(data)};
+window.MrhMakerVisuals={get:maker=>editors[maker].get(),appendFiles:(maker,data)=>editors[maker].appendFiles(data),previewImage:(maker,name)=>editors[maker].previewImage(name)};
 })();
