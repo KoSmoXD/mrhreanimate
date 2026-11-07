@@ -1,10 +1,10 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),express=require('express'),Database=require('better-sqlite3'),Motion=require('../../docs/motion-core');
-test('+ keys are issued offline only; expiry and OAuth remain server verified',async()=>{
+test('PLUS keys are owner-generated only; expiry and OAuth remain server verified',async()=>{
  const saved={...process.env},realFetch=global.fetch,db=new Database(':memory:');
  db.pragma('foreign_keys=ON');db.exec('CREATE TABLE users(id TEXT PRIMARY KEY,username TEXT UNIQUE,password_hash TEXT,created_at INTEGER);');
- for(const id of ['owner','alice','bob'])db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(id,id,'unused',Date.now());
- const app=express();app.use(express.json());app.use((req,res,next)=>{const id=req.headers['x-user'];if(['owner','alice','bob'].includes(id))req.user={id,role:id==='owner'?'owner':'user'};next()});
+ for(const id of ['owner','alice','bob','rogue'])db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(id,id==='owner'?'Mr_H':id,'unused',Date.now());
+ const app=express();app.use(express.json());app.use((req,res,next)=>{const id=req.headers['x-user'];if(['owner','alice','bob','rogue'].includes(id))req.user={id,username:id==='owner'?'Mr_H':id,role:['owner','rogue'].includes(id)?'owner':'user'};next()});
  const auth=(req,res,next)=>req.user?next():res.sendStatus(401),rateLimit=()=>((req,res,next)=>next());
  let session;
  require('../roblox-login')(app,{db,issueSession:(res,id)=>{session=id},bcrypt:{hash:async()=> 'unused'},rateLimit});
@@ -12,8 +12,26 @@ test('+ keys are issued offline only; expiry and OAuth remain server verified',a
  const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const base='http://127.0.0.1:'+server.address().port;
  const req=(path,body,user='alice',opts={})=>realFetch(base+path,{...(body===undefined?{}:{method:'POST',body:JSON.stringify(body)}),headers:{'Content-Type':'application/json',...(user?{'x-user':user}:{})},...opts});
  try{
-  assert.equal((await req('/api/pro/keys',{durationHours:24})).status,404);
-  assert.equal((await req('/api/pro/keys',{lifetime:true},'owner')).status,404);
+  assert.equal((await req('/api/pro/keys',{count:2,days:30,lifetime:false})).status,403);
+  assert.equal((await req('/api/pro/keys',{count:2,days:30,lifetime:false},null)).status,401);
+  assert.equal((await req('/api/pro/keys',{count:2,days:30,lifetime:false},'rogue')).status,403,'owner role with a different username is blocked');
+  assert.equal((await req('/api/pro/keys',{count:11,days:30,lifetime:false},'owner')).status,400);
+  const ownerStatus=await(await req('/api/pro/status',undefined,'owner')).json();
+  assert.equal(ownerStatus.isKeyGenerator,true);assert.equal(ownerStatus.hasAccess,true);
+  const guestStatus=await(await req('/api/pro/status')).json();
+  assert.equal(guestStatus.isKeyGenerator,false);
+  const generatedResponse=await req('/api/pro/keys',{count:3,days:15,lifetime:false},'owner');
+  assert.equal(generatedResponse.status,200);
+  assert.match(generatedResponse.headers.get('cache-control'),/no-store/);
+  const generated=await generatedResponse.json();assert.equal(generated.keys.length,3);
+  for(const key of generated.keys)assert.match(key,/^PLUS-[A-Z2-9]{5}-[A-Z2-9]{5}-[A-Z2-9]{5}$/);
+  assert.equal(new Set(generated.keys).size,3);
+  assert(!JSON.stringify(db.prepare('SELECT * FROM pro_keys').all()).includes(generated.keys[0]),'plaintext keys are not stored');
+  assert.equal((await req('/api/pro/redeem',{key:generated.keys[0]},'bob')).status,200);
+  assert.equal((await req('/api/pro/redeem',{key:generated.keys[0]},'bob')).status,400);
+  const lifetimeResponse=await req('/api/pro/keys',{count:1,days:null,lifetime:true},'owner');
+  assert.equal(lifetimeResponse.status,200);
+  assert.equal((await lifetimeResponse.json()).keys.length,1);
   const {createKey}=require('../scripts/create-plus-key');
   assert.throws(()=>createKey(db,{hours:0}));
   assert.equal((await req('/api/animation-ai/generate',{apiKey:'personal-key',provider:'openai',model:'model',prompt:'wave',duration:2})).status,403);
