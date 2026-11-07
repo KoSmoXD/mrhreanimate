@@ -23,3 +23,12 @@
 
 /* Hidden really means hidden, even in the responsive sidebar and profile layout. */
 #tab-keygen[hidden],#keygen-panel[hidden],.plus-name-badge[hidden]{display:none!important}
+
+/* Flexible PLUS access durations: days + hours + minutes + seconds. */
+.keygen-duration-fields{margin:0 0 12px;padding:0;border:0;min-inline-size:0}
+.keygen-duration-fields legend{font-size:13px;font-weight:750;margin:0 0 14px;padding:0}
+.keygen-time-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.keygen-time-grid .keygen-field{min-width:0}
+.keygen-time-note{font-size:12px;line-height:1.55;color:var(--theme-muted,#72675f);margin:12px 0 16px}
+.keygen-field input:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:700px){.keygen-time-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
