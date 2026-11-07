@@ -102,7 +102,7 @@ function issueSession(res,userId){
  res.cookie(COOKIE,token,{httpOnly:true,secure:PROD,sameSite:'strict',path:'/',maxAge:SESSION_MS});
 }
 function expireCookie(res){res.clearCookie(COOKIE,{httpOnly:true,secure:PROD,sameSite:'strict',path:'/'});}
-app.use(['/api','/studio.html','/video.html'],(req,res,next)=>{
+app.use(['/api','/studio.html','/video.html','/studio.js','/video-animation.js','/video-motion-core.js','/keygen.js'],(req,res,next)=>{
  req.user=null;req.sessionHash=null;
  const token=sessionToken(req);
  if(token){
@@ -755,8 +755,24 @@ app.get('/vendor/three/addons/*',async(req,res,next)=>{
  const rel=req.params[0];if(!/^[a-zA-Z0-9_./-]+\.js$/.test(rel)||rel.split('/').includes('..'))return res.sendStatus(404);
  try{const text=await fsp.readFile(path.join(__dirname,'node_modules/three/examples/jsm',rel),'utf8');res.type('application/javascript').send(text.replace(/from ['"]three['"]/g,"from '/vendor/three/build/three.module.js'"));}catch(e){res.sendStatus(404);}
 });
-// Paid studio pages require active access, including direct links.
-app.get(['/studio.html','/video.html'],(req,res,next)=>{res.set('Cache-Control','no-store');if(!pro.proStatus(req).hasAccess)return res.redirect('/#plan');next();});
+// Paid studio pages and their dedicated execution scripts are protected separately.
+// Hiding a tab in the browser cannot grant server access to either the pages or assets.
+app.get(['/studio.html','/video.html'],(req,res,next)=>{
+ res.set('Cache-Control','private, no-store');
+ if(!pro.proStatus(req).hasAccess)return res.redirect('/#plan');
+ next();
+});
+app.get(['/studio.js','/video-animation.js','/video-motion-core.js'],auth,pro.requirePro,(req,res,next)=>{
+ res.set('Cache-Control','private, no-store');
+ next();
+});
+// The owner console script is only delivered after a server-verified owner session.
+// Its write API independently enforces the same check.
+app.get('/keygen.js',auth,(req,res,next)=>{
+ res.set('Cache-Control','private, no-store');
+ if(!pro.proStatus(req).isKeyGenerator)return fail(res,403,'Owner-only access required.');
+ next();
+});
 // Never publish development notes, maps, databases or configuration via static hosting.
 app.use((req,res,next)=>{if(/\.(?:map|md|sqlite|db|env|bak|log)$/i.test(req.path))return fail(res,404,'Not found.');next();});
 // HTML, JS and CSS are UI/auth critical: never cache old scripts after a deploy.
