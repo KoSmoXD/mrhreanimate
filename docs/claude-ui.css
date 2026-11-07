@@ -515,3 +515,80 @@ html.mrh-claude {
     min-height:40px;line-height:1.25;padding:9px 12px;flex:0 0 auto;
   }
 }
+
+/* 2026-11-07: legible controls and a permanently reachable Plan tab. */
+.mrh-claude body:not(.studio-app) .site-tabs .site-tab{
+  box-sizing:border-box;
+  overflow-wrap:normal;
+  text-overflow:clip;
+}
+.mrh-claude body:not(.studio-app) .site-tabs #tab-plan{
+  font-weight:800;
+  border-color:var(--copper,#c87451);
+  color:#873e25;
+  background:#fff2e8;
+}
+.mrh-claude body:not(.studio-app) .site-tabs #tab-plan.active{
+  background:#c87451;
+  border-color:#c87451;
+  color:#fffefa;
+}
+.mrh-claude body:not(.studio-app) .site-header .account-actions button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:42px;
+  max-width:100%;
+  line-height:1.25;
+  text-align:center;
+  white-space:normal;
+}
+@media(max-width:960px){
+  .mrh-claude body:not(.studio-app) .site-tabs{
+    padding-inline:0;
+    scroll-padding-left:80px;
+  }
+  .mrh-claude body:not(.studio-app) .site-tabs #tab-plan{
+    order:-1;
+    position:sticky;
+    left:0;
+    z-index:3;
+    flex:0 0 auto;
+    box-shadow:3px 0 10px rgba(47,38,29,.13);
+    margin-right:3px;
+  }
+  .mrh-claude body:not(.studio-app) .site-tabs .site-tab{
+    font-size:13px;
+    min-height:46px;
+    padding:11px 14px;
+  }
+  .mrh-claude body:not(.studio-app) .site-header .account-actions{
+    flex:1 1 auto;
+    width:auto;
+    justify-content:flex-end;
+  }
+  .mrh-claude body:not(.studio-app) .site-header .account-actions button{
+    min-height:42px;
+    font-size:12px;
+    padding:10px 12px;
+  }
+}
+@media(max-width:540px){
+  .mrh-claude body:not(.studio-app) .site-header{
+    gap:10px;
+    align-items:center;
+  }
+  .mrh-claude body:not(.studio-app) .site-header .account-actions{
+    flex:1 1 100%;
+    width:100%;
+    justify-content:flex-start;
+  }
+  .mrh-claude body:not(.studio-app) .site-header .account-actions button{
+    flex:1 1 auto;
+    min-width:90px;
+  }
+  .mrh-claude body:not(.studio-app) .site-header .account-actions .session-label{
+    flex:1 1 100%;
+    overflow-wrap:anywhere;
+  }
+}
