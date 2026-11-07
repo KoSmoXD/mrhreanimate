@@ -3,8 +3,8 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),express=r
 test('PLUS keys are owner-generated only; expiry and OAuth remain server verified',async()=>{
  const saved={...process.env},realFetch=global.fetch,db=new Database(':memory:');
  db.pragma('foreign_keys=ON');db.exec('CREATE TABLE users(id TEXT PRIMARY KEY,username TEXT UNIQUE,password_hash TEXT,created_at INTEGER);');
- for(const id of ['owner','alice','bob','rogue'])db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(id,id==='owner'?'Mr_H':id,'unused',Date.now());
- const app=express();app.use(express.json());app.use((req,res,next)=>{const id=req.headers['x-user'];if(['owner','alice','bob','rogue'].includes(id))req.user={id,username:id==='owner'?'Mr_H':id,role:['owner','rogue'].includes(id)?'owner':'user'};next()});
+ for(const id of ['owner','alice','bob','rogue','shortuser'])db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(id,id==='owner'?'Mr_H':id,'unused',Date.now());
+ const app=express();app.use(express.json());app.use((req,res,next)=>{const id=req.headers['x-user'];if(['owner','alice','bob','rogue','shortuser'].includes(id))req.user={id,username:id==='owner'?'Mr_H':id,role:['owner','rogue'].includes(id)?'owner':'user'};next()});
  const auth=(req,res,next)=>req.user?next():res.sendStatus(401),rateLimit=()=>((req,res,next)=>next());
  let session;
  require('../roblox-login')(app,{db,issueSession:(res,id)=>{session=id},bcrypt:{hash:async()=> 'unused'},rateLimit});
@@ -32,8 +32,32 @@ test('PLUS keys are owner-generated only; expiry and OAuth remain server verifie
   const lifetimeResponse=await req('/api/pro/keys',{count:1,days:null,lifetime:true},'owner');
   assert.equal(lifetimeResponse.status,200);
   assert.equal((await lifetimeResponse.json()).keys.length,1);
+  // Custom durations can combine days/hours/minutes/seconds, including one second.
+  const mixed=await req('/api/pro/keys',{count:1,lifetime:false,days:1,hours:2,minutes:3,seconds:4},'owner');
+  assert.equal(mixed.status,200);
+  const mixedKey=(await mixed.json()).keys[0];
+  const hashKey=key=>require('node:crypto').createHash('sha256').update(key).digest('hex');
+  assert.equal(db.prepare('SELECT duration_ms FROM pro_keys WHERE key_hash=?').get(hashKey(mixedKey)).duration_ms,93784000);
+  const short=await req('/api/pro/keys',{count:1,lifetime:false,days:0,hours:0,minutes:0,seconds:1},'owner');
+  assert.equal(short.status,200);
+  const shortKey=(await short.json()).keys[0];
+  assert.equal(db.prepare('SELECT duration_ms FROM pro_keys WHERE key_hash=?').get(hashKey(shortKey)).duration_ms,1000);
+  const shortRedeemed=await req('/api/pro/redeem',{key:shortKey},'shortuser');
+  assert.equal(shortRedeemed.status,200);
+  const shortStatus=await shortRedeemed.json();
+  assert(shortStatus.hasAccess);assert(Math.abs(shortStatus.expiresAt-Date.now()-1000)<1500);
+  for(const parts of [
+   {days:0,hours:0,minutes:0,seconds:0},
+   {days:3650,hours:0,minutes:0,seconds:1},
+   {days:0,hours:0,minutes:60,seconds:0},
+   {days:0,hours:24,minutes:0,seconds:0},
+   {days:0,hours:0,minutes:0,seconds:-1},
+   {days:0,hours:0,minutes:0,seconds:0.5}
+  ])assert.equal((await req('/api/pro/keys',{count:1,lifetime:false,...parts},'owner')).status,400);
   const {createKey}=require('../scripts/create-plus-key');
   assert.throws(()=>createKey(db,{hours:0}));
+  assert.throws(()=>createKey(db,{durationMs:999}));
+  assert.throws(()=>createKey(db,{durationMs:3650*86400000+1000}));
   assert.equal((await req('/api/animation-ai/generate',{apiKey:'personal-key',provider:'openai',model:'model',prompt:'wave',duration:2})).status,403);
   const made={key:createKey(db,{hours:24})};assert.match(made.key,/^PLUS-[A-Z2-9]{5}-[A-Z2-9]{5}-[A-Z2-9]{5}$/);
   assert(!JSON.stringify(db.prepare('SELECT * FROM pro_keys').all()).includes(made.key));
