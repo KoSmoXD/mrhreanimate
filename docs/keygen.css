@@ -32,3 +32,47 @@
 .keygen-time-note{font-size:12px;line-height:1.55;color:var(--theme-muted,#72675f);margin:12px 0 16px}
 .keygen-field input:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:700px){.keygen-time-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Match the Plan page in every theme; avoid white-on-white controls. */
+#keygen-panel{width:100%;min-width:0}
+#keygen-panel .keygen-shell{
+ background:var(--panel,#171718);
+ color:var(--white,#f8f8f9);
+ border-color:var(--stroke,#464649);
+ min-width:0;
+}
+#keygen-panel .keygen-shell h1{color:inherit}
+#keygen-panel .keygen-eyebrow,
+#keygen-panel .keygen-lead,
+#keygen-panel .keygen-time-note,
+#keygen-panel #keygen-notice{color:var(--muted,#a2a2a8)}
+#keygen-panel .keygen-field input,
+#keygen-panel .keygen-secondary,
+#keygen-panel .keygen-copy-one{
+ background:var(--field,#222225);
+ color:var(--white,#f8f8f9);
+ border-color:var(--stroke,#57575c);
+}
+#keygen-panel .keygen-primary{
+ background:var(--theme-accent,#f3f3f3);
+ color:var(--theme-accent-ink,#080808);
+ border-color:var(--theme-accent,#f3f3f3);
+}
+#keygen-panel .keygen-primary,
+#keygen-panel .keygen-secondary,
+#keygen-panel .keygen-copy-one{min-height:42px;line-height:1.35}
+#keygen-panel .keygen-key{background:var(--field,#222225);border-color:var(--stroke,#57575c)}
+#keygen-panel .keygen-field input{min-width:0}
+.mrh-claude #keygen-panel .keygen-shell{background:var(--paper,#fffefa);color:var(--ink,#302d29);border-color:var(--line,#e4e0d9)}
+.mrh-claude #keygen-panel .keygen-eyebrow,
+.mrh-claude #keygen-panel .keygen-lead,
+.mrh-claude #keygen-panel .keygen-time-note,
+.mrh-claude #keygen-panel #keygen-notice{color:var(--subtle,#756f68)}
+.mrh-claude #keygen-panel .keygen-field input,
+.mrh-claude #keygen-panel .keygen-secondary,
+.mrh-claude #keygen-panel .keygen-copy-one{
+ background:#fffefa;color:var(--ink,#302d29);border-color:#cfc6b9;
+}
+.mrh-claude #keygen-panel .keygen-key{background:var(--wash,#f7f4ef);border-color:var(--line,#e4e0d9)}
+.mrh-claude #keygen-panel .keygen-primary{background:var(--copper,#c87451);color:#fffefa;border-color:var(--copper,#c87451)}
