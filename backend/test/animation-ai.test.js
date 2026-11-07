@@ -35,3 +35,34 @@ test('maker preview preserves sparse bone timing, longer clips, source easing an
  const one=Motion.parsePreview(Motion.encode([clip.frames[0]],'Single pose').buffer);assert.equal(one.duration,0);assert.equal(one.frames.length,1);
  assert.throws(()=>Motion.parsePreview(data.buffer.slice(0,12)),/Truncated/);const invalid=data.slice();new DataView(invalid.buffer).setFloat32(2+new TextEncoder().encode('Long sparse clip').length+4,NaN,true);assert.throws(()=>Motion.parsePreview(invalid.buffer),/number/);
 });
+
+
+test('async AI jobs return immediately, enforce owner isolation and report completion or cancellation',async()=>{
+ const nativeFetch=global.fetch,app=express();app.use(express.json());
+ const auth=(req,res,next)=>req.headers['x-test-user']?(req.user={id:req.headers['x-test-user']},next()):res.sendStatus(401);
+ require('../animation-ai')(app,{auth,rateLimit:()=>((req,res,next)=>next())});
+ const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const base='http://127.0.0.1:'+server.address().port;
+ const request=(path,{method='GET',body,user='async-alice'}={})=>nativeFetch(base+path,{method,headers:{...(user?{'x-test-user':user}:{}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+ const input={provider:'openai',apiKey:'personal-key',model:'test-model',prompt:'a quick wave',duration:2};
+ const pending=[],makeResponse=()=>({ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(Motion.blank())}]}]})});
+ try{
+  global.fetch=(url,opts)=>new Promise((resolve,reject)=>{pending.push({resolve,reject,signal:opts.signal});opts.signal.addEventListener('abort',()=>reject(new DOMException('Cancelled','AbortError')),{once:true});});
+  assert.equal((await request('/api/animation-ai/jobs',{method:'POST',body:input,user:null})).status,401);
+  assert.equal((await request('/api/animation-ai/jobs',{method:'POST',body:{...input,duration:300}})).status,400);
+  const started=await request('/api/animation-ai/jobs',{method:'POST',body:input});assert.equal(started.status,202);
+  const job=await started.json();assert.match(job.jobId,/^[a-f0-9-]{36}$/);
+  assert.equal((await request('/api/animation-ai/jobs/'+job.jobId,{user:'async-bob'})).status,404);
+  assert.equal((await request('/api/animation-ai/jobs',{method:'POST',body:input})).status,409);
+  for(let i=0;i<50&&!pending.length;i++)await new Promise(r=>setTimeout(r,2));
+  assert.equal(pending.length,1);
+  pending[0].resolve(makeResponse());
+  let result;
+  for(let i=0;i<50;i++){result=await(await request('/api/animation-ai/jobs/'+job.jobId)).json();if(result.status==='complete')break;await new Promise(r=>setTimeout(r,2));}
+  assert.equal(result.status,'complete');assert.equal(result.clip.duration,2);
+  assert.equal((await request('/api/animation-ai/jobs/'+job.jobId,{method:'DELETE',user:'async-bob'})).status,404);
+  const next=await request('/api/animation-ai/jobs',{method:'POST',body:input});const second=await next.json();assert.equal(next.status,202);
+  for(let i=0;i<50&&pending.length<2;i++)await new Promise(r=>setTimeout(r,2));
+  const cancel=await request('/api/animation-ai/jobs/'+second.jobId,{method:'DELETE'});assert.equal(cancel.status,200);assert.equal((await cancel.json()).status,'cancelled');
+  const state=await(await request('/api/animation-ai/jobs/'+second.jobId)).json();assert.equal(state.status,'cancelled');
+ }finally{global.fetch=nativeFetch;await new Promise(r=>server.close(r));}
+});
