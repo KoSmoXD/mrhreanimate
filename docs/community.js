@@ -33,9 +33,9 @@ function issue(msg){const toast=$('toast');toast.textContent=msg;toast.hidden=fa
 function showError(id,msg){$(id).hidden=!msg;$(id).textContent=msg||'';}
 function setUser(user){st.user=user||null;$('moveset-upload-trigger').hidden=!st.user;const form=$('comment-form');const signin=$('comment-signin');if(form)form.hidden=!st.user;if(signin)signin.hidden=!!st.user;if(st.loaded)renderMovesets();if(st.selected)renderComments();}
 window.addEventListener('mrh-session-change',e=>setUser(e.detail?.user));
-window.addEventListener('mrh-public-plus-updated',()=>{
+window.addEventListener('mrh-public-plus-updated',event=>{
  if(st.loaded)fetchMovesets();
- if(st.selected){if(st.user&&st.selected.item?.userId===st.user.id){st.selected.item.hasPlus=true;$('item-owner').replaceChildren(author(st.selected.item));}fetchComments();}
+ if(st.selected){if(st.user&&st.selected.item?.userId===st.user.id){st.selected.item.hasPlus=!!event.detail?.hasPlus;$('item-owner').replaceChildren(author(st.selected.item));}fetchComments();}
 });
 request('/me').then(r=>setUser(r.user)).catch(()=>setUser(null));
 function openDialog(id){
