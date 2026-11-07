@@ -17,14 +17,26 @@ function draw(){
  }
  $('keygen-copy').hidden=!keys.length;
 }
-$('keygen-lifetime').addEventListener('change',()=>{$('keygen-days').disabled=$('keygen-lifetime').checked;});
+const parts=['days','hours','minutes','seconds'];
+const factors={days:86400000,hours:3600000,minutes:60000,seconds:1000};
+function syncLifetime(){
+ const lifetime=$('keygen-lifetime').checked;
+ for(const unit of parts)$('keygen-'+unit).disabled=lifetime;
+}
+$('keygen-lifetime').addEventListener('change',syncLifetime);
+syncLifetime();
 form.addEventListener('submit',async e=>{
  e.preventDefault();if(!allowed)return;
- const count=Number($('keygen-count').value),lifetime=$('keygen-lifetime').checked,days=lifetime?null:Number($('keygen-days').value);
- if(!Number.isInteger(count)||count<1||count>10||(!lifetime&&(!Number.isInteger(days)||days<1||days>3650))){show('Choose 1–10 keys and 1–3650 days or lifetime.');return;}
+ const count=Number($('keygen-count').value),lifetime=$('keygen-lifetime').checked;
+ const values=Object.fromEntries(parts.map(unit=>[unit,Number($('keygen-'+unit).value)]));
+ const ms=parts.reduce((sum,unit)=>sum+values[unit]*factors[unit],0);
+ if(!Number.isInteger(count)||count<1||count>10||(!lifetime&&(!parts.every(unit=>Number.isInteger(values[unit])&&values[unit]>=0&&values[unit]<=Number($('keygen-'+unit).max))||ms<1000||ms>3650*86400000))){
+  show('Choose 1–10 keys and a duration between 1 second and 3650 days, or lifetime.');return;
+ }
  submit.disabled=true;clear();show('Generating keys…');
  try{
-  const response=await fetch('/api/pro/keys',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({count,lifetime,days})});
+  const body={count,lifetime,...(lifetime?{}:values)};
+  const response=await fetch('/api/pro/keys',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   const result=await response.json();
   if(!response.ok)throw Error(result.error||'Key generation failed.');
   if(!Array.isArray(result.keys)||result.keys.length!==count)throw Error('Unexpected server response.');
