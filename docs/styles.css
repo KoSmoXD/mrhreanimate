@@ -223,3 +223,13 @@ h1{font-size:clamp(30px,4.4vw,54px);letter-spacing:-.05em;line-height:1.08;margi
 .mocap-guide ol{padding-left:22px;line-height:1.7}
 .mocap-guide li{margin-bottom:9px}
 @media(max-width:760px){.mocap-layout{grid-template-columns:1fr;gap:14px}.mocap-card{padding:12px}.mocap-code{letter-spacing:.10em}}
+
+
+/* Active Mr H + label. Subscription state is always supplied by the server. */
+.plus-name-badge{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+ padding:3px 7px;border-radius:6px;border:1px solid #c69d51;background:#f0dcab;color:#604311;
+ font:800 9px/1.1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.06em;white-space:nowrap;
+ vertical-align:middle;margin-left:4px}
+.session-label .plus-name-badge{font-size:9px}
+.anim-author{flex-wrap:wrap}
+.profile .plus-name-badge{margin-left:8px}
