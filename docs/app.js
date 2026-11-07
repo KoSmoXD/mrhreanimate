@@ -290,7 +290,7 @@ window.addEventListener('mrh-plus-change',event=>{
  state.me.hasPlus=!!event.detail?.hasPlus;
  accountBadges();
  getGallery();
- window.dispatchEvent(new Event('mrh-public-plus-updated'));
+ window.dispatchEvent(new CustomEvent('mrh-public-plus-updated',{detail:{hasPlus:state.me.hasPlus}}));
 });
 window.addEventListener('mrh-dance-comments-updated',()=>getGallery());
 getSession().then(()=>getGallery());
