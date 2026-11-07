@@ -20,3 +20,6 @@
 .keygen-key code{font-size:13px;overflow-wrap:anywhere;user-select:all}
 .keygen-copy-one{font-size:12px;white-space:nowrap;padding:8px 13px}
 @media(max-width:640px){.keygen-grid{grid-template-columns:1fr}.keygen-key{align-items:flex-start;flex-direction:column}.keygen-shell{padding:20px}}
+
+/* Hidden really means hidden, even in the responsive sidebar and profile layout. */
+#tab-keygen[hidden],#keygen-panel[hidden],.plus-name-badge[hidden]{display:none!important}
