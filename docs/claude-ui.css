@@ -395,3 +395,84 @@ html.mrh-claude {
  .mrh-claude body:not(.studio-app) .site-tabs{flex-wrap:wrap;overflow:visible;white-space:normal;width:100%;height:auto;}
  .mrh-claude body:not(.studio-app) .site-tab{width:auto;flex:1 1 120px;justify-content:center;text-align:center;}
 }
+
+
+/* November 2026 header/navigation correction.
+   Workspace tabs must never be placed inside .account-actions: the desktop
+   .site-tab width rule was forcing the header buttons into clipped rows. */
+@media (min-width:961px) {
+  .mrh-claude body:not(.studio-app) .site-header {
+    justify-content:flex-end;
+    overflow:visible;
+  }
+  .mrh-claude body:not(.studio-app) .account-actions {
+    display:flex;
+    flex-flow:row nowrap;
+    align-items:center;
+    justify-content:flex-end;
+    gap:9px;
+    flex:0 1 auto;
+    min-width:0;
+    max-width:100%;
+    margin-left:auto;
+  }
+  .mrh-claude body:not(.studio-app) .account-actions .action {
+    flex:0 0 auto;
+    white-space:nowrap;
+  }
+  .mrh-claude body:not(.studio-app) .account-actions .session-label {
+    display:block;
+    min-width:0;
+    max-width:min(210px,18vw);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    margin-right:2px;
+  }
+}
+@media (min-width:961px) and (max-width:1150px) {
+  .mrh-claude body:not(.studio-app) .site-header {
+    padding-inline:16px;
+  }
+  .mrh-claude body:not(.studio-app) .account-actions {
+    gap:6px;
+  }
+  .mrh-claude body:not(.studio-app) .account-actions .session-label {
+    max-width:105px;
+  }
+  .mrh-claude body:not(.studio-app) .account-actions .action {
+    padding:9px 11px;
+  }
+}
+@media (max-width:960px) {
+  .mrh-claude body:not(.studio-app) .site-header {
+    height:auto;
+    min-height:76px;
+    flex-wrap:wrap;
+    justify-content:space-between;
+    align-content:center;
+    gap:8px;
+    overflow:visible;
+  }
+  .mrh-claude body:not(.studio-app) .account-actions {
+    margin-left:auto;
+    min-width:0;
+    max-width:100%;
+    flex-wrap:wrap;
+    gap:6px;
+    justify-content:flex-end;
+    align-items:center;
+  }
+  .mrh-claude body:not(.studio-app) .account-actions .action {
+    white-space:nowrap;
+  }
+}
+@media (max-width:540px) {
+  .mrh-claude body:not(.studio-app) .site-header {
+    padding-block:10px;
+  }
+  .mrh-claude body:not(.studio-app) .account-actions {
+    width:100%;
+    justify-content:flex-start;
+  }
+}
