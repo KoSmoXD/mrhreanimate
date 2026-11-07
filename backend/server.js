@@ -64,6 +64,7 @@ const passwordValid=s=>typeof s==='string'&&Buffer.byteLength(s,'utf8')>=10&&Buf
 const publicUser=user=>({
  id:user.id,username:user.username,
  role:user.role==='owner'?'owner':'user',
+ hasPlus:pro.hasPlus(user.id,user.role),
  avatarUrl:user.avatar_mime?'/api/users/'+user.id+'/avatar?v='+(user.avatar_rev||0):null
 });
 const fail=(res,status,message)=>res.status(status).json({error:message});
@@ -295,6 +296,7 @@ function card(row){
  return {id:row.id,userId:row.user_id,username:row.username,
   description:row.description||'',commentCount:row.comment_count||0,
   role:row.role==='owner'?'owner':'user',
+  hasPlus:pro.hasPlus(row.user_id,row.role),
   avatarUrl:row.avatar_mime?'/api/users/'+row.user_id+'/avatar?v='+(row.avatar_rev||0):null,
   title:row.title,createdAt:new Date(row.created_at).toISOString(),sizeBytes:row.size_bytes};
 }
@@ -674,7 +676,7 @@ app.post('/api/make-moveset',movesetLimiter,(req,res)=>{
   }
  });
 });
-setupCommunity({app,db,auth,fail,TMP,ROOT});
+setupCommunity({app,db,auth,fail,TMP,ROOT,hasPlus:pro.hasPlus});
 app.get('/api/animations',(req,res)=>{
  const limit=Math.min(60,Math.max(1,parseInt(req.query.limit,10)||32));
  const offset=Math.min(50000,Math.max(0,parseInt(req.query.offset,10)||0));
