@@ -84,11 +84,11 @@ $('generate').onclick=async()=>{
     if(!response.ok)throw Error(job.error||'Could not check generation status ('+response.status+').');
     failures=0;
     if(job.status==='complete'){finished=job;break;}
-    if(job.status==='error')throw Error(job.error||'AI generation failed.');
+    if(job.status==='error'){const issue=Error(job.error||'AI generation failed.');issue.terminal=true;throw issue;}
     if(job.status==='cancelled')throw Error('Generation cancelled.');
     status(job.status==='validating'?'Checking generated R6 keyframes…':'AI is generating your motion…');
    }catch(e){
-    if(/^(AI generation|The AI|API key|Provider|Model|Generation cancelled|Generation job not found)/i.test(e.message))throw e;
+    if(e.terminal||/^(AI generation|The AI|API key|Provider|Model|Generation cancelled|Generation job not found)/i.test(e.message))throw e;
     if(++failures>4)throw Error('Connection to the generation server was interrupted. Please retry.');
     status('Reconnecting to generation server… ('+failures+'/4)');
    }
