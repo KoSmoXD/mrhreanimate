@@ -108,13 +108,13 @@ module.exports=function setup(app,{auth,rateLimit,requirePro=(req,res,next)=>nex
   const job=startJob(req.user,params);
   res.status(202).json({jobId:job.id,status:job.status,pollAfterMs:2000});
  });
- app.get('/api/animation-ai/jobs/:id',auth,(req,res)=>{
+ app.get('/api/animation-ai/jobs/:id',auth,requirePro,(req,res)=>{
   res.set('Cache-Control','no-store');prune();
   const job=jobs.get(req.params.id);
   if(!job||job.userId!==req.user.id)return res.status(404).json({error:'Generation job not found or expired. Please generate again.'});
   res.json(present(job));
  });
- app.delete('/api/animation-ai/jobs/:id',auth,(req,res)=>{
+ app.delete('/api/animation-ai/jobs/:id',auth,requirePro,(req,res)=>{
   res.set('Cache-Control','no-store');
   const job=jobs.get(req.params.id);
   if(!job||job.userId!==req.user.id)return res.status(404).json({error:'Generation job not found.'});
