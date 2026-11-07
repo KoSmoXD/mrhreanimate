@@ -114,7 +114,8 @@ module.exports=function setup(app,{auth,rateLimit,requirePro=(req,res,next)=>nex
   if(!job||job.userId!==req.user.id)return res.status(404).json({error:'Generation job not found or expired. Please generate again.'});
   res.json(present(job));
  });
- app.delete('/api/animation-ai/jobs/:id',auth,requirePro,(req,res)=>{
+ // Owners of a job may cancel it even after PLUS expires, avoiding unnecessary AI usage.
+ app.delete('/api/animation-ai/jobs/:id',auth,(req,res)=>{
   res.set('Cache-Control','no-store');
   const job=jobs.get(req.params.id);
   if(!job||job.userId!==req.user.id)return res.status(404).json({error:'Generation job not found.'});
