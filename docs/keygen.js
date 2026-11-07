@@ -22,7 +22,7 @@ form.addEventListener('submit',async e=>{
  e.preventDefault();if(!allowed)return;
  const count=Number($('keygen-count').value),lifetime=$('keygen-lifetime').checked,days=lifetime?null:Number($('keygen-days').value);
  if(!Number.isInteger(count)||count<1||count>10||(!lifetime&&(!Number.isInteger(days)||days<1||days>3650))){show('Choose 1–10 keys and 1–3650 days or lifetime.');return;}
- submit.disabled=true;show('Generating keys…');clear();
+ submit.disabled=true;clear();show('Generating keys…');
  try{
   const response=await fetch('/api/pro/keys',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({count,lifetime,days})});
   const result=await response.json();
