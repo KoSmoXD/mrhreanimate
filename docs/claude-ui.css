@@ -476,3 +476,42 @@ html.mrh-claude {
     justify-content:flex-start;
   }
 }
+
+
+/* Accessible compact navigation: Plan stays next to Dances on phones.
+   One horizontal strip prevents 10+ wrapped tabs from burying the content. */
+@media (max-width:960px) {
+  .mrh-claude body:not(.studio-app) .site-tabs{
+    display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;
+    width:100%;max-width:100%;white-space:nowrap;
+    gap:8px;padding:5px 2px 13px;margin-bottom:22px;
+    scroll-padding-inline:8px;scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+  }
+  .mrh-claude body:not(.studio-app) .site-tabs .site-tab{
+    flex:0 0 auto;width:auto;min-height:44px;
+    white-space:nowrap;justify-content:center;
+    padding:10px 13px;scroll-snap-align:start;
+    border:1px solid #e2d9ce;color:#665b50;background:#fffefa;
+    font-weight:650;line-height:1.2;
+  }
+  .mrh-claude body:not(.studio-app) .site-tabs .site-tab.active{
+    color:#934a2f;background:#f4e8df;border-color:#d8ab93;
+  }
+  .mrh-claude body:not(.studio-app) .site-tabs .site-tab:focus-visible{
+    outline:2px solid var(--copper);outline-offset:-2px;
+  }
+}
+/* Visually anchor the always-available Plan entry without a large badge. */
+.mrh-claude body:not(.studio-app) .site-tabs #tab-plan:not(.active){
+  color:#9a4e32;background:#f9ece3;border-color:#e9c8b5;
+}
+@media (max-width:540px){
+  .mrh-claude body:not(.studio-app) .site-header .account-actions{
+    gap:7px;align-items:center;justify-content:flex-start;
+  }
+  .mrh-claude body:not(.studio-app) .site-header .account-actions .action,
+  .mrh-claude body:not(.studio-app) .site-header .account-actions .primary{
+    min-height:40px;line-height:1.25;padding:9px 12px;flex:0 0 auto;
+  }
+}
