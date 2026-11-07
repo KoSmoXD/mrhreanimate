@@ -21,3 +21,20 @@ test('visual runtime restores original accessories and preserves unrelated overr
  const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process'),dir=fs.mkdtempSync(path.join(os.tmpdir(),'mrh-visual-luau-'));
  try{const fixture=fs.readFileSync(path.join(__dirname,'visual-runtime.fixture.luau'),'utf8'),runtime=fs.readFileSync(path.join(__dirname,'../visual-runtime.lua'),'utf8'),file=path.join(dir,'check.luau');fs.writeFileSync(file,fixture.replace('-- INSERT_VISUAL_RUNTIME_HERE',runtime));const result=spawnSync(process.env.LUAU_BIN,[file],{encoding:'utf8'});assert.equal(result.status,0,result.stderr||result.stdout);}finally{fs.rmSync(dir,{recursive:true,force:true})}
 });
+
+test('PNG effects and Roblox model uploads are validated and registered as ZIP assets',async()=>{
+ const {validateVisualUploads,allNames}=require('../visual-assets');
+ const png=Buffer.alloc(24);Buffer.from([137,80,78,71,13,10,26,10]).copy(png);
+ png.write('IHDR',12,'ascii');png.writeUInt32BE(64,16);png.writeUInt32BE(64,20);
+ const xml=Buffer.from('<?xml version="1.0" encoding="utf-8"?><roblox version="4"><Item class="Accessory"/></roblox>');
+ const settings=V.validate({...V.empty(),effects:[{type:'png',image:'MRH_Effect_01.png'}],accessories:[{name:'Hat',model:'MRH_Accessory_01.rbxmx'}]});
+ assert.deepEqual(allNames(settings),['MRH_Effect_01.png','MRH_Accessory_01.rbxmx']);
+ const files={effects:[{originalname:'fire.png',size:png.length,buffer:png}],accessories:[{originalname:'hat.rbxmx',size:xml.length,buffer:xml}]};
+ const uploads=await validateVisualUploads(settings,files);
+ assert.deepEqual(uploads.map(u=>u.folder),['Images','Models']);
+ assert.match(makeVisualRuntime(settings),/MRH_Effect_01/);
+ const moveset=makeMoveset({name:'PNG Test',roles:{idle:true,walk:true},visuals:settings}).source;
+ assert.match(moveset,/MRH_Accessory_01.rbxmx/);
+ await assert.rejects(validateVisualUploads(settings,{...files,effects:[]}),/matching upload/);
+ await assert.rejects(validateVisualUploads(settings,{...files,effects:[{...files.effects[0],buffer:Buffer.alloc(24)}]}),/invalid file header/);
+});
