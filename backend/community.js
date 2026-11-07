@@ -3,7 +3,7 @@ const crypto=require('node:crypto'),path=require('node:path'),fs=require('node:f
 const multer=require('multer'),rateLimit=require('express-rate-limit');
 const {promisify}=require('node:util'),{execFile}=require('node:child_process');
 const run=promisify(execFile);
-module.exports=function community({app,db,auth,fail,TMP,ROOT}){
+module.exports=function community({app,db,auth,fail,TMP,ROOT,hasPlus}){
  const MOVES=path.join(ROOT,'movesets');fs.mkdirSync(MOVES,{recursive:true});
  db.exec([
  "CREATE TABLE IF NOT EXISTS movesets(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,title TEXT NOT NULL,description TEXT NOT NULL DEFAULT '',size_bytes INTEGER NOT NULL,created_at INTEGER NOT NULL);",
@@ -24,7 +24,7 @@ module.exports=function community({app,db,auth,fail,TMP,ROOT}){
  const get=(kind,id)=>['animations','movesets'].includes(kind)?
   db.prepare('SELECT id,user_id FROM '+kind+' WHERE id=?').get(id):null;
  const select=kind=>"SELECT a.*,u.username,u.role,u.avatar_mime,u.avatar_rev,(SELECT COUNT(*) FROM comments c WHERE c.kind='"+kind+"' AND c.item_id=a.id) AS comment_count FROM "+kind+" a JOIN users u ON u.id=a.user_id";
- const item=x=>({id:x.id,userId:x.user_id,title:x.title,description:x.description||'',sizeBytes:x.size_bytes,commentCount:x.comment_count||0,createdAt:new Date(x.created_at).toISOString(),username:x.username,role:x.role==='owner'?'owner':'user',avatarUrl:x.avatar_mime?'/api/users/'+x.user_id+'/avatar?v='+(x.avatar_rev||0):null});
+ const item=x=>({id:x.id,userId:x.user_id,title:x.title,description:x.description||'',sizeBytes:x.size_bytes,commentCount:x.comment_count||0,createdAt:new Date(x.created_at).toISOString(),username:x.username,role:x.role==='owner'?'owner':'user',hasPlus:hasPlus(x.user_id,x.role),avatarUrl:x.avatar_mime?'/api/users/'+x.user_id+'/avatar?v='+(x.avatar_rev||0):null});
  app.get('/api/movesets',(req,res)=>{
   const limit=Math.min(50,Math.max(1,parseInt(req.query.limit,10)||32)),offset=Math.min(50000,Math.max(0,parseInt(req.query.offset,10)||0)),q=String(req.query.q||'').slice(0,80);
   const where=q?' WHERE a.title LIKE ? OR a.description LIKE ? OR u.username LIKE ?':'';
@@ -179,7 +179,7 @@ module.exports=function community({app,db,auth,fail,TMP,ROOT}){
   }catch(error){next(error);}
  });
  const commentLimit=rateLimit({windowMs:15*60000,limit:15,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Comment limit reached. Try later.'}});
- const comment=x=>({id:x.id,userId:x.user_id,username:x.username,role:x.role==='owner'?'owner':'user',avatarUrl:x.avatar_mime?'/api/users/'+x.user_id+'/avatar?v='+(x.avatar_rev||0):null,body:x.body,createdAt:new Date(x.created_at).toISOString()});
+ const comment=x=>({id:x.id,userId:x.user_id,username:x.username,role:x.role==='owner'?'owner':'user',hasPlus:hasPlus(x.user_id,x.role),avatarUrl:x.avatar_mime?'/api/users/'+x.user_id+'/avatar?v='+(x.avatar_rev||0):null,body:x.body,createdAt:new Date(x.created_at).toISOString()});
  app.get('/api/:kind/:id/comments',(req,res,next)=>{
   const {kind,id}=req.params;if(!['animations','movesets'].includes(kind))return next();
   if(!get(kind,id))return fail(res,404,'Upload not found.');
