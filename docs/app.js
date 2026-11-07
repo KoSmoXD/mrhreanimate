@@ -46,6 +46,21 @@ function ownerBadge(user){
  return badge;
 }
 
+function plusBadge(user){
+ if(!user?.hasPlus)return null;
+ const badge=el('span','plus-name-badge','PLUS');
+ badge.title='Active Mr H + subscription';
+ badge.setAttribute('aria-label','PLUS member');
+ return badge;
+}
+function accountBadges(){
+ if(!state.me)return;
+ const header=$('session-label');
+ header.replaceChildren(document.createTextNode('@'+state.me.username+(isOwner(state.me)?' ✅':'')));
+ const plus=plusBadge(state.me);if(plus)header.append(document.createTextNode(' '),plus);
+ $('profile-plus').hidden=!state.me.hasPlus;
+ $('profile-role').textContent=isOwner(state.me)?'Verified owner · PLUS':state.me.hasPlus?'PLUS subscriber':'Member account';
+}
 function openModal(id){
  document.querySelectorAll('.modal').forEach(el=>el.hidden=true);
  $(id).hidden=false;
@@ -64,10 +79,10 @@ function setUser(user){
  for(const key of ['login-trigger','register-trigger'])$(key).hidden=active;
  for(const key of ['upload-trigger','account-trigger','logout-trigger','session-label'])$(key).hidden=!active;
  if(active){
-  $('session-label').textContent='@'+state.me.username+(isOwner(state.me)?' ✅':'');
+  accountBadges();
   $('profile-name').textContent=state.me.username;
   $('profile-badge').hidden=!isOwner(state.me);
-  $('profile-role').textContent=isOwner(state.me)?'Verified owner · Server admin':'Member account';
+  accountBadges();
   const avatarBox=$('profile-avatar');
   avatarBox.replaceChildren(...avatarNode(state.me,'profile-avatar').childNodes);
   if(!avatarBox.children.length)avatarBox.textContent=avatar(state.me.username);
@@ -98,6 +113,7 @@ function renderCard(item,index){
  const username=el('span','author-name',item.username||'Unknown');
  author.append(avatarNode(item),username);
  const verified=ownerBadge(item);if(verified)author.append(verified);
+ const plus=plusBadge(item);if(plus)author.append(plus);
  const info=el('div','card-info');
  const uploaded=el('div'),size=el('div');
  uploaded.append(el('span','info-label','Uploaded on'),el('span','info-value',dateFormat.format(new Date(item.createdAt))));
@@ -269,6 +285,13 @@ function wire(){
  for(const id of ['upload-anim','upload-mp3','upload-lua'])$(id).addEventListener('change',updateFileLabels);
 }
 wire();
+window.addEventListener('mrh-plus-change',event=>{
+ if(!state.me)return;
+ state.me.hasPlus=!!event.detail?.hasPlus;
+ accountBadges();
+ getGallery();
+ window.dispatchEvent(new Event('mrh-public-plus-updated'));
+});
 window.addEventListener('mrh-dance-comments-updated',()=>getGallery());
 getSession().then(()=>getGallery());
 })();
