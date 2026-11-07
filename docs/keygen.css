@@ -1,0 +1,22 @@
+/* Owner key console: warm minimal settings layout. */
+#keygen-panel{max-width:1060px;margin:0 auto;padding:28px 12px 70px}
+.keygen-shell{background:var(--theme-panel,#fff);color:var(--theme-text,#24211e);border:1px solid var(--theme-border,#ddd8d0);border-radius:20px;padding:clamp(22px,4vw,38px);box-shadow:0 12px 35px rgba(52,40,24,.04)}
+.keygen-eyebrow{font-size:11px;letter-spacing:.15em;color:var(--theme-muted,#7b746b);text-transform:uppercase;font-weight:700;margin:0 0 8px}
+.keygen-shell h1{font-size:clamp(28px,4vw,40px);line-height:1.16;letter-spacing:-.04em;margin:0 0 12px}
+.keygen-lead{color:var(--theme-muted,#7b746b);margin:0 0 30px;line-height:1.65;max-width:670px}
+.keygen-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:0 0 24px}
+.keygen-field{display:flex;flex-direction:column;gap:9px;font-size:13px;font-weight:650}
+.keygen-field input{width:100%;background:var(--theme-field,#faf9f7);color:inherit;border:1px solid var(--theme-border,#dedad4);border-radius:11px;padding:13px 14px;font:inherit}
+.keygen-lifetime{display:flex;align-items:center;gap:10px;font-size:13px;margin:4px 0 24px}
+.keygen-lifetime input{accent-color:#ac5b3b;width:17px;height:17px}
+.keygen-actions{display:flex;gap:10px;flex-wrap:wrap}
+.keygen-primary{border:1px solid #ae6347;border-radius:12px;background:#a85738;color:#fff;padding:12px 21px;font-weight:700;cursor:pointer}
+.keygen-primary:hover:not(:disabled){background:#92482e}
+.keygen-primary:disabled{opacity:.55;cursor:wait}
+.keygen-secondary,.keygen-copy-one{border:1px solid var(--theme-border,#ddd);border-radius:11px;background:var(--theme-field,#fff);color:inherit;padding:11px 15px;cursor:pointer}
+#keygen-notice{font-size:13px;line-height:1.5;color:var(--theme-muted,#72675f);margin:16px 0}
+#keygen-output{display:grid;gap:8px;margin-top:14px}
+.keygen-key{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--theme-border,#e5ded6);background:var(--theme-field,#faf9f7);border-radius:12px;padding:10px 12px}
+.keygen-key code{font-size:13px;overflow-wrap:anywhere;user-select:all}
+.keygen-copy-one{font-size:12px;white-space:nowrap;padding:8px 13px}
+@media(max-width:640px){.keygen-grid{grid-template-columns:1fr}.keygen-key{align-items:flex-start;flex-direction:column}.keygen-shell{padding:20px}}
