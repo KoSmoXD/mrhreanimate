@@ -43,7 +43,72 @@ window.addEventListener('pagehide',()=>{$('ai-key').value=''});
 async function aiStatus(){try{const r=await fetch('/api/animation-ai/status'),d=await r.json();siteAI=d.enabled;proRequired=!!d.pro?.required;hasPro=!!d.pro?.hasAccess;if(proRequired&&!hasPro){location.replace('./#plan');return;}const pro=d.pro||{};$('pro-status').textContent=hasPro?(pro.expiresAt?'+ active until '+new Date(pro.expiresAt).toLocaleString()+'.':'+ access active.'):(pro.loggedIn?'Redeem a key issued by Mr H to unlock AI generation.':'Log in through the library, then redeem your + key.');updateAI()}catch{updateAI();$('ai-status').textContent='Could not check AI availability. Reload to retry.'}}
 $('roblox-signin').onclick=()=>location.assign('/api/auth/roblox/start');
 fetch('/api/auth/roblox/status').then(r=>r.json()).then(d=>{$('roblox-signin').disabled=!d.configured;$('roblox-login-status').textContent=d.linked?'Roblox account linked.':d.configured?'Use Roblox sign-in to access your account.':'Roblox sign-in is not configured yet. Log in through the library.'}).catch(()=>{});
-$('generate').onclick=async()=>{if(busy)return;const prompt=$('prompt').value.trim(),duration=Number($('duration').value);if(prompt.length<3)return status('Describe the motion first.',true);busy=true;$('generate').disabled=true;const snapshot=JSON.stringify(clip);const request={prompt,duration};if($('ai-provider').value!=='site'){request.provider=$('ai-provider').value;request.apiKey=$('ai-key').value.trim();request.model=$('ai-model').value.trim();if(request.apiKey.length<8||!request.model){busy=false;updateAI();return status('Enter your provider API key and model ID.',true)}}status('Generating editable motion…');try{const r=await fetch('/api/animation-ai/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request),signal:AbortSignal.timeout(100000)});const d=await r.json();if(!r.ok)throw Error(d.error||'Generation failed');const generated=M.validate(d.clip);if(snapshot!==JSON.stringify(clip)){download(JSON.stringify(generated,null,2),'generated-motion.json','application/json');status('You edited while generating. Generated motion was downloaded; import it when ready.')}else{checkpoint();clip=generated;refresh(true);status('AI keyframes generated. Refine the joints and curves below.')}}catch(e){status(e.message,true)}finally{delete request.apiKey;busy=false;updateAI()}};
+let activeJobId=null,cancelRequested=false;
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+$('cancel-generate').onclick=async()=>{
+ if(!activeJobId||!busy)return;
+ cancelRequested=true;
+ $('cancel-generate').disabled=true;
+ status('Cancelling generation…');
+ try{await fetch('/api/animation-ai/jobs/'+encodeURIComponent(activeJobId),{method:'DELETE',credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(15000)});}
+ catch{status('Could not confirm cancellation. You can refresh this page.',true);}
+};
+$('generate').onclick=async()=>{
+ if(busy)return;
+ const prompt=$('prompt').value.trim(),duration=Number($('duration').value);
+ if(prompt.length<3)return status('Describe the motion first.',true);
+ const request={prompt,duration};
+ if($('ai-provider').value!=='site'){
+  request.provider=$('ai-provider').value;request.apiKey=$('ai-key').value.trim();request.model=$('ai-model').value.trim();
+  if(request.apiKey.length<8||!request.model)return status('Enter your provider API key and model ID.',true);
+ }
+ busy=true;cancelRequested=false;activeJobId=null;updateAI();$('cancel-generate').hidden=false;
+ const snapshot=JSON.stringify(clip);
+ status('Sending animation request…');
+ try{
+  const start=await fetch('/api/animation-ai/jobs',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(request),signal:AbortSignal.timeout(20000)});
+  const accepted=await start.json().catch(()=>({}));
+  if(!start.ok)throw Error(accepted.error||'Could not start generation ('+start.status+').');
+  if(!/^[a-f0-9-]{36}$/i.test(accepted.jobId||''))throw Error('Generation server returned an invalid job.');
+  activeJobId=accepted.jobId;
+  $('cancel-generate').disabled=false;
+  status('AI is generating your motion. This can take a few minutes; the page will check progress automatically.');
+  let failures=0,finished=null;
+  const deadline=Date.now()+250000;
+  while(!cancelRequested&&Date.now()<deadline){
+   await pause(2000);
+   if(cancelRequested)break;
+   try{
+    const response=await fetch('/api/animation-ai/jobs/'+encodeURIComponent(activeJobId),{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(15000)});
+    const job=await response.json().catch(()=>({}));
+    if(!response.ok)throw Error(job.error||'Could not check generation status ('+response.status+').');
+    failures=0;
+    if(job.status==='complete'){finished=job;break;}
+    if(job.status==='error')throw Error(job.error||'AI generation failed.');
+    if(job.status==='cancelled')throw Error('Generation cancelled.');
+    status(job.status==='validating'?'Checking generated R6 keyframes…':'AI is generating your motion…');
+   }catch(e){
+    if(/^(AI generation|The AI|API key|Provider|Model|Generation cancelled|Generation job not found)/i.test(e.message))throw e;
+    if(++failures>4)throw Error('Connection to the generation server was interrupted. Please retry.');
+    status('Reconnecting to generation server… ('+failures+'/4)');
+   }
+  }
+  if(cancelRequested)throw Error('Generation cancelled.');
+  if(!finished)throw Error('AI generation exceeded the time limit. Try a shorter motion.');
+  const generated=M.validate(finished.clip);
+  if(snapshot!==JSON.stringify(clip)){
+   download(JSON.stringify(generated,null,2),'generated-motion.json','application/json');
+   status('You edited while generating. Generated motion was downloaded; import it when ready.');
+  }else{
+   checkpoint();clip=generated;refresh(true);
+   status('AI keyframes generated. Refine the joints and curves below.');
+  }
+ }catch(e){status(e.name==='TimeoutError'?'The generation server could not be reached. Retry the request.':e.message,true);}
+ finally{
+  delete request.apiKey;activeJobId=null;cancelRequested=false;busy=false;
+  $('cancel-generate').hidden=true;$('cancel-generate').disabled=false;updateAI();
+ }
+};
 // Timeline: pointer selection and constrained retiming, plus keyboard-accessible frame buttons.
 const tl=$('timeline');function xy(canvas,e){const r=canvas.getBoundingClientRect();return[(e.clientX-r.left)*canvas.width/r.width,(e.clientY-r.top)*canvas.height/r.height]}
 function drawTimeline(){const w=Math.max(280,Math.round(tl.getBoundingClientRect().width));tl.width=w;tl.height=94;const c=tl.getContext('2d');c.clearRect(0,0,w,94);c.font='11px monospace';for(let i=0;i<=10;i++){const x=16+(w-32)*i/10;c.strokeStyle='#252525';c.beginPath();c.moveTo(x,25);c.lineTo(x,85);c.stroke();c.fillStyle='#888';c.fillText((clip.duration*i/10).toFixed(1),Math.min(w-30,x),15)}for(let i=0;i<clip.frames.length;i++){const x=16+(w-32)*clip.frames[i].time/clip.duration;c.fillStyle=i===selected?'#b9f27b':'#7a7a7a';c.beginPath();c.moveTo(x,43);c.lineTo(x+7,51);c.lineTo(x,59);c.lineTo(x-7,51);c.closePath();c.fill()}const x=16+(w-32)*time/clip.duration;c.strokeStyle='#eee';c.beginPath();c.moveTo(x,24);c.lineTo(x,85);c.stroke()}
