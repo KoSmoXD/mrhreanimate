@@ -20,6 +20,7 @@ function avatar(user,cls='avatar'){
 function author(user){
  const p=node('div','anim-author');p.append(avatar(user),node('span','author-name',user.username||'Unknown'));
  if(owner(user)){const badge=node('span','owner-badge','✅');badge.title='Verified server owner';p.append(badge);}
+ if(user?.hasPlus){const badge=node('span','plus-name-badge','PLUS');badge.title='Active Mr H + subscription';badge.setAttribute('aria-label','PLUS member');p.append(badge);}
  return p;
 }
 async function request(path,options={}){
@@ -32,6 +33,10 @@ function issue(msg){const toast=$('toast');toast.textContent=msg;toast.hidden=fa
 function showError(id,msg){$(id).hidden=!msg;$(id).textContent=msg||'';}
 function setUser(user){st.user=user||null;$('moveset-upload-trigger').hidden=!st.user;const form=$('comment-form');const signin=$('comment-signin');if(form)form.hidden=!st.user;if(signin)signin.hidden=!!st.user;if(st.loaded)renderMovesets();if(st.selected)renderComments();}
 window.addEventListener('mrh-session-change',e=>setUser(e.detail?.user));
+window.addEventListener('mrh-public-plus-updated',()=>{
+ if(st.loaded)fetchMovesets();
+ if(st.selected){if(st.user&&st.selected.item?.userId===st.user.id){st.selected.item.hasPlus=true;$('item-owner').replaceChildren(author(st.selected.item));}fetchComments();}
+});
 request('/me').then(r=>setUser(r.user)).catch(()=>setUser(null));
 function openDialog(id){
  document.querySelectorAll('.modal').forEach(m=>m.hidden=m.id!==id);
