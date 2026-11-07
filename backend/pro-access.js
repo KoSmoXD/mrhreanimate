@@ -15,13 +15,31 @@ module.exports=function setupPro(app,{db,auth,rateLimit}){
  const generatorLimit=rateLimit({windowMs:60*60000,limit:15,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Key generation limit reached. Try again later.'}});
  // Only the authenticated, reserved Mr_H owner can issue keys. No client-provided role is trusted.
  app.post('/api/pro/keys',auth,(req,res,next)=>isKeyGenerator(req.user)?next():res.status(403).json({error:'Only Mr_H can generate PLUS keys.'}),generatorLimit,(req,res)=>{
-  const {count,days,lifetime}=req.body||{};
-  if(!Number.isInteger(count)||count<1||count>10||typeof lifetime!=='boolean'||(!lifetime&&(!Number.isInteger(days)||days<1||days>3650)))
-   return res.status(400).json({error:'Choose 1–10 keys and a duration of 1–3650 days, or lifetime.'});
-  if(lifetime&&days!==null&&days!==undefined)return res.status(400).json({error:'Lifetime keys do not take a duration.'});
+  const {count,lifetime}=req.body||{};
+  if(!Number.isInteger(count)||count<1||count>10||typeof lifetime!=='boolean')
+   return res.status(400).json({error:'Choose 1–10 keys and a valid duration, or lifetime.'});
+  const units={days:86400000,hours:3600000,minutes:60000,seconds:1000};
+  const limits={days:3650,hours:23,minutes:59,seconds:59};
+  let durationMs=null;
+  const parts={};
+  if(lifetime){
+   // Zeroes/nulls are allowed for legacy clients, but nonzero durations are not.
+   if(Object.keys(units).some(u=>req.body?.[u]!=null&&req.body[u]!==0))
+    return res.status(400).json({error:'Lifetime keys do not take a duration.'});
+  }else{
+   for(const unit of Object.keys(units)){
+    const value=req.body?.[unit]??0;
+    if(!Number.isInteger(value)||value<0||value>limits[unit])
+     return res.status(400).json({error:'Duration must use 0–3650 days, 0–23 hours, 0–59 minutes and 0–59 seconds.'});
+    parts[unit]=value;
+   }
+   durationMs=Object.keys(units).reduce((sum,unit)=>sum+parts[unit]*units[unit],0);
+   if(durationMs<1000||durationMs>3650*86400000)
+    return res.status(400).json({error:'Choose a duration between 1 second and 3650 days.'});
+  }
   try{
-   const keys=db.transaction(()=>Array.from({length:count},()=>createKey(db,{lifetime,hours:lifetime?undefined:days*24})))();
-   res.set('Cache-Control','no-store').json({keys,count:keys.length,lifetime,days:lifetime?null:days});
+   const keys=db.transaction(()=>Array.from({length:count},()=>createKey(db,{lifetime,durationMs})))();
+   res.set('Cache-Control','no-store').json({keys,count:keys.length,lifetime,...(lifetime?{days:null,hours:null,minutes:null,seconds:null}:parts)});
   }catch(error){console.error('PLUS key generation failed:',error.message);res.status(500).json({error:'Could not generate keys.'});}
  });
  app.post('/api/pro/redeem',auth,limiter,(req,res)=>{
