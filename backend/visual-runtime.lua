@@ -61,6 +61,19 @@ local function addEffect(rule, part)
         effect = Instance.new("Smoke"); effect.Color = c; effect.Size = rule.scale; effect.Opacity = 0.4; effect.RiseVelocity = 2
     elseif rule.type == "light" then
         effect = Instance.new("PointLight"); effect.Color = c; effect.Brightness = math.min(5, rule.scale); effect.Range = math.min(40, rule.scale * 4)
+    elseif rule.type == "png" then
+        -- PNGs are packaged as local assets; load when the reanimator asset resolver supports images.
+        local ok, texture = pcall(function() return AssetGetContentId(rule.image) end)
+        if ok and type(texture) == "string" and texture ~= "" then
+            effect = Instance.new("ParticleEmitter")
+            effect.Texture = texture
+            effect.Rate = 6
+            effect.Lifetime = NumberRange.new(0.5, 0.8)
+            effect.Speed = NumberRange.new(0, 0.2)
+            effect.Size = NumberSequence.new(math.max(0.1, rule.scale * 0.3))
+            effect.LightEmission = 0.6
+            effect.LockedToPart = true
+        end
     elseif rule.type == "trail" then
         local a, b = Instance.new("Attachment"), Instance.new("Attachment")
         a.Position, b.Position = Vector3.new(0, rule.scale * 0.15, 0), Vector3.new(0, -rule.scale * 0.15, 0)
