@@ -44,7 +44,11 @@ async function refresh(){
  try{const response=await fetch('/api/pro/status',{cache:'no-store'});if(!response.ok)throw Error('Status unavailable');const plan=await response.json();if(id===requestId)render(plan);}
  catch{if(id===requestId)render(null);}
 }
-$('plan-activate-focus').onclick=()=>$('plan-key').focus();
+$('plan-activate-focus').onclick=()=>{
+ const field=$('plan-key');
+ field.scrollIntoView({behavior:'smooth',block:'center'});
+ try{field.focus({preventScroll:true});}catch{field.focus();}
+};
 $('plan-login').onclick=()=>$('login-trigger').click();
 $('plan-redeem-form').onsubmit=async event=>{
  event.preventDefault();if(!current?.loggedIn){$('login-trigger').click();return;}
