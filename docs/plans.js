@@ -3,9 +3,15 @@
 const $=id=>document.getElementById(id);
 let current=null,requestId=0,expiryTimer;
 function render(plan){
+ const previous=current;
  current=plan;clearTimeout(expiryTimer);
  const active=!!plan?.hasAccess;
  document.querySelectorAll('[data-plus-only]').forEach(tab=>tab.hidden=!active);
+ const keygenAllowed=!!plan?.isKeyGenerator;
+ $('tab-keygen').hidden=!keygenAllowed;
+ window.dispatchEvent(new CustomEvent('mrh-keygen-permission',{detail:{allowed:keygenAllowed}}));
+ if(plan?.loggedIn&&previous?.loggedIn&&!!previous.hasAccess!==active)
+  window.dispatchEvent(new CustomEvent('mrh-plus-change',{detail:{hasPlus:active}}));
  $('plan-free').textContent=active?'Included with +':'Current plan';
  $('plan-activate-focus').textContent=active?'Add another key':'Activate with a key';
  $('plan-status').textContent=!plan?'Could not check your plan. Try again shortly.':active?(plan.isOwner?'Owner · + access active':plan.expiresAt?'+ active until '+new Date(plan.expiresAt).toLocaleString():'+ lifetime access active'):'Your current plan: Free';
